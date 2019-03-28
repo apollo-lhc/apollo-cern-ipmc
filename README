@@ -1,0 +1,18 @@
+
+Build IPMC firmware:
+
+  - Must be member of CERN e-group epesebe-ipmc-forum
+  - Fetch https://gitlab.cern.ch/ep-ese-be-xtca/ipmc-project/raw/master/compile.py
+  - Run compile.py (prompts for CERN credentials)
+
+Load IPMC firmware:
+
+  $ ipmitool -I lan -H 192.168.40.44 -U "" -P "" hpm upgrade hpm1all.img force
+     (time needed: approx. 16 minutes)
+  $ ipmitool -I lan -H 192.168.40.44 -U "" -P "" hpm activate
+
+
+
+Firmware source API examples:
+  - https://gitlab.cern.ch/ep-ese-be-xtca/ipmc-project/tree/master/ipmc-user
+
