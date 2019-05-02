@@ -11,7 +11,18 @@ Load IPMC firmware:
      (time needed: approx. 16 minutes)
   $ ipmitool -I lan -H 192.168.40.44 -U "" -P "" hpm activate
 
+Running GPIO example with IPMC in DevKit:
 
+  - Check out https://gitlab.cern.ch/ep-ese-be-xtca/ipmc-devkit.git
+  - Copy devkit/gpio.py into ipmc-devkit
+  - Start IPMC:
+    $ ./main.py
+  - Poll GPIO state:
+    $ ./gpio.py
+  - Control GPIO state over TCP:
+    $ nc 192.168.40.44 5000
+    > 1<return> - sets GPIO ACTIVE   (GND)
+    > 0<return> - sets GPIO INACTIVE (VCC)
 
 Firmware source API examples:
   - https://gitlab.cern.ch/ep-ese-be-xtca/ipmc-project/tree/master/ipmc-user
