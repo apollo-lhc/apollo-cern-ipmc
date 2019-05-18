@@ -27,3 +27,28 @@ Running GPIO example with IPMC in DevKit:
 Firmware source API examples:
   - https://gitlab.cern.ch/ep-ese-be-xtca/ipmc-project/tree/master/ipmc-user
 
+
+GPIO spec
+---------
+
+| Name              | IPMC Pin | IPMC IO Name | Dir | default | notes                                                            |
+|-------------------+----------+--------------+-----+---------+------------------------------------------------------------------|
+| IPMC_ZYNQ_EN      |      198 | USER_IO_3    | O   |       0 | Start regulator powerup sequence                                 |
+| EN_ONE_JTAG_CHAIN |       78 | USER_IO_4    | O   |       0 | Puts everything on one JTAG chain                                |
+| UART_ADDR0        |       79 | USER_IO_5    | O   |       0 | Selects which device the IPMC UART / FP UART goes to             |
+| UART_ADDR1        |      200 | USER_IO_6    | O   |       0 | Selects which device the IPMC UART / FP UART goes to             |
+| ZYNQ_BOOT_MODE0   |      201 | USER_IO_7    | O   |       1 | Selects which boot source for the ZYNQ (set before IPMC_ZYNQ_EN) |
+| ZYNQ_BOOT_MODE1   |       81 | USER_IO_8    | O   |       1 | Selects which boot source for the ZYNQ                           |
+| SENSE_RST         |       82 | USER_IO_9    | O   |       0 | Reset sense i2c bus mux                                          |
+| Mezz2_EN          |      203 | USER_IO_10   | O   |       0 | NOT USED (jumperable)  In case we don't have a zynq              |
+| Mezz1_EN          |      204 | USER_IO_11   | O   |       0 | NOT USED (jumperable)                                            |
+| M24512_WE_N       |       84 | USER_IO_12   | O   |       1 | Write enable for mgmt i2c bus eeprom                             |
+| ETH_SW_PWR_GOOD   |       85 | USER_IO_13   | I   |       X | Ethernet power good                                              |
+| ETH_SW_RESET_N    |       87 | USER_IO_16   | O   |       1 | reset ethernet switch                                            |
+
+
+Questions or comments
+---------------------
+
+- What is the maximum length of the data and reply strings in the TCP/IP data handler
+- no return type for callback functions
