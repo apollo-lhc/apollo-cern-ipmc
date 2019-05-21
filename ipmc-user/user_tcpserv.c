@@ -29,14 +29,24 @@ Version ..... : V0.1 - 18/05/2019
 
 /* ================================================================ */
 
+// char *
+// strcpy(char *str_dest, const char *str_src);
+
+size_t
+strlen(const char * str);
+
 void
 lowercase(char s[]);
 
 void
 remove_extra_spaces(char s[]);
 
-char *
-get_param(const char * s, const int pos);
+// char *
+// get_param(const char * s, const int pos);
+
+void
+get_next_param(char * param, char * line);
+
 
 int
 get_signal_index(const char * sm_signal_name);
@@ -45,10 +55,10 @@ int
 get_cmd_index(const char * cmd);
 
 int
-write_gpio_signal(const char * cmd, unsigned char * reply);
+write_gpio_signal(char * params, unsigned char * reply);
 
 int
-read_gpio_signal(const char * cmd, unsigned char * reply);
+read_gpio_signal(char * params, unsigned char * reply);
 
 /* ================================================================ */
 
@@ -110,33 +120,33 @@ INIT_CALLBACK(user_tcpserv_init)
   tcp_connect_server(user_tcpserv_connect_handler,
                      user_tcpserv_disconnect_handler,
                      user_tcpserv_data_handler,
-                     23);
+                     2345);
 }
 
-/* TIMER_CALLBACK: called every 1s */
-TIMER_CALLBACK(1s, user_tcpserv_timercback)
-{
-  unsigned i;
-  
-  unsigned char *data = (unsigned char *)"USER_TCPSERV_TIMERCBACK \n\r";
-  unsigned len = 26;
-	
-  /* Scan the connection slot to send data to all of the clients */
-  for(i=0; i < MAX_USER_TCPSERV_CLIENT; i++){
-    
-    /* Check if the slot is in use */
-    if(user_tcpserv_clients[i].opened){
-      
-      /* Send "len" bytes of "data" */
-      tcp_send_packet(user_tcpserv_clients[i].to,
-                      user_tcpserv_clients[i].to_port,
-                      data,
-                      len);
-      
-    }
-    
-  }
-}
+// /* TIMER_CALLBACK: called every 1s */
+// TIMER_CALLBACK(1s, user_tcpserv_timercback)
+// {
+//   unsigned i;
+//   
+//   unsigned char *data = (unsigned char *)"USER_TCPSERV_TIMERCBACK \n\r";
+//   unsigned len = 26;
+// 	
+//   /* Scan the connection slot to send data to all of the clients */
+//   for(i=0; i < MAX_USER_TCPSERV_CLIENT; i++){
+//     
+//     /* Check if the slot is in use */
+//     if(user_tcpserv_clients[i].opened){
+//       
+//       /* Send "len" bytes of "data" */
+//       tcp_send_packet(user_tcpserv_clients[i].to,
+//                       user_tcpserv_clients[i].to_port,
+//                       data,
+//                       len);
+//       
+//     }
+//     
+//   }
+// }
 
 /* 
  * Name: user_tcpserv_connect_handler
@@ -256,16 +266,48 @@ user_tcpserv_data_handler(const ip_addr_t to,
 {
 
   char cmd_line[CMD_LINE_MAX_LEN];
-  strncpy(cmd_line,
-          (const char *) data,
-          (size_t) len);
-  cmd_line[len] = '\0';
-    
-  lowercase(cmd_line);
+  int cmd_len;
+
+  if (data[len-2] == '\r') {
+    cmd_len = len-2;
+  }
+  else if (data[len-1] == '\n') {
+    cmd_len = len-1;
+  }
+  else {
+    cmd_len = len;
+  }
+  
+  memcpy(cmd_line, data, cmd_len);
+
+  cmd_line[cmd_len] = '\0';
+
+  debug_printf("<_> user_tcpserv command line: ");
+  debug_printf(cmd_line);
+  debug_printf("\n");
+
   remove_extra_spaces(cmd_line);
-  char * cmd = get_param(cmd_line, 0);
+  debug_printf("<_> >>>>>> extra spaces: ");
+  debug_printf(cmd_line);
+  debug_printf("\n");
+
+  lowercase(cmd_line);
+  debug_printf("<_> >>>>>> lowercase: ");
+  debug_printf(cmd_line);
+  debug_printf("\n");
+
+
+  char cmd[30];
+  get_next_param(cmd, cmd_line);
+  debug_printf("<_> >>>>>> cmd: ");
+  debug_printf(cmd);
+  debug_printf("\n");
+
   int cmd_idx = get_cmd_index(cmd);
-   
+  debug_printf("<_> >>>>>> cmd_idx: ");
+  debug_printf("%d", cmd_idx);
+  debug_printf("\n");
+ 
   if (cmd_idx >= 0) { 
     // execute command, get reply and associated length
     *replyLen = cmd_map[cmd_idx].fnc_ptr(cmd_line, reply);
@@ -274,10 +316,14 @@ user_tcpserv_data_handler(const ip_addr_t to,
   else {
     /* Clone the request in the reply buffer */
     memcpy(reply, data, len);
+    reply[len]= '\0';
   
     /* Set the reply length */
     *replyLen = len;
   }
+
+  debug_printf("<_> user_tcpserv response: ");
+  debug_printf((const char *) reply);
 
   /* Return the function successfully */
   return 0;
@@ -287,10 +333,16 @@ user_tcpserv_data_handler(const ip_addr_t to,
 /* ================================================================ */
 
 int
-write_gpio_signal(const char * cmd,
+write_gpio_signal(char * params,
                   unsigned char * reply)
 {
-  char * sm_signal_name = get_param(cmd, 1);
+  debug_printf("<_> ======= write_gpio_signal\n");
+
+  char sm_signal_name[30];
+  get_next_param(sm_signal_name, params);
+
+  int msg_len;
+  
   int idx = get_signal_index(sm_signal_name);
   
   if (idx >= 0) {
@@ -299,28 +351,60 @@ write_gpio_signal(const char * cmd,
 
     if (pin_map[idx].writable == 1) {
 
-      char * value = get_param(cmd, 2);
+      char value[2];
+      get_next_param(value, params);
+
+      debug_printf("<_> ======= value: ");
+      debug_printf(value);
+      debug_printf("\n");
       
       if (value[0] == '1' || value[0] == 'h'){
         signal_deactivate(&userio_sig);
+        debug_printf("<_> ======= signal deactivated\n");
       }
-      else if (value[0] == '1' || value[0] == 'h') {
+      else if (value[0] == '0' || value[0] == 'h') {
         signal_activate(&userio_sig);
+        debug_printf("<_> ======= signal activated\n");
       }
+
+      char msg[] = "OK\n";
+      msg_len = strlen(msg);
+      memcpy(reply, msg, msg_len);
     }
+
+    else {
+      char msg[] = "Cannot write to input signal.\n";
+      msg_len = strlen(msg);
+      memcpy(reply, msg, msg_len);
+    }
+
   }
-  
-  reply[0] = 'O';
-  reply[1] = 'K';
-  return 2;
+
+  else {
+    char msg[] = "Signal not found.\n";
+    msg_len = strlen(msg);
+    memcpy(reply, msg, msg_len);
+  }
+
+  return msg_len;
 }
 
-// read pin and return a char corresponding to its value.
+// read pin and fill reply string with associated value. returns the
+// size of the reply.
 int
-read_gpio_signal(const char * cmd,
+read_gpio_signal(char * params,
                  unsigned char * reply)
 {
-  char * sm_signal_name = get_param(cmd, 1);
+
+  debug_printf("<_> ======= read_gpio_signal\n");
+
+  char sm_signal_name[30];
+  get_next_param(sm_signal_name, params);
+
+  debug_printf("<_> ======= ");
+  debug_printf(sm_signal_name);
+  debug_printf("\n");
+
   int idx = get_signal_index(sm_signal_name);
   
   int v;
@@ -333,16 +417,26 @@ read_gpio_signal(const char * cmd,
     v = signal_read(&userio_sig);
   
     if (v == 0) {
-      reply[0] = '1';
-      reply_len = 1;
+      char msg[] = "1\n";
+      reply_len = strlen(msg);
+      memcpy(reply, msg, reply_len);
     }
     else if (v == 1) {
-      reply[0] = '0';
-      reply_len = 1;
+      char msg[] = "0\n";
+      reply_len = strlen(msg);
+      memcpy(reply, msg, reply_len);
     }
     else{
-      reply_len = -1;
+      char msg[] = "Unexpected value read from signal.\n";
+      reply_len = strlen(msg);
+      memcpy(reply, msg, reply_len);
     }
+  }
+
+  else {
+    char msg[] = "Signal not found.\n";
+    reply_len = strlen(msg);
+    memcpy(reply, msg, reply_len);
   }
 
   return reply_len;
@@ -454,6 +548,26 @@ void remove_extra_spaces(char s[])
 }
 
 
+// char *
+// strcpy(char *str_dest,
+//        const char *str_src)
+// {
+//     assert(str_dest != NULL && str_src != NULL);
+//     char *temp = str_dest;
+//     while((*str_dest++ = *str_src++) != '\0');
+//     return temp;
+// }
+
+
+// freebsd implementation of strlen
+size_t
+strlen(const char * str)
+{
+    const char *s;
+    for (s = str; *s; ++s) {}
+    return(s - str);
+}
+
 /* ================================================================ */
 
 // look for signal information in the pin map table and return its
@@ -463,6 +577,12 @@ get_signal_index(const char * sm_signal_name)
 {
   int i = 0;
   for (i = 0; pin_map[i].sm_name != NULL; i++) {
+
+    debug_printf("<_> ++++++++ signal_ids: ");
+    debug_printf(pin_map[i].sm_name);
+    debug_printf(" ");
+    debug_printf(sm_signal_name);
+    debug_printf("\n");
     
     if (str_eq(pin_map[i].sm_name, sm_signal_name) == 1) {
       return i;
@@ -478,6 +598,13 @@ get_cmd_index(const char * cmd)
 {
   int i = 0;
   for (i = 0; cmd_map[i].cmd != NULL; i++) {
+
+    debug_printf("<_> ++++++++ cmd_ids: ");
+    debug_printf(cmd_map[i].cmd);
+    debug_printf(" ");
+    debug_printf(cmd);
+    debug_printf("\n");
+
     if (str_eq(cmd_map[i].cmd, cmd) == 1) {
       return i;
     }
@@ -485,44 +612,35 @@ get_cmd_index(const char * cmd)
   return -1;
 }
 
-// this function receive a command string and returns a char array
-// with the parameter in the specified position. Position 0 is the
-// command itself.
-char *
-get_param(const char * s,
-          const int pos)
+// copy the first word from line (until delimiter) to param, removing
+// it from the content of the line.
+void
+get_next_param(char * param,
+               char * line)
 {
-  int cnt = 0;
 
-  const char * p = s;
+  char * target = param;
+  char * l = line;
 
-  char param[20] = "";
-  char * q = param;
+  while (*l != ' ' && *l != '\0') {
+    *target = *l;
+    target++;
+    l++;
+  }
+  *target = '\0';
 
-  // look for parameter in a given position
-  // starts with position 0
-  while (*p != '\0' && cnt != pos) {
-    if (*p == ' ') {
-      cnt++;
+  target = line;
+  if (*l != '\0') {  
+    l++;
+    while (*l != '\0') {
+      *target = *l;
+      target++;
+      l++;
     }
-    p++;
   }
+  *target = '\0';
 
-  // after parameter is identified, copy it to target array
-  while (*p != '\0' && *p != ' ') {
-    *q = * p;
-    p++;
-    q++;
-  }
-  *q = '\0';
-
-  // if no relevant data was copied to the target, return NULL
-  if (q == param) {
-    return NULL;
-  }
-
-  // return the pointer to the content otherwise
-  return q;
+  return;
 }
 
 
