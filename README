@@ -52,7 +52,12 @@ paths might produce unexpected results (meaning errors).
 
     - The CERN IPMC compile script uses a XML configuration file to
       set commonly used resources, it is named as config.xml. For this
-      project and at this moment, it means mainly LAN configuration.
+      project and at this moment, it means mainly LAN
+      configuration. There is a read only copy of the config file
+      named as "config.tpl". Make a copy of this file with the name
+      "config.xml". The "config.xml" file will be automaticaly ignored
+      by the svn to avoid mistakes. All the following changes takes
+      place in the new "config.xml" file.
 
     - Look for the <LANConfig></LANConfig> section
 
@@ -66,7 +71,7 @@ paths might produce unexpected results (meaning errors).
 
     - It is suggested to review all the other LAN parameters, such as netmask or gateway.
 
-    - Save the file
+    - Save the "config.xml" file.
 
 - Run compile.py (it prompts for CERN credentials)
 
@@ -80,6 +85,12 @@ paths might produce unexpected results (meaning errors).
         - lxml (pip install lxml)
 
         - requests (pip install requests)
+
+    - There is a read only version of this file in our repository
+      named as "compile_ref.py". If you want to make changes, you need
+      to make a copy of that. We suggest the name of the changed file
+      as "compile.py", which will be automaticaly ingnored by the svn,
+      avoiding mistakes.
 
     - Command to run the compilation script: python compile.py
 
