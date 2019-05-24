@@ -58,6 +58,98 @@ get_cmd_index(const char * cmd);
 
 /* ================================================================ */
 
+typedef struct pin_map_n {
+  const char * sm_name;
+  const int output;
+  const int expert;
+  const signal_t ipmc_name;
+  const int initial;
+} pin_map_t;
+
+static pin_map_t pin_map[] = {
+  {"ipmc_zynq_en"     , 1, 1, USER_IO_3                 , 0}, 
+  {"en_one_jtag_chain", 1, 0, USER_IO_4                 , 0}, 
+  {"uart_addr0"       , 1, 0, USER_IO_5                 , 0}, 
+  {"uart_addr1"       , 1, 0, USER_IO_6                 , 0}, 
+  {"zynq_boot_mode0"  , 1, 1, USER_IO_7                 , 1}, 
+  {"zynq_boot_mode1"  , 1, 1, USER_IO_8                 , 1}, 
+  {"sense_rst"        , 1, 0, USER_IO_9                 , 0}, 
+  {"mezz2_en"         , 1, 0, USER_IO_10                , 0}, 
+  {"mezz1_en"         , 1, 0, USER_IO_11                , 0}, 
+  {"m24512_we_n"      , 1, 0, USER_IO_12                , 1}, 
+  {"eth_sw_pwr_good"  , 0, 0, USER_IO_13                , 0}, 
+  {"eth_sw_reset_n"   , 1, 1, USER_IO_16                , 1},
+  {"en_12v"           , 1, 1, CFG_PAYLOAD_DCDC_EN_SIGNAL, 0},
+  {"fp_latch"         , 0, 0, CFG_HANDLE_SWITCH_SIGNAL  , 0},
+};
+
+/* ================================================================ */
+
+static int expert_mode = 0;
+
+// let's declare strings as global variables so they are not included
+// in stack.
+
+static const char connection_request_str[] =
+  "<_> user_tcpserv: " "New connection request\n";
+
+static const char conn_not_avail_str[] =
+  "<W> user_tcpserv: "
+  "No user_tcpserv connection slot available\n";
+
+static const char disconn_req_str[] =
+  "<_> user_tcpserv: " "Disconnect request received\n";
+
+static const char expert_str[] =
+  "Expert mode is enabled.\n";
+
+static const char prompt_str[] = ":: ";
+
+static const char help_str[] = "help";
+
+static const char question_mark_str[] = "?";
+
+static const char set_gpio_help_str[] =
+  "Usage: set_gpio <signal name> <value>.\n"
+  "Value should be 1 (one) to activate the signal.\n"
+  "Value should be 0 (zero) to deactivate the signal.\n";
+
+static const char ok_str[] = "OK\n";
+
+static const char set_gpio_error_str[] =
+  "Signal cannot be written.\n";
+
+static const char signal_not_found_str[] =
+  "Signal not found.\n";
+
+static const char get_gpio_help_str[] =
+  "Usage: get_gpio <signal name>.\n"
+  "Returns 1 (one) if signals is activated.\n"
+  "Returns 0 (zero) if signals is deactivated.\n";
+
+static const char gpio_enabled_str[] = "1\n";
+static const char gpio_disabled_str[] = "0\n";
+static const char gpio_error_str[] =
+  "Unexpected value read from signal.\n";
+
+static const char expert_help_str[] =
+  "Usage: expert_mode <value>.\n"
+  "Value should be 'on' (no quotes) to allow "
+  "overwrite of special signals.\n"
+  "Any other value, including empty (no value), "
+  "deactivates expert mode.\n";
+
+static const char expert_off_str[] =
+  "Expert mode deactivated.\n";
+
+static const char cmds_header_str[] = "Available commands:\n";
+static const char signals_header_str[] =
+  "Available signals (marked if expert mode required):\n";
+
+static const char expert_label_str[] = " (E)";
+
+/* ================================================================ */
+
 int
 write_gpio_signal(char * params, unsigned char * reply);
 
@@ -65,54 +157,25 @@ int
 read_gpio_signal(char * params, unsigned char * reply);
 
 int
-set_overwrite_control_mode(char * params, unsigned char * reply);
+set_expert_mode(char * params, unsigned char * reply);
 
-// int
-// help(char * params, unsigned char * reply);
+int
+help(char * params, unsigned char * reply);
 
 /* ================================================================ */
 
-typedef struct pin_map_n {
-  const char * sm_name;
-  const int output;
-  const int control;
-  const signal_t ipmc_name;
-  const int initial;
-} pin_map_t;
-
-static pin_map_t pin_map[] = {
-  {"ipmc_zynq_en"          , 1, 1, USER_IO_3                 , 0}, 
-  {"en_one_jtag_chain"     , 1, 0, USER_IO_4                 , 0}, 
-  {"uart_addr0"            , 1, 0, USER_IO_5                 , 0}, 
-  {"uart_addr1"            , 1, 0, USER_IO_6                 , 0}, 
-  {"zynq_boot_mode0"       , 1, 1, USER_IO_7                 , 1}, 
-  {"zynq_boot_mode1"       , 1, 1, USER_IO_8                 , 1}, 
-  {"sense_rst"             , 1, 0, USER_IO_9                 , 0}, 
-  {"mezz2_en"              , 1, 0, USER_IO_10                , 0}, 
-  {"mezz1_en"              , 1, 0, USER_IO_11                , 0}, 
-  {"m24512_we_n"           , 1, 0, USER_IO_12                , 1}, 
-  {"eth_sw_pwr_good"       , 0, 0, USER_IO_13                , 0}, 
-  {"eth_sw_reset_n"        , 1, 1, USER_IO_16                , 1},
-  {"en_12v"                , 1, 1, CFG_PAYLOAD_DCDC_EN_SIGNAL, 0},
-  {"fp_latch"              , 0, 0, CFG_HANDLE_SWITCH_SIGNAL  , 0},
-  {NULL, 0, 1, USER_IO_16, 0}
-};
-
 typedef struct cmd_map_n {
   const char * cmd;
-  const int (*fnc_ptr)(const char *, unsigned char *);
+  int (*fnc_ptr)(char *, unsigned char *);
 } cmd_map_t;
 
 static cmd_map_t cmd_map[] = {
-  {"set_gpio"              , & write_gpio_signal},
-  {"get_gpio"              , & read_gpio_signal},
-  {"overwrite_control_mode", & set_overwrite_control_mode},
-  // {"help"                  , & help},
-  // {"?"                     , & help},
-  {NULL, NULL}
+  {"set_gpio"       , & write_gpio_signal},
+  {"get_gpio"       , & read_gpio_signal },
+  {"expert_mode"    , & set_expert_mode  },
+  {help_str         , & help             },
+  {question_mark_str, & help             },
 };
-
-static int overwrite_control_mode = 0; 
 
 /* ================================================================ */
 
@@ -185,7 +248,7 @@ user_tcpserv_connect_handler(const ip_addr_t from,
   unsigned i;
   
   /* Display information in debug console */
-  debug_printf("<_> user_tcpserv: " "New connection request\n");
+  debug_printf(connection_request_str);
   
   /* Save client information in a list */
 
@@ -203,10 +266,14 @@ user_tcpserv_connect_handler(const ip_addr_t from,
       user_tcpserv_clients[i].opened = 1;
 
 
-      tcp_send_packet(user_tcpserv_clients[i].to,
-                      user_tcpserv_clients[i].to_port,
-                      (unsigned char *) "$ ",
-                      2);
+      // didn't work, leaving it out for now.
+      //
+      // // attempt to send prompt in the beginning of the
+      // // communication
+      // // tcp_send_packet(user_tcpserv_clients[i].to,
+      // //                 user_tcpserv_clients[i].to_port,
+      // //                 (unsigned char *) ":: ",
+      // //                 3);
 
       /* Return successfully */
       return 0; 
@@ -214,7 +281,7 @@ user_tcpserv_connect_handler(const ip_addr_t from,
   }
 
   /* Print a warning message when no slot is available */
-  debug_printf("<W> user_tcpserv: " "No user_tcpserv connection slot available\n");
+  debug_printf(conn_not_avail_str);
 	
   /* And quit de function with error */
   return 1;
@@ -232,12 +299,13 @@ user_tcpserv_connect_handler(const ip_addr_t from,
  *              library and cannot be changed.
  */
 char
-user_tcpserv_disconnect_handler(const ip_addr_t from, unsigned short from_port)
+user_tcpserv_disconnect_handler(const ip_addr_t from,
+                                unsigned short from_port)
 {
   unsigned i;
   
   /* Display information in debug console */
-  debug_printf("<_> user_tcpserv: " "Disconnect request received\n");
+  debug_printf(disconn_req_str);
   
   /* Search for the client slot in the array */
   for(i=0; i < MAX_USER_TCPSERV_CLIENT; i++){
@@ -306,78 +374,69 @@ user_tcpserv_data_handler(const ip_addr_t to,
 
   cmd_line[cmd_len] = '\0';
 
-  debug_printf("<_> user_tcpserv command line: ");
-  debug_printf(cmd_line);
-  debug_printf("\n");
+  // debug_printf("<_> user_tcpserv command line: ");
+  // debug_printf(cmd_line);
+  // debug_printf("\n");
 
   remove_extra_spaces(cmd_line);
-  debug_printf("<_> >>>>>> no extra spaces: ");
-  debug_printf(cmd_line);
-  debug_printf("\n");
+  // debug_printf("<_> >>>>>> no extra spaces: ");
+  // debug_printf(cmd_line);
+  // debug_printf("\n");
 
   lowercase(cmd_line);
-  debug_printf("<_> >>>>>> all lowercase: ");
-  debug_printf(cmd_line);
-  debug_printf("\n");
+  // debug_printf("<_> >>>>>> all lowercase: ");
+  // debug_printf(cmd_line);
+  // debug_printf("\n");
 
 
   char cmd[30];
   get_next_param(cmd, cmd_line);
-  debug_printf("<_> >>>>>> cmd: ");
-  debug_printf(cmd);
-  debug_printf("\n");
+  // debug_printf("<_> >>>>>> cmd: ");
+  // debug_printf(cmd);
+  // debug_printf("\n");
 
   int cmd_idx = get_cmd_index(cmd);
-  debug_printf("<_> >>>>>> cmd_idx: ");
-  debug_printf("%d", cmd_idx);
-  debug_printf("\n");
+  // debug_printf("<_> >>>>>> cmd_idx: ");
+  // debug_printf("%d", cmd_idx);
+  // debug_printf("\n");
  
   if (cmd_idx >= 0) { 
     // execute command, get reply and associated length
     *replyLen = cmd_map[cmd_idx].fnc_ptr(cmd_line, reply);
-    debug_printf("----- cmd reply len: %d\n", *replyLen);
+    // debug_printf("----- cmd reply len: %d\n", *replyLen);
   }
 
   else {
     /* Clone the request in the reply buffer */
     memcpy(reply, data, len);
-
-    unsigned char * r = reply;
-    for(; *r != '\r' && *r != '\n'; r++);
-
-    if (*r == '\r') {
-      *r = '\n';
-    }
-    r++;
-    *r = '\0';
+    reply[len] = '\0';
     
     /* Set the reply length */
-    *replyLen = strlen((char *) reply);
-    debug_printf("----- echo reply len: %d\n", *replyLen);
+    *replyLen = len;
+    // debug_printf("----- echo reply len: %d\n", *replyLen);
   }
 
-  if (overwrite_control_mode == 1) {
-    char msg[] = "Overwrite control mode is enabled.\n";
+  if (expert_mode == 1) {
 
     unsigned char * r = &reply[*replyLen];
-    int l = strlen(msg);
-    memcpy(r, msg, l);
+    int l = strlen(expert_str);
+    memcpy(r, expert_str, l);
     r += l;
     *r = '\0';
     *replyLen += l;
 
-    debug_printf("----- overwrite reply len: %d\n", *replyLen);
+    // debug_printf("----- expert reply len: %d\n", *replyLen);
   }
 
   unsigned char * p = &reply[*replyLen];
-  memcpy(p, ":: ", 3); 
+  memcpy(p, prompt_str, 3); 
   *replyLen += 3;
   reply[*replyLen] = '\0';
 
-  debug_printf("----- final reply len: %d\n", *replyLen);
+  // debug_printf("----- final reply len: %d\n", *replyLen);
 
-  debug_printf("<_> user_tcpserv response: ");
-  debug_printf((char *) reply);
+  // debug_printf("<_> user_tcpserv response: ");
+  // debug_printf((char *) reply);
 
   /* Return the function successfully */
   return 0;
@@ -393,7 +452,10 @@ str_eq (const char *s1,
   const unsigned char *p1 = (const unsigned char *) s1;
   const unsigned char *p2 = (const unsigned char *) s2;
 
+  // debug_printf("@@@@@@@ str_eq 1\n");
+  
   while (*p1 != '\0') {
+    // debug_printf("%c %c\n", *p1, *p2);
     if (*p1 != * p2){
       return 0;
     }
@@ -401,9 +463,13 @@ str_eq (const char *s1,
     p2++;
   }
 
+  // debug_printf("@@@@@@@ str_eq 2\n");
+
   if (*p2 != '\0') {
     return 0;
   }
+
+  // debug_printf("@@@@@@@ str_eq 3\n");
 
   return 1;
 }
@@ -518,13 +584,15 @@ int
 get_signal_index(const char * sm_signal_name)
 {
   int i = 0;
-  for (i = 0; pin_map[i].sm_name != NULL; i++) {
+  int map_len = sizeof(pin_map) / sizeof(pin_map[0]);
 
-    debug_printf("<_> ++++++++ signal_ids: ");
-    debug_printf(pin_map[i].sm_name);
-    debug_printf(" ");
-    debug_printf(sm_signal_name);
-    debug_printf("\n");
+  for (i = 0; i < map_len; i++) {
+
+    // debug_printf("<_> ++++++++ signal_ids: ");
+    // debug_printf(pin_map[i].sm_name);
+    // debug_printf(" ");
+    // debug_printf(sm_signal_name);
+    // debug_printf("\n");
     
     if (str_eq(pin_map[i].sm_name, sm_signal_name) == 1) {
       return i;
@@ -539,13 +607,15 @@ int
 get_cmd_index(const char * cmd)
 {
   int i = 0;
-  for (i = 0; cmd_map[i].cmd != NULL; i++) {
+  int map_len = sizeof(cmd_map) / sizeof(cmd_map[0]);
+  
+  for (i = 0; i < map_len; i++) {
 
-    debug_printf("<_> ++++++++ cmd_ids: ");
-    debug_printf(cmd_map[i].cmd);
-    debug_printf(" ");
-    debug_printf(cmd);
-    debug_printf("\n");
+    // debug_printf("<_> ++++++++ cmd_ids: ");
+    // debug_printf(cmd_map[i].cmd);
+    // debug_printf(" ");
+    // debug_printf(cmd);
+    // debug_printf("\n");
 
     if (str_eq(cmd_map[i].cmd, cmd) == 1) {
       return i;
@@ -592,12 +662,19 @@ int
 write_gpio_signal(char * params,
                   unsigned char * reply)
 {
-  debug_printf("<_> ======= write_gpio_signal\n");
+  // debug_printf("<_> ======= write_gpio_signal\n");
 
   char sm_signal_name[30];
   get_next_param(sm_signal_name, params);
 
   int msg_len;
+  
+  if (str_eq(sm_signal_name, help_str) == 1
+      || str_eq(sm_signal_name, question_mark_str) == 1) {
+    msg_len = strlen(set_gpio_help_str);
+    memcpy(reply, set_gpio_help_str, msg_len);
+    return msg_len;
+  }
   
   int idx = get_signal_index(sm_signal_name);
   
@@ -605,43 +682,40 @@ write_gpio_signal(char * params,
   
     signal_t userio_sig = pin_map[idx].ipmc_name;
 
-    if ( (pin_map[idx].output == 1 && pin_map[idx].control == 0)
+    if ( (pin_map[idx].output == 1 && pin_map[idx].expert == 0)
          || (pin_map[idx].output == 1
-             && pin_map[idx].control == 1 && overwrite_control_mode == 1) ) {
+             && pin_map[idx].expert == 1 && expert_mode == 1) ) {
 
       char value[2];
       get_next_param(value, params);
 
-      debug_printf("<_> ======= value: ");
-      debug_printf(value);
-      debug_printf("\n");
+      // debug_printf("<_> ======= value: ");
+      // debug_printf(value);
+      // debug_printf("\n");
       
       if (value[0] == '1' || value[0] == 'h'){
         signal_deactivate(&userio_sig);
-        debug_printf("<_> ======= signal deactivated\n");
+        // debug_printf("<_> ======= signal deactivated\n");
       }
-      else if (value[0] == '0' || value[0] == 'h') {
+      else if (value[0] == '0' || value[0] == 'l') {
         signal_activate(&userio_sig);
-        debug_printf("<_> ======= signal activated\n");
+        // debug_printf("<_> ======= signal activated\n");
       }
 
-      char msg[] = "OK\n";
-      msg_len = strlen(msg);
-      memcpy(reply, msg, msg_len);
+      msg_len = strlen(ok_str);
+      memcpy(reply, ok_str, msg_len);
     }
 
     else {
-      char msg[] = "Signal cannot be written.\n";
-      msg_len = strlen(msg);
-      memcpy(reply, msg, msg_len);
+      msg_len = strlen(set_gpio_error_str);
+      memcpy(reply, set_gpio_error_str, msg_len);
     }
 
   }
 
   else {
-    char msg[] = "Signal not found.\n";
-    msg_len = strlen(msg);
-    memcpy(reply, msg, msg_len);
+    msg_len = strlen(signal_not_found_str);
+    memcpy(reply, signal_not_found_str, msg_len);
   }
 
   return msg_len;
@@ -654,118 +728,163 @@ read_gpio_signal(char * params,
                  unsigned char * reply)
 {
 
-  debug_printf("<_> ======= read_gpio_signal\n");
+  // debug_printf("<_> ======= read_gpio_signal\n");
 
   char sm_signal_name[30];
   get_next_param(sm_signal_name, params);
 
-  debug_printf("<_> ======= ");
-  debug_printf(sm_signal_name);
-  debug_printf("\n");
+  // debug_printf("<_> ======= ");
+  // debug_printf(sm_signal_name);
+  // debug_printf("\n");
+
+  int reply_len = 0;
+
+  // debug_printf("######## read_gpio_signal 1\n");
+
+
+  if (str_eq(sm_signal_name, help_str) == 1
+      || str_eq(sm_signal_name, question_mark_str) == 1) {
+    reply_len = strlen(get_gpio_help_str);
+    memcpy(reply, get_gpio_help_str, reply_len);
+    return reply_len;
+  }
+
+  // debug_printf("######## read_gpio_signal 1.3\n");
 
   int idx = get_signal_index(sm_signal_name);
   
-  int v;
-  int reply_len = 0;
-  
   if (idx >= 0) {
+
+    // debug_printf("######## read_gpio_signal 2 (idx found)\n");
+
   
     signal_t userio_sig = pin_map[idx].ipmc_name;
   
-    v = signal_read(&userio_sig);
+    int v = signal_read(&userio_sig);
   
     if (v == 0) {
-      char msg[] = "1\n";
-      reply_len = strlen(msg);
-      memcpy(reply, msg, reply_len);
+      reply_len = strlen(gpio_enabled_str);
+      memcpy(reply, gpio_enabled_str, reply_len);
     }
     else if (v == 1) {
-      char msg[] = "0\n";
-      reply_len = strlen(msg);
-      memcpy(reply, msg, reply_len);
+      reply_len = strlen(gpio_disabled_str);
+      memcpy(reply, gpio_disabled_str, reply_len);
     }
     else{
-      char msg[] = "Unexpected value read from signal.\n";
-      reply_len = strlen(msg);
-      memcpy(reply, msg, reply_len);
+      reply_len = strlen(gpio_error_str);
+      memcpy(reply, gpio_error_str, reply_len);
     }
   }
 
   else {
-    char msg[] = "Signal not found.\n";
-    reply_len = strlen(msg);
-    memcpy(reply, msg, reply_len);
+
+    // debug_printf("######## read_gpio_signal (idx not found) 3\n");
+
+    reply_len = strlen(signal_not_found_str);
+    memcpy(reply, signal_not_found_str, reply_len);
   }
+
+  // debug_printf("######## read_gpio_signal  (final) 4\n");
 
   return reply_len;
 }
 
 int
-set_overwrite_control_mode(char * params,
+set_expert_mode(char * params,
                            unsigned char * reply)
 {
 
   int reply_len = 0;
   
-  char overwrite_control_state[30];
-  get_next_param(overwrite_control_state, params);
+  char expert_state[30];
+  get_next_param(expert_state, params);
 
-  if (str_eq(overwrite_control_state, "on") == 1){
-    overwrite_control_mode = 1;
-    char msg[] = "\n";
-    reply_len = strlen(msg);
-    memcpy(reply, msg, reply_len);
+
+  if (str_eq(expert_state, help_str) == 1
+      || str_eq(expert_state, question_mark_str) == 1) {
+    reply_len = strlen(expert_help_str);
+    memcpy(reply, expert_help_str, reply_len);
+    return reply_len;
+  }
+
+  
+  if (str_eq(expert_state, "on") == 1){
+    expert_mode = 1;
+    reply_len = 0;
   }
 
   else {
-    overwrite_control_mode = 0;
-    char msg[] = "Overwrite control mode deactivated.\n";
-    reply_len = strlen(msg);
-    memcpy(reply, msg, reply_len);
+    expert_mode = 0;
+    reply_len = strlen(expert_off_str);
+    memcpy(reply, expert_off_str, reply_len);
   }    
   
   return reply_len;
 }
 
-// int
-// help (char * params,
-//       unsigned char * reply)
-// {
-//   unsigned char * r = reply;
-//   cmd_map_t * cmd_map_ptr = cmd_map;
-//   pin_map_t * pin_map_ptr = pin_map;
-//   int len;
-// 
-//   char msg1[] = "Commands available:\n";
-//   len = strlen(msg1);
-//   memcpy(r, msg1, len);
-//   r += len;
-// 
-//   for (; cmd_map_ptr->cmd != NULL; cmd_map_ptr++) {
-//     len = strlen(cmd_map_ptr->cmd);
-//     memcpy(r, cmd_map_ptr->cmd, len);
-//     r += len;
-//     *r = '\n';
-//     r++;
-//   }
-// 
-//   char msg2[] = "Signals available:\n";
-//   len = strlen(msg2);
-//   memcpy(r, msg2, len);
-//   r += len;
-// 
-//   for (; pin_map_ptr->sm_name != NULL; pin_map_ptr++) {
-//     len = strlen(pin_map_ptr->sm_name);
-//     memcpy(r, pin_map_ptr->sm_name, len);
-//     r += len;
-//     *r = '\n';
-//     r++;
-//   }
-// 
-//   r = '\0';
-// 
-//   return strlen((char *) reply);
-//   
-// }
+int
+help (char * params,
+      unsigned char * reply)
+{
+  // debug_printf("..... help 0\n");
+
+  unsigned char * r = reply;
+  int len;
+
+  int i;
+  int map_len;
+
+  // debug_printf("..... help 1\n");
+
+  len = strlen(cmds_header_str);
+  memcpy(r, cmds_header_str, len);
+  r += len;
+
+  // debug_printf("..... help 2\n");
+
+  map_len = sizeof(cmd_map) / sizeof(cmd_map[0]);
+  for (i = 0; i < map_len; i++) {
+    memcpy(r, "  ", 2);
+    r += 2;
+    len = strlen(cmd_map[i].cmd);
+    memcpy(r, cmd_map[i].cmd, len);
+    r += len;
+    *r = '\n';
+    r++;
+  }
+
+  // debug_printf("..... help 3\n");
+
+  len = strlen(signals_header_str);
+  memcpy(r, signals_header_str, len);
+  r += len;
+
+  // debug_printf("..... help 4\n");
+
+  map_len = sizeof(pin_map) / sizeof(pin_map[0]);
+  for (i = 0; i < map_len; i++) {
+    memcpy(r, "  ", 2);
+    r += 2;
+    len = strlen(pin_map[i].sm_name);
+    memcpy(r, pin_map[i].sm_name, len);
+    r += len;
+    if (pin_map[i].expert == 1) {
+      len = strlen(expert_label_str);
+      memcpy(r, expert_label_str, len);
+      r += len;
+    }
+    *r = '\n';
+    r++;
+  }
+
+  // debug_printf("..... help 5\n");
+
+  *r = '\0';
+
+  // debug_printf("..... help 6\n");
+
+  return strlen((char *) reply);
+  
+}
 
 
