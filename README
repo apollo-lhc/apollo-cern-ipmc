@@ -1,55 +1,184 @@
-CERN IPMC
----------
+The CERN IPMC
+-------------
 
 The CERN IPMC solution is based on the Pigeon Point design. As Pigeon
 Point limits the access to their resources by a Non-Disclosure
-Agreement (NDA), the CERN IPMC provides callback hooks, which a
-designer can customize the IPMC firmware as needed.
+Agreement (NDA), the CERN IPMC project provides callback hooks, which
+with designers are able to customize their IPMC firmware as needed.
 
-In this project, we are making use of:
+At this moment, this project is making use of:
 - TCP/IP communication for a command line interface implementation
-- Read and write of GPIO signals 
+- Read and write of GPIO signals
 
-A reference implementation can be found in the following link:
+Future plans will include:
+- Sensors
+- JTAG
 
-https://gitlab.cern.ch/ep-ese-be-xtca/ipmc-project
+A reference implementation is provided by the CERN IPMC project and it
+can be accessed by the following link:
+
+    https://gitlab.cern.ch/ep-ese-be-xtca/ipmc-project
 
 
-Build CERN IPMC firmware
-------------------------
+Building CERN IPMC firmware
+---------------------------
+
+All instructions below assume the working directory is
+
+    common-atca-blade.firmware/ipmc/trunk
+
+Moving files to different places or executing commands from different
+paths might produce unexpected results (meaning errors).
 
 - Must be member of CERN e-group epesebe-ipmc-forum
-- Fetch https://gitlab.cern.ch/ep-ese-be-xtca/ipmc-project/raw/master/compile.py
-- Run compile.py (prompts for CERN credentials)
 
-According to the instructions in the reference implementation, the compile.py script
+    - Subscription can be done in https://e-groups.cern.ch
 
-- colorama (installation command: pip install colorama)
-- lxml (installation command: pip install lxml)
-- requests (installation command: pip install requests)
+- Access to the compilation script provided by the CERN IPMC project.
+
+    - This is a compiler script provided by the CERN IPMC project,
+      once we don't have access to Pigeon Point code, as explained
+      above. It will upload the custom files, run the compilation in a
+      server prepared with all the Pigeon Point files, and download
+      the necessary files used to program the IPMC.
+
+    - A version of the compile script is stored in this
+      repository. Please do not commit any changes to this file.
+
+    - Original version can be found here:
+    https://gitlab.cern.ch/ep-ese-be-xtca/ipmc-project/raw/master/compile.py
+
+- Prepare configuration file
+
+    - The CERN IPMC compile script uses a XML configuration file to
+      set commonly used resources, it is named as config.xml. For this
+      project and at this moment, it means mainly LAN configuration.
+
+    - Look for the <LANConfig></LANConfig> section
+
+    - Change the <MACAddr></MACAddr> field using a suitable address.
+
+    - Change the <IPAddr slot_addr="default"></IPAddr> to the required value.
+
+        - NB: The CERN IPMC code is not assuming different IP
+          addresses associated to the ATCA slot addresses. You always
+          want to use the "default" field.
+
+    - It is suggested to review all the other LAN parameters, such as netmask or gateway.
+
+    - Save the file
+
+- Run compile.py (it prompts for CERN credentials)
+
+    - It is a Python 3 script and requires the following libraries
+      (there are below suggestions about how to install these
+      libraries, but you should use what makes more sense for your
+      system):
+
+        - colorama (pip install colorama)
+
+        - lxml (pip install lxml)
+
+        - requests (pip install requests)
+
+    - Command to run the compilation script: python compile.py
+
+If the compilation works fine, new files will be available in the
+current directory.  After the compilation, you will have some new
+files in your working directory, the only needed one is "hpm1all.img".
 
 Load IPMC firmware
 ------------------
 
-  $ ipmitool -I lan -H 192.168.40.44 -U "" -P "" hpm upgrade hpm1all.img force
-     (time needed: approx. 16 minutes)
-  $ ipmitool -I lan -H 192.168.40.44 -U "" -P "" hpm activate
+Assuming you know the IP address of the IPMC, you can use the ipmitool
+to reprogram the IPMC firmware. The CERN IPMC does answer ping
+requests, so if that fails the problem is somewhere in the network
+(wrong IP address, blocked subnets, etc).
 
-Running GPIO example with IPMC in DevKit:
+- To verify that the connection with the IPMC is working, use the following command:
 
-  - Check out https://gitlab.cern.ch/ep-ese-be-xtca/ipmc-devkit.git
-  - Copy devkit/gpio.py into ipmc-devkit
-  - Start IPMC:
-    $ ./main.py
-  - Poll GPIO state:
-    $ ./gpio.py
-  - Control GPIO state over TCP:
-    $ nc 192.168.40.44 5000
-    > 1<return> - sets GPIO ACTIVE   (GND)
-    > 0<return> - sets GPIO INACTIVE (VCC)
+    $ ping <IPMC IP address>
 
-Firmware source API examples:
-  - https://gitlab.cern.ch/ep-ese-be-xtca/ipmc-project/tree/master/ipmc-user
+If the ping requests are answered, proceed to programming the IPMC using the ipmitool:
+
+    $ ipmitool -I lan -H <IPMC IP address> -P "" hpm upgrade hpm1all.img force
+
+        - Please remember to answer "yes" to the subsequent question
+          raised by the ipmitool "Services may be affected during
+          upgrade. Do you wish to continue? (y/n):". The IPMI channel
+          will be closed without notification if you fail to do that
+          in a reasonable time, which will lead you to a long wait
+          until the ipmitool times out.
+
+        - time needed: approx. 16 minutes
+
+After having the IPMC successfully programmed, the new firmware needs to be activated:
+
+    $ ipmitool -I lan -H <IPMC IP address> -P "" hpm activate
+
+        - this command terminates with what looks like an error:
+          "Close Session command failed". Please ignore it. If you got
+          to that point, the activation was successful.
+
+Once the new firmware is activated, the IPMC will reboot and the new
+network configuration should be used from that point on.
+
+Command line interface
+----------------------
+
+In our IPMC firmware, a command line interface is implemented over
+TCP/IP on port 2345. This command line interface is used to set and
+retrieve value of GPIO signals.
+
+For now, netcat utility is used to connect to it (please make sure you
+are using the correct IPMC IP address):
+
+    $ nc <IPMC IP address> 2345
+
+    - When connected for the first time, nothing is returned from
+      IPMC, pressing <enter> (empty line) should return a prompt
+      marked as ":: ".
+
+    - Case is ignored.
+
+    - Delimiter is space. Extra spaces are ignored.
+
+    - Once connected, any command not recognized is answered with an
+      echo of the message sent.
+
+    - To get the state of a GPIO (there is a list of signals in a
+      table below; use the Service Module signal names, left column):
+
+        :: get_gpio <name of the signal>
+
+    - To set a GPIO:
+
+        :: set_gpio <name of the signal> <0 or 1>
+
+    - Some signals should not be easily changed and they are
+      protected. To enable this changes:
+
+        :: overwrite_control_mode on
+
+        - any other argument will disable this mode (including no argument)
+
+        - after switching this mode on, every command will be followed
+          by an notification that it is enabled. This is an effort to
+          remind people that they can cause bad things if they are not
+          careful.
+ 
+
+Helper scripts
+--------------
+
+There is a "scripts" folder where some helpers are kept.
+
+- debug_listerner.py : opens and prints messages coming from the Debug
+  USB-serial port. It excludes some uninteresting (for the moment)
+  messages that polute the output.
+
+- ipmc_config_gen.py : script to generate configuration file for the
+  IPMCs [to be done]
 
 
 GPIO spec
@@ -79,4 +208,5 @@ Questions or comments
 ---------------------
 
 - What is the maximum length of the data and reply strings in the TCP/IP data handler
-- no return type for callback functions
+
+- What is the size of the stack?

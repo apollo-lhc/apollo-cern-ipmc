@@ -67,8 +67,8 @@ read_gpio_signal(char * params, unsigned char * reply);
 int
 set_overwrite_control_mode(char * params, unsigned char * reply);
 
-int
-help(char * params, unsigned char * reply);
+// int
+// help(char * params, unsigned char * reply);
 
 /* ================================================================ */
 
@@ -107,8 +107,8 @@ static cmd_map_t cmd_map[] = {
   {"set_gpio"              , & write_gpio_signal},
   {"get_gpio"              , & read_gpio_signal},
   {"overwrite_control_mode", & set_overwrite_control_mode},
-  {"help"                  , & help},
-  {"?"                     , & help},
+  // {"help"                  , & help},
+  // {"?"                     , & help},
   {NULL, NULL}
 };
 
@@ -311,12 +311,12 @@ user_tcpserv_data_handler(const ip_addr_t to,
   debug_printf("\n");
 
   remove_extra_spaces(cmd_line);
-  debug_printf("<_> >>>>>> extra spaces: ");
+  debug_printf("<_> >>>>>> no extra spaces: ");
   debug_printf(cmd_line);
   debug_printf("\n");
 
   lowercase(cmd_line);
-  debug_printf("<_> >>>>>> lowercase: ");
+  debug_printf("<_> >>>>>> all lowercase: ");
   debug_printf(cmd_line);
   debug_printf("\n");
 
@@ -335,6 +335,7 @@ user_tcpserv_data_handler(const ip_addr_t to,
   if (cmd_idx >= 0) { 
     // execute command, get reply and associated length
     *replyLen = cmd_map[cmd_idx].fnc_ptr(cmd_line, reply);
+    debug_printf("----- cmd reply len: %d\n", *replyLen);
   }
 
   else {
@@ -352,20 +353,29 @@ user_tcpserv_data_handler(const ip_addr_t to,
     
     /* Set the reply length */
     *replyLen = strlen((char *) reply);
+    debug_printf("----- echo reply len: %d\n", *replyLen);
   }
 
   if (overwrite_control_mode == 1) {
-    char msg[] = " Overwrite control mode is enabled.\n";
-    unsigned char * r = reply;
-    for(; *r != '\n'; r++);
-    memcpy(r, msg, strlen(msg));
-    *replyLen = strlen((char *) reply);
+    char msg[] = "Overwrite control mode is enabled.\n";
+
+    unsigned char * r = &reply[*replyLen];
+    int l = strlen(msg);
+    memcpy(r, msg, l);
+    r += l;
+    *r = '\0';
+    *replyLen += l;
+
+    debug_printf("----- overwrite reply len: %d\n", *replyLen);
   }
 
-  reply[*replyLen] = '$';
-  reply[*replyLen+1] = ' ';
-  replyLen += 2;
-  
+  unsigned char * p = &reply[*replyLen];
+  memcpy(p, ":: ", 3); 
+  *replyLen += 3;
+  reply[*replyLen] = '\0';
+
+  debug_printf("----- final reply len: %d\n", *replyLen);
+
   debug_printf("<_> user_tcpserv response: ");
   debug_printf((char *) reply);
 
@@ -717,45 +727,45 @@ set_overwrite_control_mode(char * params,
   return reply_len;
 }
 
-int
-help (char * params,
-      unsigned char * reply)
-{
-  unsigned char * r = reply;
-  cmd_map_t * cmd_map_ptr = cmd_map;
-  pin_map_t * pin_map_ptr = pin_map;
-  int len;
-
-  char msg1[] = "Commands available:\n";
-  len = strlen(msg1);
-  memcpy(r, msg1, len);
-  r += len;
-
-  for (; cmd_map_ptr->cmd != NULL; cmd_map_ptr++) {
-    len = strlen(cmd_map_ptr->cmd);
-    memcpy(r, cmd_map_ptr->cmd, len);
-    r += len;
-    *r = '\n';
-    r++;
-  }
-
-  char msg2[] = "Signals available:\n";
-  len = strlen(msg2);
-  memcpy(r, msg2, len);
-  r += len;
-
-  for (; pin_map_ptr->sm_name != NULL; pin_map_ptr++) {
-    len = strlen(pin_map_ptr->sm_name);
-    memcpy(r, pin_map_ptr->sm_name, len);
-    r += len;
-    *r = '\n';
-    r++;
-  }
-
-  r = '\0';
-
-  return strlen((char *) reply);
-  
-}
+// int
+// help (char * params,
+//       unsigned char * reply)
+// {
+//   unsigned char * r = reply;
+//   cmd_map_t * cmd_map_ptr = cmd_map;
+//   pin_map_t * pin_map_ptr = pin_map;
+//   int len;
+// 
+//   char msg1[] = "Commands available:\n";
+//   len = strlen(msg1);
+//   memcpy(r, msg1, len);
+//   r += len;
+// 
+//   for (; cmd_map_ptr->cmd != NULL; cmd_map_ptr++) {
+//     len = strlen(cmd_map_ptr->cmd);
+//     memcpy(r, cmd_map_ptr->cmd, len);
+//     r += len;
+//     *r = '\n';
+//     r++;
+//   }
+// 
+//   char msg2[] = "Signals available:\n";
+//   len = strlen(msg2);
+//   memcpy(r, msg2, len);
+//   r += len;
+// 
+//   for (; pin_map_ptr->sm_name != NULL; pin_map_ptr++) {
+//     len = strlen(pin_map_ptr->sm_name);
+//     memcpy(r, pin_map_ptr->sm_name, len);
+//     r += len;
+//     *r = '\n';
+//     r++;
+//   }
+// 
+//   r = '\0';
+// 
+//   return strlen((char *) reply);
+//   
+// }
 
 
