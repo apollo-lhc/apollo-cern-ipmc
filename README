@@ -158,14 +158,25 @@ are using the correct IPMC IP address):
     - Some signals should not be easily changed and they are
       protected. To enable this changes:
 
-        :: overwrite_control_mode on
+        :: expert_mode on
 
         - any other argument will disable this mode (including no argument)
 
         - after switching this mode on, every command will be followed
-          by an notification that it is enabled. This is an effort to
-          remind people that they can cause bad things if they are not
-          careful.
+          by an notification that it remains enabled. This is an
+          effort to remind people that they can cause bad things if
+          they are not careful.
+
+    - There are some documentation directly embedded in the command
+      line interface. Try:
+
+        :: help
+
+        :: ?
+
+        :: <command name> help
+
+        :: <command name> ?
  
 
 Helper scripts
