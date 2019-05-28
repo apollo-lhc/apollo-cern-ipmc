@@ -188,6 +188,10 @@ are using the correct IPMC IP address):
         :: <command name> help
 
         :: <command name> ?
+
+    - To leave the command line interface, the netcat program should
+      be interrupted by pressing C-c (combination of the keys Control
+      and C simultaneously).
  
 
 Helper scripts
