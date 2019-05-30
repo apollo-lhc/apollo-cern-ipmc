@@ -20,6 +20,11 @@ Version ..... : V0.1 - 18/05/2019
 
 #include <app/signal.h>
 
+#include <user_pca9545.h>
+#include <user_tcn75a.h>
+
+#include <user_helpers.h>
+
 // it seems stdio cannot be used... 
 // #include <stdio.h>
 
@@ -32,14 +37,8 @@ Version ..... : V0.1 - 18/05/2019
 // char *
 // strcpy(char *str_dest, const char *str_src);
 
-size_t
-strlen(const char * str);
-
 void
 lowercase(char s[]);
-
-int
-str_eq (const char *s1, const char *s2);
 
 void
 remove_extra_spaces(char s[]);
@@ -148,6 +147,24 @@ static const char signals_header_str[] =
 
 static const char expert_label_str[] = " (E)";
 
+static const char i2c_mux_write_help_str[] =
+  "Usage: write_i2c_mux <mask>\n"
+  "mask: 4-bit integer, one for each lane.\n"
+  "Ex: \"write_i2c_mux 3\" enables two lanes.\n";
+
+static const char i2c_mux_read_help_str[] =
+  "Usage: read_i2c_mux\n";
+
+static const char i2c_mux_error_str[] =
+  "I2C mux operation error.\n";
+
+static const char tcn75a_help_str[] =
+  "Usage: read_tcn75a <sensor UID>\n"
+  "  UID is U34, U35 or U36.\n";
+
+static const char error_str[] =
+  "Something has gone wrong.\n";
+
 /* ================================================================ */
 
 int
@@ -162,6 +179,15 @@ set_expert_mode(char * params, unsigned char * reply);
 int
 help(char * params, unsigned char * reply);
 
+int
+write_i2c_mux(char * params, unsigned char * reply);
+
+int
+read_i2c_mux(char * params, unsigned char * reply);
+
+int
+read_tcn75a(char * params, unsigned char * reply);
+
 /* ================================================================ */
 
 typedef struct cmd_map_n {
@@ -175,6 +201,9 @@ static cmd_map_t cmd_map[] = {
   {"expert_mode"    , & set_expert_mode  },
   {help_str         , & help             },
   {question_mark_str, & help             },
+  {"write_i2c_mux"  , & write_i2c_mux    },
+  {"read_i2c_mux"   , & read_i2c_mux     },
+  {"read_tcn75a"    , & read_tcn75a      },
 };
 
 /* ================================================================ */
@@ -445,35 +474,6 @@ user_tcpserv_data_handler(const ip_addr_t to,
 
 /* ================================================================ */
 
-int
-str_eq (const char *s1,
-        const char *s2)
-{
-  const unsigned char *p1 = (const unsigned char *) s1;
-  const unsigned char *p2 = (const unsigned char *) s2;
-
-  // debug_printf("@@@@@@@ str_eq 1\n");
-  
-  while (*p1 != '\0') {
-    // debug_printf("%c %c\n", *p1, *p2);
-    if (*p1 != * p2){
-      return 0;
-    }
-    p1++;
-    p2++;
-  }
-
-  // debug_printf("@@@@@@@ str_eq 2\n");
-
-  if (*p2 != '\0') {
-    return 0;
-  }
-
-  // debug_printf("@@@@@@@ str_eq 3\n");
-
-  return 1;
-}
-
 // convert string to lowercase
 void lowercase(char s[])
 {
@@ -566,15 +566,6 @@ void remove_extra_spaces(char s[])
 //     return temp;
 // }
 
-
-// freebsd implementation of strlen
-size_t
-strlen(const char * str)
-{
-    const char *s;
-    for (s = str; *s; ++s) {}
-    return(s - str);
-}
 
 /* ================================================================ */
 
@@ -888,3 +879,96 @@ help (char * params,
 }
 
 
+int
+write_i2c_mux(char * params, unsigned char * reply)
+{
+
+  int reply_len = 0;
+  
+  char mask[10];
+  get_next_param(mask, params);
+
+
+  if (str_eq(mask, help_str) == 1
+      || str_eq(mask, question_mark_str) == 1) {
+    reply_len = strlen(i2c_mux_write_help_str);
+    memcpy(reply, i2c_mux_write_help_str, reply_len);
+    return reply_len;
+  }
+
+  char ret = pca9545_write((unsigned char) *mask);
+
+  if(ret == 0){
+    reply_len = strlen(ok_str);
+    memcpy(reply, ok_str, reply_len);
+    return reply_len;
+  }
+  
+  reply_len = strlen(i2c_mux_error_str);
+  memcpy(reply, i2c_mux_error_str, reply_len);
+  return reply_len;
+}
+
+
+int
+read_i2c_mux(char * params, unsigned char * reply)
+{
+
+  int reply_len = 0;
+  
+  char mask[10];
+  get_next_param(mask, params);
+
+
+  if (str_eq(mask, help_str) == 1
+      || str_eq(mask, question_mark_str) == 1) {
+    reply_len = strlen(i2c_mux_read_help_str);
+    memcpy(reply, i2c_mux_read_help_str, reply_len);
+    return reply_len;
+  }
+
+  char ret = pca9545_read(reply);
+
+  if(ret == 0){
+    reply[1] = '\n';
+    return 2;
+  }
+  
+  reply_len = strlen(i2c_mux_error_str);
+  memcpy(reply, i2c_mux_error_str, reply_len);
+  return reply_len;
+}
+
+int
+read_tcn75a(char * params, unsigned char * reply)
+{
+  int reply_len = 0;
+  
+  char id[10];
+  get_next_param(id, params);
+
+
+  if (str_eq(id, help_str) == 1
+      || str_eq(id, question_mark_str) == 1) {
+    reply_len = strlen(tcn75a_help_str);
+    memcpy(reply, tcn75a_help_str, reply_len);
+    return reply_len;
+  }
+
+  unsigned char temp;
+  char ret = tcn75a_read((unsigned char *) id, &temp);
+  
+  if(ret == 0){
+    itoa(temp, (char *) reply);
+    reply_len = strlen((char *) reply);
+    reply[reply_len]='\n';
+    reply_len++;
+    reply[reply_len]='\0';    
+    return reply_len;
+  }
+  
+  reply_len = strlen(error_str);
+  memcpy(reply, error_str, reply_len);
+  return reply_len;
+
+}
