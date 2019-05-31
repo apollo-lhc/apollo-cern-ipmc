@@ -685,11 +685,11 @@ write_gpio_signal(char * params,
       // debug_printf("\n");
       
       if (value[0] == '1' || value[0] == 'h'){
-        signal_deactivate(&userio_sig);
+        signal_activate(&userio_sig);
         // debug_printf("<_> ======= signal deactivated\n");
       }
       else if (value[0] == '0' || value[0] == 'l') {
-        signal_activate(&userio_sig);
+        signal_deactivate(&userio_sig);
         // debug_printf("<_> ======= signal activated\n");
       }
 
