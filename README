@@ -157,14 +157,16 @@ are using the correct IPMC IP address):
     - Once connected, any command not recognized is answered with an
       echo of the message sent.
 
-    - To get the state of a GPIO (there is a list of signals in a
-      table below; use the Service Module signal names, left column):
+    - There are some documentation directly embedded in the command
+      line interface. Try:
 
-        :: get_gpio <name of the signal>
+        :: help
 
-    - To set a GPIO:
+        :: ?
 
-        :: set_gpio <name of the signal> <0 or 1>
+        :: <command name> help
+
+        :: <command name> ?
 
     - Some signals should not be easily changed and they are
       protected. To enable this changes:
@@ -178,16 +180,7 @@ are using the correct IPMC IP address):
           effort to remind people that they can cause bad things if
           they are not careful.
 
-    - There are some documentation directly embedded in the command
-      line interface. Try:
-
-        :: help
-
-        :: ?
-
-        :: <command name> help
-
-        :: <command name> ?
+        - this command is also described by the help
 
     - To leave the command line interface, the netcat program should
       be interrupted by pressing C-c (combination of the keys Control
