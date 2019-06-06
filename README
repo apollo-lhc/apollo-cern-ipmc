@@ -199,8 +199,23 @@ There is a "scripts" folder where some helpers are kept.
   USB-serial port. It excludes some uninteresting (for the moment)
   messages that polute the output.
 
-- ipmc_config_gen.py : script to generate configuration file for the
-  IPMCs [to be done]
+- ipmc_config_gen.py : Python 3 script to generate configuration file for the
+  IPMCs
+
+- cmd.py : this is a Python 3 script to send one command and receive
+  one answer from the IPMC. This script is useful if you want to
+  repeat commands using the command line prompt from your operating
+  system. Usage:
+
+    ipmc/trunk $ python scripts/cmd.py <IPMC IP ADDR> <IPMC commands>
+
+  See some examples below:
+
+    ipmc/trunk $ python scripts/cmd.py help
+
+    ipmc/trunk $ python scripts/cmd.py get_gpio en_12v
+
+    ipmc/trunk $ python scripts/cmd.py expert mode on
 
 
 GPIO spec
