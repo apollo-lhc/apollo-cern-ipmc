@@ -123,8 +123,8 @@ static const char signal_not_found_str[] =
 
 static const char get_gpio_help_str[] =
   "Usage: get_gpio <signal name>.\n"
-  "Returns 1 (one) if signals is activated.\n"
-  "Returns 0 (zero) if signals is deactivated.\n";
+  "Returns 1 (one) if signal is activated.\n"
+  "Returns 0 (zero) if signal is deactivated.\n";
 
 static const char gpio_enabled_str[] = "1\n";
 static const char gpio_disabled_str[] = "0\n";
@@ -141,7 +141,9 @@ static const char expert_help_str[] =
 static const char expert_off_str[] =
   "Expert mode deactivated.\n";
 
-static const char cmds_header_str[] = "Available commands:\n";
+static const char cmds_header_str[] =
+  "Try also \"<command> help\".\n"
+  "Available commands:\n";
 static const char signals_header_str[] =
   "Available signals (marked if expert mode required):\n";
 
