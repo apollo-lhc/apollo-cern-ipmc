@@ -18,14 +18,15 @@ def fill_template(template_file, params):
     
 def main():
     params = {}
-    params['ip_address'] = ip_addr_map[int(sys.argv[2])] 
-    params['mac_address'] = mac_addr_map[int(sys.argv[2])] 
+    params['ip_address'] = ip_addr_map[int(sys.argv[1])] 
+    params['mac_address'] = mac_addr_map[int(sys.argv[1])] 
 
     scripts_dir = os.path.dirname(os.path.realpath(__file__))
+    template_file = os.path.join(scripts_dir, "../templates/config.tpl")
     target_file = os.path.join(scripts_dir, "../config.xml")
 
     with open(target_file, 'w') as f:
-        f.write(fill_template(sys.argv[1], params))
+        f.write(fill_template(template_file, params))
 
 if __name__ == "__main__":
     main()
