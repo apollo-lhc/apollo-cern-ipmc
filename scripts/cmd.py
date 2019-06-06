@@ -20,10 +20,10 @@ def main():
         data = s.recv(BUFFER_SIZE)
         if data:
             waiting = False
-        
     s.close()
 
-    print(data.decode())
+    data = data.decode()[:-4]
+    print(data)
 
 if __name__ == "__main__":
     main()
