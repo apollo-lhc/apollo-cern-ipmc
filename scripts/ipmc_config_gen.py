@@ -1,5 +1,7 @@
 import sys
+import os
 from string import Template
+
 
 ip_addr_map = {}
 ip_addr_map[3] = "192.168.20.72"
@@ -19,7 +21,10 @@ def main():
     params['ip_address'] = ip_addr_map[int(sys.argv[2])] 
     params['mac_address'] = mac_addr_map[int(sys.argv[2])] 
 
-    with open('config.xml', 'w') as f:
+    scripts_dir = os.path.dirname(os.path.realpath(__file__))
+    target_file = os.path.join(scripts_dir, "../config.xml")
+
+    with open(target_file, 'w') as f:
         f.write(fill_template(sys.argv[1], params))
 
 if __name__ == "__main__":
