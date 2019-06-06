@@ -165,6 +165,10 @@ static const char tcn75a_help_str[] =
 static const char error_str[] =
   "Something has gone wrong.\n";
 
+static const char version_str[] = "0.0.0-10\n";
+static const char version_help_str[] =
+  "Usage: version\n";
+
 /* ================================================================ */
 
 int
@@ -188,6 +192,9 @@ read_i2c_mux(char * params, unsigned char * reply);
 int
 read_tcn75a(char * params, unsigned char * reply);
 
+int
+version(char * params, unsigned char * reply);
+
 /* ================================================================ */
 
 typedef struct cmd_map_n {
@@ -196,14 +203,15 @@ typedef struct cmd_map_n {
 } cmd_map_t;
 
 static cmd_map_t cmd_map[] = {
-  {"set_gpio"       , & write_gpio_signal},
-  {"get_gpio"       , & read_gpio_signal },
   {"expert_mode"    , & set_expert_mode  },
-  {help_str         , & help             },
-  {question_mark_str, & help             },
-  {"write_i2c_mux"  , & write_i2c_mux    },
+  {"get_gpio"       , & read_gpio_signal },
   {"read_i2c_mux"   , & read_i2c_mux     },
   {"read_tcn75a"    , & read_tcn75a      },
+  {"set_gpio"       , & write_gpio_signal},
+  {"write_i2c_mux"  , & write_i2c_mux    },
+  {"version"        , & version          },
+  {help_str         , & help             },
+  {question_mark_str, & help             },
 };
 
 /* ================================================================ */
@@ -655,19 +663,19 @@ write_gpio_signal(char * params,
 {
   // debug_printf("<_> ======= write_gpio_signal\n");
 
-  char sm_signal_name[30];
-  get_next_param(sm_signal_name, params);
+  char param[30];
+  get_next_param(param, params);
 
   int msg_len;
   
-  if (str_eq(sm_signal_name, help_str) == 1
-      || str_eq(sm_signal_name, question_mark_str) == 1) {
+  if (str_eq(param, help_str) == 1
+      || str_eq(param, question_mark_str) == 1) {
     msg_len = strlen(set_gpio_help_str);
     memcpy(reply, set_gpio_help_str, msg_len);
     return msg_len;
   }
   
-  int idx = get_signal_index(sm_signal_name);
+  int idx = get_signal_index(param);
   
   if (idx >= 0) {
   
@@ -677,33 +685,34 @@ write_gpio_signal(char * params,
          || (pin_map[idx].output == 1
              && pin_map[idx].expert == 1 && expert_mode == 1) ) {
 
-      char value[2];
-      get_next_param(value, params);
+      get_next_param(param, params);
 
       // debug_printf("<_> ======= value: ");
       // debug_printf(value);
       // debug_printf("\n");
       
-      if (value[0] == '1' || value[0] == 'h'){
+      if (param[0] == '1' || param[0] == 'h'){
         signal_activate(&userio_sig);
         // debug_printf("<_> ======= signal deactivated\n");
+        msg_len = strlen(ok_str);
+        memcpy(reply, ok_str, msg_len);
       }
-      else if (value[0] == '0' || value[0] == 'l') {
+      else if (param[0] == '0' || param[0] == 'l') {
         signal_deactivate(&userio_sig);
         // debug_printf("<_> ======= signal activated\n");
+        msg_len = strlen(ok_str);
+        memcpy(reply, ok_str, msg_len);
       }
-
-      msg_len = strlen(ok_str);
-      memcpy(reply, ok_str, msg_len);
+      else {
+        msg_len = strlen(set_gpio_error_str);
+        memcpy(reply, set_gpio_error_str, msg_len);
+      }
     }
-
     else {
       msg_len = strlen(set_gpio_error_str);
       memcpy(reply, set_gpio_error_str, msg_len);
     }
-
   }
-
   else {
     msg_len = strlen(signal_not_found_str);
     memcpy(reply, signal_not_found_str, msg_len);
@@ -721,8 +730,8 @@ read_gpio_signal(char * params,
 
   // debug_printf("<_> ======= read_gpio_signal\n");
 
-  char sm_signal_name[30];
-  get_next_param(sm_signal_name, params);
+  char param[30];
+  get_next_param(param, params);
 
   // debug_printf("<_> ======= ");
   // debug_printf(sm_signal_name);
@@ -733,8 +742,8 @@ read_gpio_signal(char * params,
   // debug_printf("######## read_gpio_signal 1\n");
 
 
-  if (str_eq(sm_signal_name, help_str) == 1
-      || str_eq(sm_signal_name, question_mark_str) == 1) {
+  if (str_eq(param, help_str) == 1
+      || str_eq(param, question_mark_str) == 1) {
     reply_len = strlen(get_gpio_help_str);
     memcpy(reply, get_gpio_help_str, reply_len);
     return reply_len;
@@ -742,7 +751,7 @@ read_gpio_signal(char * params,
 
   // debug_printf("######## read_gpio_signal 1.3\n");
 
-  int idx = get_signal_index(sm_signal_name);
+  int idx = get_signal_index(param);
   
   if (idx >= 0) {
 
@@ -753,11 +762,11 @@ read_gpio_signal(char * params,
   
     int v = signal_read(&userio_sig);
   
-    if (v == 0) {
+    if (v == 1) {
       reply_len = strlen(gpio_enabled_str);
       memcpy(reply, gpio_enabled_str, reply_len);
     }
-    else if (v == 1) {
+    else if (v == 0) {
       reply_len = strlen(gpio_disabled_str);
       memcpy(reply, gpio_disabled_str, reply_len);
     }
@@ -766,15 +775,11 @@ read_gpio_signal(char * params,
       memcpy(reply, gpio_error_str, reply_len);
     }
   }
-
   else {
-
     // debug_printf("######## read_gpio_signal (idx not found) 3\n");
-
     reply_len = strlen(signal_not_found_str);
     memcpy(reply, signal_not_found_str, reply_len);
   }
-
   // debug_printf("######## read_gpio_signal  (final) 4\n");
 
   return reply_len;
@@ -782,24 +787,24 @@ read_gpio_signal(char * params,
 
 int
 set_expert_mode(char * params,
-                           unsigned char * reply)
+                unsigned char * reply)
 {
 
   int reply_len = 0;
   
-  char expert_state[30];
-  get_next_param(expert_state, params);
+  char param[30];
+  get_next_param(param, params);
 
 
-  if (str_eq(expert_state, help_str) == 1
-      || str_eq(expert_state, question_mark_str) == 1) {
+  if (str_eq(param, help_str) == 1
+      || str_eq(param, question_mark_str) == 1) {
     reply_len = strlen(expert_help_str);
     memcpy(reply, expert_help_str, reply_len);
     return reply_len;
   }
 
   
-  if (str_eq(expert_state, "on") == 1){
+  if (str_eq(param, "on") == 1){
     expert_mode = 1;
     reply_len = 0;
   }
@@ -885,18 +890,18 @@ write_i2c_mux(char * params, unsigned char * reply)
 
   int reply_len = 0;
   
-  char mask[10];
-  get_next_param(mask, params);
+  char param[30];
+  get_next_param(param, params);
 
 
-  if (str_eq(mask, help_str) == 1
-      || str_eq(mask, question_mark_str) == 1) {
+  if (str_eq(param, help_str) == 1
+      || str_eq(param, question_mark_str) == 1) {
     reply_len = strlen(i2c_mux_write_help_str);
     memcpy(reply, i2c_mux_write_help_str, reply_len);
     return reply_len;
   }
 
-  char ret = pca9545_write((unsigned char) *mask);
+  char ret = pca9545_write((unsigned char) *param);
 
   if(ret == 0){
     reply_len = strlen(ok_str);
@@ -916,12 +921,12 @@ read_i2c_mux(char * params, unsigned char * reply)
 
   int reply_len = 0;
   
-  char mask[10];
-  get_next_param(mask, params);
+  char param[30];
+  get_next_param(param, params);
 
 
-  if (str_eq(mask, help_str) == 1
-      || str_eq(mask, question_mark_str) == 1) {
+  if (str_eq(param, help_str) == 1
+      || str_eq(param, question_mark_str) == 1) {
     reply_len = strlen(i2c_mux_read_help_str);
     memcpy(reply, i2c_mux_read_help_str, reply_len);
     return reply_len;
@@ -944,19 +949,19 @@ read_tcn75a(char * params, unsigned char * reply)
 {
   int reply_len = 0;
   
-  char id[10];
-  get_next_param(id, params);
+  char param[30];
+  get_next_param(param, params);
 
 
-  if (str_eq(id, help_str) == 1
-      || str_eq(id, question_mark_str) == 1) {
+  if (str_eq(param, help_str) == 1
+      || str_eq(param, question_mark_str) == 1) {
     reply_len = strlen(tcn75a_help_str);
     memcpy(reply, tcn75a_help_str, reply_len);
     return reply_len;
   }
 
   unsigned char temp;
-  char ret = tcn75a_read((unsigned char *) id, &temp);
+  char ret = tcn75a_read((unsigned char *) param, &temp);
   
   if(ret == 0){
     itoa(temp, (char *) reply);
@@ -969,6 +974,27 @@ read_tcn75a(char * params, unsigned char * reply)
   
   reply_len = strlen(error_str);
   memcpy(reply, error_str, reply_len);
+  return reply_len;
+
+}
+
+int
+version(char * params, unsigned char * reply)
+{
+  int reply_len = 0;
+  
+  char param[20];
+  get_next_param(param, params);
+
+  if (str_eq(param, help_str) == 1
+      || str_eq(param, question_mark_str) == 1) {
+    reply_len = strlen(version_help_str);
+    memcpy(reply, version_help_str, reply_len);
+    return reply_len;
+  }
+
+  reply_len = strlen(version_str);
+  memcpy(reply, version_str, reply_len);
   return reply_len;
 
 }
