@@ -22,7 +22,8 @@ def main():
             waiting = False
     s.close()
 
-    data = data.decode()[:-4]
+    data = data.decode()[:-3]
+    data = data.rstrip()
     print(data)
 
 if __name__ == "__main__":

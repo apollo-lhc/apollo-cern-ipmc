@@ -142,10 +142,11 @@ static const char expert_off_str[] =
   "Expert mode deactivated.\n";
 
 static const char cmds_header_str[] =
-  "Try also \"<command> help\".\n"
   "Available commands:\n";
 static const char signals_header_str[] =
   "Available signals (marked if expert mode required):\n";
+static const char help_footer_str[] =
+  "Try also \"<command> help\".\n";
 
 static const char expert_label_str[] = " (E)";
 
@@ -170,6 +171,10 @@ static const char error_str[] =
 static const char version_str[] = "0.0.0-10\n";
 static const char version_help_str[] =
   "Usage: version\n";
+
+static const char echo_str[] = "echo: ";
+
+  
 
 /* ================================================================ */
 
@@ -446,12 +451,21 @@ user_tcpserv_data_handler(const ip_addr_t to,
   }
 
   else {
+
+    int l = strlen(echo_str);
+    memcpy(reply, echo_str, l);
+
+    unsigned char * r = &reply[l];
+
     /* Clone the request in the reply buffer */
-    memcpy(reply, data, len);
-    reply[len] = '\0';
-    
+    memcpy(r, data, len);
+
     /* Set the reply length */
-    *replyLen = len;
+    *replyLen = l+len;
+
+    // finish string
+    reply[*replyLen] = '\0';
+
     // debug_printf("----- echo reply len: %d\n", *replyLen);
   }
 
@@ -877,6 +891,9 @@ help (char * params,
 
   // debug_printf("..... help 5\n");
 
+  len = strlen(help_footer_str);
+  memcpy(r, help_footer_str, len);
+  r += len;
   *r = '\0';
 
   // debug_printf("..... help 6\n");
