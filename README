@@ -247,3 +247,21 @@ Questions or comments
 - What is the maximum length of the data and reply strings in the TCP/IP data handler
 
 - What is the size of the stack?
+
+
+TO DO
+-----
+
+[X] initial state for signals
+[ ] delay between 12v and zynq enables
+[ ] fix line ended command line parser
+[-] loop to wait for zynq to boot
+[ ] ensure IPMC uart signals are GND or high impedance on boot
+[ ] ensure IPMC XVC signals are GND or high impedance on boot
+
+
+Legend
+
+    [X]: done
+    [-]: very low priority
+    [ ]: to be done
