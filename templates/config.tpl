@@ -41,12 +41,14 @@
     
     <PowerONSeq>
       <step>PSQ_ENABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step>
-      <step>PSQ_ENABLE_SIGNAL(USER_IO_3)</step>
+      <!-- GPIO logic are inverted -->
+      <step>PSQ_DISABLE_SIGNAL(USER_IO_3)</step>
       <step>PSQ_END</step>
     </PowerONSeq>
     
     <PowerOFFSeq>
-      <step>PSQ_DISABLE_SIGNAL(USER_IO_3)</step>
+      <!-- GPIO logic are inverted -->
+      <step>PSQ_ENABLE_SIGNAL(USER_IO_3)</step>
       <step>PSQ_DISABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step>
       <step>PSQ_END</step>
     </PowerOFFSeq>
