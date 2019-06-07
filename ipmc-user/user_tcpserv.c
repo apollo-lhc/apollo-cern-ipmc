@@ -22,6 +22,7 @@ Version ..... : V0.1 - 18/05/2019
 
 #include <user_pca9545.h>
 #include <user_tcn75a.h>
+#include <user_gpio.h>
 
 #include <user_helpers.h>
 
@@ -50,41 +51,9 @@ void
 get_next_param(char * param, char * line);
 
 int
-get_signal_index(const char * sm_signal_name);
-
-int
 get_cmd_index(const char * cmd);
 
 /* ================================================================ */
-
-typedef struct pin_map_n {
-  const char * sm_name;
-  const int output;
-  const int expert;
-  const signal_t ipmc_name;
-  const int initial;
-} pin_map_t;
-
-static pin_map_t pin_map[] = {
-  {"ipmc_zynq_en"     , 1, 1, USER_IO_3                 , 0}, 
-  {"en_one_jtag_chain", 1, 0, USER_IO_4                 , 0}, 
-  {"uart_addr0"       , 1, 0, USER_IO_5                 , 0}, 
-  {"uart_addr1"       , 1, 0, USER_IO_6                 , 0}, 
-  {"zynq_boot_mode0"  , 1, 1, USER_IO_7                 , 1}, 
-  {"zynq_boot_mode1"  , 1, 1, USER_IO_8                 , 1}, 
-  {"sense_rst"        , 1, 0, USER_IO_9                 , 0}, 
-  {"mezz2_en"         , 1, 0, USER_IO_10                , 0}, 
-  {"mezz1_en"         , 1, 0, USER_IO_11                , 0}, 
-  {"m24512_we_n"      , 1, 0, USER_IO_12                , 1}, 
-  {"eth_sw_pwr_good"  , 0, 0, USER_IO_13                , 0}, 
-  {"eth_sw_reset_n"   , 1, 1, USER_IO_16                , 1},
-  {"en_12v"           , 1, 1, CFG_PAYLOAD_DCDC_EN_SIGNAL, 0},
-  {"fp_latch"         , 0, 0, CFG_HANDLE_SWITCH_SIGNAL  , 0},
-};
-
-/* ================================================================ */
-
-static int expert_mode = 0;
 
 // let's declare strings as global variables so they are not included
 // in stack.
@@ -172,9 +141,7 @@ static const char version_str[] = "0.0.0-10\n";
 static const char version_help_str[] =
   "Usage: version\n";
 
-static const char echo_str[] = "echo: ";
-
-  
+static const char echo_str[] = "Command not recognized. Echoing:\n";
 
 /* ================================================================ */
 
@@ -220,6 +187,8 @@ static cmd_map_t cmd_map[] = {
   {help_str         , & help             },
   {question_mark_str, & help             },
 };
+
+static const int N_COMMANDS = sizeof(cmd_map) / sizeof(cmd_map[0]);
 
 /* ================================================================ */
 
@@ -469,16 +438,13 @@ user_tcpserv_data_handler(const ip_addr_t to,
     // debug_printf("----- echo reply len: %d\n", *replyLen);
   }
 
-  if (expert_mode == 1) {
-
+  if (is_expert_mode_on() == 1) {
     unsigned char * r = &reply[*replyLen];
     int l = strlen(expert_str);
     memcpy(r, expert_str, l);
     r += l;
     *r = '\0';
     *replyLen += l;
-
-    // debug_printf("----- expert reply len: %d\n", *replyLen);
   }
 
   unsigned char * p = &reply[*replyLen];
@@ -579,42 +545,7 @@ void remove_extra_spaces(char s[])
   return;
 }
 
-
-// char *
-// strcpy(char *str_dest,
-//        const char *str_src)
-// {
-//     assert(str_dest != NULL && str_src != NULL);
-//     char *temp = str_dest;
-//     while((*str_dest++ = *str_src++) != '\0');
-//     return temp;
-// }
-
-
 /* ================================================================ */
-
-// look for signal information in the pin map table and return its
-// position. -1 is returned in case no signal is found.
-int
-get_signal_index(const char * sm_signal_name)
-{
-  int i = 0;
-  int map_len = sizeof(pin_map) / sizeof(pin_map[0]);
-
-  for (i = 0; i < map_len; i++) {
-
-    // debug_printf("<_> ++++++++ signal_ids: ");
-    // debug_printf(pin_map[i].sm_name);
-    // debug_printf(" ");
-    // debug_printf(sm_signal_name);
-    // debug_printf("\n");
-    
-    if (str_eq(pin_map[i].sm_name, sm_signal_name) == 1) {
-      return i;
-    }
-  }
-  return -1;
-}
 
 // look for command information in the command map table and return
 // its position. -1 is returned in case no command is found.
@@ -622,16 +553,7 @@ int
 get_cmd_index(const char * cmd)
 {
   int i = 0;
-  int map_len = sizeof(cmd_map) / sizeof(cmd_map[0]);
-  
-  for (i = 0; i < map_len; i++) {
-
-    // debug_printf("<_> ++++++++ cmd_ids: ");
-    // debug_printf(cmd_map[i].cmd);
-    // debug_printf(" ");
-    // debug_printf(cmd);
-    // debug_printf("\n");
-
+  for (i = 0; i < N_COMMANDS; i++) {
     if (str_eq(cmd_map[i].cmd, cmd) == 1) {
       return i;
     }
@@ -692,48 +614,33 @@ write_gpio_signal(char * params,
   }
   
   int idx = get_signal_index(param);
-  
+
   if (idx >= 0) {
-  
-    signal_t userio_sig = pin_map[idx].ipmc_name;
 
-    if ( (pin_map[idx].output == 1 && pin_map[idx].expert == 0)
-         || (pin_map[idx].output == 1
-             && pin_map[idx].expert == 1 && expert_mode == 1) ) {
-
-      get_next_param(param, params);
-
-      // debug_printf("<_> ======= value: ");
-      // debug_printf(value);
-      // debug_printf("\n");
-      
-      if (param[0] == '1' || param[0] == 'h'){
-        signal_activate(&userio_sig);
-        // debug_printf("<_> ======= signal deactivated\n");
+    get_next_param(param, params);
+    if (param[0] == '1' || param[0] == 'h'){
+      if (activate_gpio(idx) == 0) {
         msg_len = strlen(ok_str);
         memcpy(reply, ok_str, msg_len);
+        return msg_len;
       }
-      else if (param[0] == '0' || param[0] == 'l') {
-        signal_deactivate(&userio_sig);
-        // debug_printf("<_> ======= signal activated\n");
+    }
+
+    else if (param[0] == '0' || param[0] == 'l') {
+      if (deactivate_gpio(idx) == 0) {
         msg_len = strlen(ok_str);
         memcpy(reply, ok_str, msg_len);
-      }
-      else {
-        msg_len = strlen(set_gpio_error_str);
-        memcpy(reply, set_gpio_error_str, msg_len);
-      }
+        return msg_len;
+      }      
     }
-    else {
-      msg_len = strlen(set_gpio_error_str);
-      memcpy(reply, set_gpio_error_str, msg_len);
-    }
-  }
-  else {
-    msg_len = strlen(signal_not_found_str);
-    memcpy(reply, signal_not_found_str, msg_len);
+
+    msg_len = strlen(set_gpio_error_str);
+    memcpy(reply, set_gpio_error_str, msg_len);
+    return msg_len;
   }
 
+  msg_len = strlen(signal_not_found_str);
+  memcpy(reply, signal_not_found_str, msg_len);
   return msg_len;
 }
 
@@ -773,31 +680,22 @@ read_gpio_signal(char * params,
 
     // debug_printf("######## read_gpio_signal 2 (idx found)\n");
 
-  
-    signal_t userio_sig = pin_map[idx].ipmc_name;
-  
-    int v = signal_read(&userio_sig);
-  
-    if (v == 1) {
+    int v = get_gpio_state(idx);
+    
+    if (v > 0) {
       reply_len = strlen(gpio_enabled_str);
       memcpy(reply, gpio_enabled_str, reply_len);
+      return reply_len;
     }
-    else if (v == 0) {
+    else {
       reply_len = strlen(gpio_disabled_str);
       memcpy(reply, gpio_disabled_str, reply_len);
-    }
-    else{
-      reply_len = strlen(gpio_error_str);
-      memcpy(reply, gpio_error_str, reply_len);
+      return reply_len;
     }
   }
-  else {
-    // debug_printf("######## read_gpio_signal (idx not found) 3\n");
-    reply_len = strlen(signal_not_found_str);
-    memcpy(reply, signal_not_found_str, reply_len);
-  }
-  // debug_printf("######## read_gpio_signal  (final) 4\n");
 
+  reply_len = strlen(signal_not_found_str);
+  memcpy(reply, signal_not_found_str, reply_len);
   return reply_len;
 }
 
@@ -821,16 +719,14 @@ set_expert_mode(char * params,
 
   
   if (str_eq(param, "on") == 1){
-    expert_mode = 1;
+    enable_expert_mode();
     reply_len = 0;
+    return reply_len;
   }
 
-  else {
-    expert_mode = 0;
-    reply_len = strlen(expert_off_str);
-    memcpy(reply, expert_off_str, reply_len);
-  }    
-  
+  disable_expert_mode();
+  reply_len = strlen(expert_off_str);
+  memcpy(reply, expert_off_str, reply_len);
   return reply_len;
 }
 
@@ -873,14 +769,14 @@ help (char * params,
 
   // debug_printf("..... help 4\n");
 
-  map_len = sizeof(pin_map) / sizeof(pin_map[0]);
-  for (i = 0; i < map_len; i++) {
+  for (i = 0; i < get_n_pins(); i++) {
     memcpy(r, "  ", 2);
     r += 2;
-    len = strlen(pin_map[i].sm_name);
-    memcpy(r, pin_map[i].sm_name, len);
+    pin_map_t signal = get_gpio_signal(i);
+    len = strlen(signal.sm_name);
+    memcpy(r, signal.sm_name, len);
     r += len;
-    if (pin_map[i].expert == 1) {
+    if (signal.expert == 1) {
       len = strlen(expert_label_str);
       memcpy(r, expert_label_str, len);
       r += len;
