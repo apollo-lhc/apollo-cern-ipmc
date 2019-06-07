@@ -253,9 +253,9 @@ TO DO
 -----
 
 [X] initial state for signals
-[ ] delay between 12v and zynq enables
-[ ] fix line ended command line parser
-[-] loop to wait for zynq to boot
+[-] delay between 12v and zynq enables
+[\] fix line ended command line parser
+[ ] loop to wait for zynq to boot
 [ ] ensure IPMC uart signals are GND or high impedance on boot
 [ ] ensure IPMC XVC signals are GND or high impedance on boot
 
@@ -265,3 +265,5 @@ Legend
     [X]: done
     [-]: very low priority
     [ ]: to be done
+    [\]: started
+    [=]: cancelled or not possible
