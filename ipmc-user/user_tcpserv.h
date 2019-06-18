@@ -4,9 +4,6 @@
 #include <net/ip.h>
 #include <net/tcp.h>
 
-#define MAX_USER_TCPSERV_CLIENT 10
-#define CMD_LINE_MAX_LEN 50
-
 /* Structure used to save client information */
 typedef struct{
 	ip_addr_t to;

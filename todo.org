@@ -1,0 +1,2 @@
+- [X] create a config template for the devkit -> SM 0
+- [ ] make expert_mode associated to a specific connection (not global) 

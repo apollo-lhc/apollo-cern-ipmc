@@ -26,17 +26,21 @@ Version ..... : V0.1 - 18/05/2019
 
 #include <user_helpers.h>
 
-// it seems stdio cannot be used... 
-// #include <stdio.h>
-
 #ifndef NULL
 #define NULL ((void *)0)
 #endif
 
-/* ================================================================ */
+#define MAX_USER_TCPSERV_CLIENT 10
+#define CMD_LINE_MAX_LEN 50
 
-// char *
-// strcpy(char *str_dest, const char *str_src);
+typedef struct cmd_buf_n {
+  char data[CMD_LINE_MAX_LEN];
+  unsigned short len;
+} cmd_buf_t;
+
+cmd_buf_t cmd_buf[MAX_USER_TCPSERV_CLIENT];
+
+/* ================================================================ */
 
 void
 lowercase(char s[]);
@@ -44,14 +48,22 @@ lowercase(char s[]);
 void
 remove_extra_spaces(char s[]);
 
-// char *
-// get_param(const char * s, const int pos);
-
 void
 get_next_param(char * param, char * line);
 
 int
 get_cmd_index(const char * cmd);
+
+
+
+int
+append_to_cmd_buffer(int conn_idx,
+                     const unsigned char * data,
+                     unsigned short len);
+
+int
+chomp_cmd(char * cmd_line,
+          int conn_idx);
 
 /* ================================================================ */
 
@@ -141,7 +153,8 @@ static const char version_str[] = "0.0.0-10\n";
 static const char version_help_str[] =
   "Usage: version\n";
 
-static const char echo_str[] = "Command not recognized. Echoing:\n";
+static const char echo_str[] =
+  "Command not recognized. Echoing:\n";
 
 /* ================================================================ */
 
@@ -189,6 +202,10 @@ static cmd_map_t cmd_map[] = {
 };
 
 static const int N_COMMANDS = sizeof(cmd_map) / sizeof(cmd_map[0]);
+
+/* ================================================================ */
+
+char cmd_buffer[MAX_USER_TCPSERV_CLIENT][CMD_LINE_MAX_LEN];
 
 /* ================================================================ */
 
@@ -277,6 +294,8 @@ user_tcpserv_connect_handler(const ip_addr_t from,
       memcpy(user_tcpserv_clients[i].to, from, sizeof(from));
       
       user_tcpserv_clients[i].opened = 1;
+      cmd_buf[i].data[0] = '\0';
+      cmd_buf[i].len = 0;
 
 
       // didn't work, leaving it out for now.
@@ -370,26 +389,78 @@ user_tcpserv_data_handler(const ip_addr_t to,
                           unsigned *replyLen)
 {
 
-  char cmd_line[CMD_LINE_MAX_LEN];
-  int cmd_len;
+  int i;
+  int conn_idx = -1;
 
-  if (data[len-2] == '\r') {
-    cmd_len = len-2;
+
+  debug_printf("<_> ======= 1\n");
+
+  for(i = 0; i < MAX_USER_TCPSERV_CLIENT; i++){
+		
+    /* Check the information */
+    if(user_tcpserv_clients[i].opened == 1
+       && !memcmp(from,
+                  user_tcpserv_clients[i].to,
+                  sizeof(from))
+       && from_port == user_tcpserv_clients[i].to_port){
+      conn_idx = i;
+    }
   }
-  else if (data[len-1] == '\n') {
-    cmd_len = len-1;
+
+  if (conn_idx == -1){
+    return -1;
   }
-  else {
-    cmd_len = len;
+
+  debug_printf("<_> ======= 2\n");
+
+  // append received data to associated buffer
+  // check for overflow
+  if (append_to_cmd_buffer(conn_idx, data, len) != 0){
+    return 0;
+  }
+
+  char cmd_line[CMD_LINE_MAX_LEN];
+
+  debug_printf("<_> ======= 3\n");
+
+  // look for termination
+  // copy from buffer to cmd line;
+  // terminates cmd line with '\0' for str_eq
+  // shift remaining of the buffer to the start
+  // returns the len of the command found, or -1 otherwise
+  int cmd_len = chomp_cmd(cmd_line, conn_idx);
+  
+  debug_printf("<_> ======= 4\n");
+  
+  if (cmd_len < 0) {
+    *replyLen = 0;
+    return 0;
   }
   
-  memcpy(cmd_line, data, cmd_len);
+  
+  // if (data[len-2] == '\r') {
+  //   cmd_len = len-2;
+  // }
+  // else if (data[len-1] == '\n') {
+  //   cmd_len = len-1;
+  // }
+  // else {
+  //   cmd_len = len;
+  // }
 
-  cmd_line[cmd_len] = '\0';
+  
+  // memcpy(cmd_line, , cmd_len);
+
+  // cmd_line[cmd_len] = '\0';
 
   // debug_printf("<_> user_tcpserv command line: ");
   // debug_printf(cmd_line);
   // debug_printf("\n");
+
+  debug_printf("<_> ======= 5: cmd line below\n");
+  debug_printf(cmd_line);
+  debug_printf("\n");
+  debug_printf("<_> =========: end of cmd line\n");
 
   remove_extra_spaces(cmd_line);
   // debug_printf("<_> >>>>>> no extra spaces: ");
@@ -404,19 +475,15 @@ user_tcpserv_data_handler(const ip_addr_t to,
 
   char cmd[30];
   get_next_param(cmd, cmd_line);
-  // debug_printf("<_> >>>>>> cmd: ");
-  // debug_printf(cmd);
-  // debug_printf("\n");
+  debug_printf("<_> >>>>>> cmd: %s\n", cmd);
 
   int cmd_idx = get_cmd_index(cmd);
-  // debug_printf("<_> >>>>>> cmd_idx: ");
-  // debug_printf("%d", cmd_idx);
-  // debug_printf("\n");
+  debug_printf("<_> >>>>>> cmd_idx: %d\n", cmd_idx);
  
   if (cmd_idx >= 0) { 
     // execute command, get reply and associated length
     *replyLen = cmd_map[cmd_idx].fnc_ptr(cmd_line, reply);
-    // debug_printf("----- cmd reply len: %d\n", *replyLen);
+    debug_printf("<_> >>>>>> cmd reply len: %d\n", *replyLen);
   }
 
   else {
@@ -460,7 +527,6 @@ user_tcpserv_data_handler(const ip_addr_t to,
   /* Return the function successfully */
   return 0;
 }
-
 
 /* ================================================================ */
 
@@ -545,7 +611,39 @@ void remove_extra_spaces(char s[])
   return;
 }
 
+
+// char *
+// strcpy(char *str_dest,
+//        const char *str_src)
+// {
+//     assert(str_dest != NULL && str_src != NULL);
+//     char *temp = str_dest;
+//     while((*str_dest++ = *str_src++) != '\0');
+//     return temp;
+// }
+
+
 /* ================================================================ */
+
+// look for connection information in the command buffer and returns
+// its position. -1 is returned in case nothing is found.
+int
+get_cmd_buffer_index(const ip_addr_t from_addr,
+                     const unsigned short from_port)
+{
+  int i = 0;
+
+  for (i = 0; i < MAX_USER_TCPSERV_CLIENT; i++) {
+    if (0 == memcmp(&(user_tcpserv_clients[i].to),
+                    &from_addr, sizeof(from_addr))){
+      if (user_tcpserv_clients[i].to_port == from_port){
+        // same ip address and same port considered unique connection.
+        return i;
+      }
+    }
+  }
+  return -1;
+}
 
 // look for command information in the command map table and return
 // its position. -1 is returned in case no command is found.
@@ -592,6 +690,94 @@ get_next_param(char * param,
   return;
 }
 
+// append received data to associated buffer
+// check for overflow
+int
+append_to_cmd_buffer(int conn_idx,
+                     const unsigned char * data,
+                     unsigned short len)
+{
+
+  debug_printf("<_> ++++ append starting\n");
+
+  char tmp[50];
+  memcpy(tmp, data, len);
+  tmp[len] = '\0';
+  
+  debug_printf("<_> ++++ len: %d\n", len);
+  debug_printf("<_> ++++ data: %s\n", tmp);
+
+  int l = cmd_buf[conn_idx].len; 
+  if (l + len >= CMD_LINE_MAX_LEN) {
+    return -1;
+  }
+
+  memcpy(&(cmd_buf[conn_idx].data[l]), data, len);
+  cmd_buf[conn_idx].len += len;
+  cmd_buf[conn_idx].data[cmd_buf[conn_idx].len] = '\0';
+
+  debug_printf("<_> ++++ buf: %s\n", cmd_buf[conn_idx].data);
+  
+  return 0;
+}
+
+
+// look for termination
+// copy from buffer to cmd line;
+// terminates cmd line with '\0' for str_eq
+// shift remaining of the buffer to the start
+// returns the len of the command found, or -1 otherwise
+int
+chomp_cmd(char * cmd_line,
+              int conn_idx)
+{
+  int i;
+
+  debug_printf("<_> ~~~~ chomp starting\n");
+  debug_printf("<_> ~~~~ cmd_idx: %d\n", conn_idx);
+  debug_printf("<_> ~~~~ cmd_len: %d\n", cmd_buf[conn_idx].len);
+
+  for (i = 0; i < cmd_buf[conn_idx].len; i++) {
+
+    debug_printf("<_> ~~~~ cmd_buff[i]: %c\n", cmd_buf[conn_idx].data[i]);
+
+    if (cmd_buf[conn_idx].data[i] == '\n'
+        || cmd_buf[conn_idx].data[i] == '\r'){
+
+      // copy command to be processed
+      memcpy(cmd_line, cmd_buf[conn_idx].data, i);
+      cmd_line[i] = '\0';
+
+      debug_printf("<_> ~~~~ terminated: %s\n", cmd_line);
+      
+
+      //remove terminator(s)
+      char * p = &(cmd_buf[conn_idx].data[i]);
+      while (*p == '\r' || *p == '\n') {
+        p++;
+        cmd_buf[conn_idx].len--;
+      }
+
+      // shift data to beginning of buffer
+      char * q = cmd_buf[conn_idx].data;
+      cmd_buf[conn_idx].len -= i;
+      int k;
+      for (k = 0; k < cmd_buf[conn_idx].len; k++){
+        *q = *p;
+        p++;
+        q++;
+      };
+
+      // return len of the command
+      return i;
+    }
+  }
+
+  // no terminator found -> no command
+  return -1;
+}
+
+
 
 /* ================================================================ */
 
@@ -614,18 +800,17 @@ write_gpio_signal(char * params,
   }
   
   int idx = get_signal_index(param);
-
   if (idx >= 0) {
-
     get_next_param(param, params);
     if (param[0] == '1' || param[0] == 'h'){
       if (activate_gpio(idx) == 0) {
         msg_len = strlen(ok_str);
         memcpy(reply, ok_str, msg_len);
         return msg_len;
+        msg_len = strlen(ok_str);
+        memcpy(reply, ok_str, msg_len);
       }
     }
-
     else if (param[0] == '0' || param[0] == 'l') {
       if (deactivate_gpio(idx) == 0) {
         msg_len = strlen(ok_str);
@@ -633,12 +818,10 @@ write_gpio_signal(char * params,
         return msg_len;
       }      
     }
-
     msg_len = strlen(set_gpio_error_str);
     memcpy(reply, set_gpio_error_str, msg_len);
     return msg_len;
   }
-
   msg_len = strlen(signal_not_found_str);
   memcpy(reply, signal_not_found_str, msg_len);
   return msg_len;
@@ -693,7 +876,6 @@ read_gpio_signal(char * params,
       return reply_len;
     }
   }
-
   reply_len = strlen(signal_not_found_str);
   memcpy(reply, signal_not_found_str, reply_len);
   return reply_len;

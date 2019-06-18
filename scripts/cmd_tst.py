@@ -8,12 +8,30 @@ BUFFER_SIZE = 1024
 
 def main():
 
-    target_ip_addr = sys.argv[1]
-    message = " ".join(x for x in sys.argv[2:]) + "\n"
 
+    target_ip_addr = sys.argv[1]
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((target_ip_addr, TCP_PORT))
+
+    message = "get_gpio"
     s.send(message.encode())
+    print(message)
+    input("Press Enter to continue...")
+
+    message = " "
+    s.send(message.encode())
+    print(message)
+    input("Press Enter to continue...")
+
+    message = "en_12v"
+    s.send(message.encode())
+    print(message)
+    input("Press Enter to continue...")
+
+    message = "\n"
+    s.send(message.encode())
+    print(message)
+    input("Press Enter to continue...")
 
     waiting = True
     while (waiting):
