@@ -248,6 +248,9 @@ Questions or comments
 
 - What is the size of the stack?
 
+- What are the values accepted in the second parameter of the signal_set_pin? (SIGNAL_HIGHZ, ...)
+
+
 
 TO DO
 -----
@@ -256,8 +259,13 @@ TO DO
 [-] delay between 12v and zynq enables
 [\] fix line ended command line parser
 [ ] loop to wait for zynq to boot
+    - poll Zynq I2C lines
+    - when Zynq up, light up LEDs
 [ ] ensure IPMC uart signals are GND or high impedance on boot
 [ ] ensure IPMC XVC signals are GND or high impedance on boot
+[ ] No rush, but please change
+    - <SerialIntf>SDI_INTF</SerialIntf> to <SerialIntf>SDI_SOL</SerialIntf>
+    - remove  <RedirectSDItoSOL/>
 
 
 Legend
