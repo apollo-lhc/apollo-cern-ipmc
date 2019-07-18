@@ -27,7 +27,7 @@ Version ..... : V0.1 - 18/05/2019
 static pin_map_t pin_map[] = {
   {"ipmc_zynq_en"     , 1, 1, USER_IO_3                 , 0}, 
   {"en_one_jtag_chain", 1, 0, USER_IO_4                 , 0}, 
-  {"uart_addr0"       , 1, 0, USER_IO_5                 , 0}, 
+  {"uart_addr0"       , 1, 0, USER_IO_5                 , 1}, 
   {"uart_addr1"       , 1, 0, USER_IO_6                 , 0}, 
   {"zynq_boot_mode0"  , 1, 1, USER_IO_7                 , 1}, 
   {"zynq_boot_mode1"  , 1, 1, USER_IO_8                 , 1}, 
