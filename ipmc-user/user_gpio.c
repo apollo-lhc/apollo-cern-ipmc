@@ -31,7 +31,7 @@ static pin_map_t pin_map[] = {
   {"uart_addr1"       , 1, 0, USER_IO_6                 , 0}, 
   {"zynq_boot_mode0"  , 1, 1, USER_IO_7                 , 1}, 
   {"zynq_boot_mode1"  , 1, 1, USER_IO_8                 , 1}, 
-  {"sense_rst"        , 1, 0, USER_IO_9                 , 0}, 
+  {"sense_rst"        , 1, 0, USER_IO_9                 , 1}, 
   {"mezz2_en"         , 1, 0, USER_IO_10                , 0}, 
   {"mezz1_en"         , 1, 0, USER_IO_11                , 0}, 
   {"m24512_we_n"      , 1, 0, USER_IO_12                , 1}, 
