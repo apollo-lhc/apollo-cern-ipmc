@@ -1,7 +1,17 @@
 #include <user_helpers.h>
 
+#include <debug.h>
+
+const char msg_i_c_n[] =
+  "~~~~~~~ i: %d; c: %x; n: %d\n";
+
+const char msg_i_c_n_2[] =
+  "------- i: %d; c: %x; n: %d\n";
+
+
 /* reverse:  reverse string s in place */
-void reverse(char s[])
+void
+reverse(char s[])
 {
   int i, j;
   char c;
@@ -14,21 +24,125 @@ void reverse(char s[])
 }  
 
 /* itoa:  convert n to characters in s */
-void itoa(int n, char s[])
+int
+a_from_i(char s[],
+         int n,
+         char hex)
 {
   int i, sign;
-  
-  if ((sign = n) < 0)  /* record sign */
+  int aux;
+
+  sign = n; /* record sigh */
+  if (n < 0) {
     n = -n;          /* make n positive */
+  }
+
+  /* generate digits in reverse order */
   i = 0;
-  do {       /* generate digits in reverse order */
-    s[i++] = n % 10 + '0';   /* get next digit */
-  } while ((n /= 10) > 0);     /* delete it */
-  if (sign < 0)
+  do {
+    if (hex == 1) {
+      /* store next digit */
+      aux = n % 16;
+      if (aux < 10) {
+        s[i++] = aux + '0';
+      } else {
+        s[i++] = aux - 10 + 'A';
+      }
+      /* then eliminate it */
+      debug_printf(msg_i_c_n_2, i-1, s[i-1], n);
+      n /= 16;
+    } else {
+      /* store next digit */
+      s[i++] = n % 10 + '0';
+      /* then eliminate it */
+      debug_printf(msg_i_c_n_2, i-1, s[i-1], n);
+      n /= 10;
+    }
+  } while (n > 0);    
+
+  // prepending 0x in case of hex
+  if (hex == 1) {
+    s[i++] = 'x';    
+    s[i++] = '0';    
+  }  
+
+  /* recovering signal */
+  if (sign < 0) {
     s[i++] = '-';
+  }
+
+  // closing up
   s[i] = '\0';
+
+  debug_printf("!!!!!!! %s\n", s);
+  
+  /* string is backwards; let's reverse it */
   reverse(s);
+  
+  return 0;
 }  
+
+
+/* itoa:  convert n to characters in s */
+int
+i_from_a(int * n,
+         char s[],
+         char * hex)
+{
+  int i;
+
+  *n = 0; // Initialize result 
+
+  if (s[0] == '0' && s[1] == 'x') {
+    *hex = 1;
+    for (i = 2; s[i] != '\0'; i++) {
+      if ('0' <= s[i] && s[i] <= '9') {
+        *n = *n * 16 + s[i] - '0';
+        debug_printf(msg_i_c_n, i, s[i], *n);
+      } else if ('a' <= s[i] && s[i] <= 'f') {
+        *n = *n * 16 + s[i] - 'a' + 10;
+        debug_printf(msg_i_c_n, i, s[i], *n);
+      }
+      else {
+        return 1;
+      }
+    }
+  } else {
+    *hex = 0;
+    for (i = 0; s[i] != '\0'; i++) {
+      *n = *n * 10 + s[i] - '0';
+      debug_printf(msg_i_c_n, i, s[i], *n);
+    }
+  }
+
+  return 0;
+}
+
+// int
+// vec_a_from_vec_i (char * a,
+//                   char * i,
+//                   int len,
+//                   char hex)
+// {
+//   int ret = 0;
+//   for (int k = 0; k < len; k++) {
+//     ret = a_from_i(&a[k], i[k], hex);
+//   }
+//   return ret;
+// }
+// 
+// int
+// vec_i_from_vec_a (char * i,
+//                   char * a,
+//                   int len,
+//                   char * hex)
+// {
+//   int ret = 0;
+//   for (int k = 0; k < len; k++) {
+//     ret = i_from_a(&i[k], a[k], hex);
+//   }
+//   return ret;
+// }
 
 // freebsd implementation of strlen
 int
@@ -67,4 +181,17 @@ str_eq (const char *s1,
   // debug_printf("@@@@@@@ str_eq 3\n");
 
   return 1;
+}
+
+// copying strings
+int
+strlcpy(char *dest,
+        const char *src)
+{
+  unsigned i;
+  for (i=0; src[i] != '\0'; ++i) {
+    dest[i] = src[i];
+  }
+  dest[i]= '\0';
+  return i;
 }
