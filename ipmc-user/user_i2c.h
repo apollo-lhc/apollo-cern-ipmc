@@ -12,28 +12,32 @@
 
 /* Write to I2C slave without registers */
 char
-i2c_read(const unsigned char i2c_addr,
+i2c_read(unsigned char i2c_addr,
          unsigned char * data,
-         const char len);
+         const char len,
+         char i2c_bus);
 
 /* Read from I2C slave without registers */
 char
-i2c_write(const unsigned char i2c_addr,
+i2c_write(unsigned char i2c_addr,
           const unsigned char data[],
-          const unsigned char len);
+          const unsigned char len,
+          char i2c_bus);
 
 /* Write to I2C slave targeting an initial register */
 char
-i2c_reg_read(const unsigned char i2c_addr,
+i2c_reg_read(unsigned char i2c_addr,
              const unsigned char reg_addr,
              unsigned char * data,
-             const char len);
+             const char len,
+             char i2c_bus);
 
 /* Read from I2C slave targeting an initial register */
 char
-i2c_reg_write(const unsigned char i2c_addr,
+i2c_reg_write(unsigned char i2c_addr,
               const unsigned char reg_addr,
               const unsigned char data[],
-              const char len);
+              const char len,
+              char i2c_bus);
 
 #endif /* GENERIC_I2C_H */

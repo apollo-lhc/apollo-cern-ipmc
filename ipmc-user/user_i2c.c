@@ -21,11 +21,14 @@ static const char i2c_debug_str[] =
 
 /* Write to I2C slave without registers */
 char
-i2c_read(const unsigned char i2c_addr,
+i2c_read(unsigned char i2c_addr,
          unsigned char * data,
-         const char len)
+         const char len,
+         char i2c_bus)
 {
-  short int full_addr = MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, i2c_addr);
+  i2c_addr <<= 1;
+  i2c_addr |= 1;
+  short int full_addr = MO_CHANNEL_ADDRESS(i2c_bus, i2c_addr);
   
   int ret = i2c_dev_read(full_addr, data, len);
   debug_printf(i2c_debug_str, full_addr, i2c_addr, ret);
@@ -40,11 +43,13 @@ i2c_read(const unsigned char i2c_addr,
 
 /* Read from I2C slave without registers */
 char
-i2c_write(const unsigned char i2c_addr,
+i2c_write(unsigned char i2c_addr,
           const unsigned char data[],
-          const unsigned char len)
+          const unsigned char len,
+          char i2c_bus)
 {
-  short int full_addr = MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, i2c_addr);
+  i2c_addr <<= 1; 
+  short int full_addr = MO_CHANNEL_ADDRESS(i2c_bus, i2c_addr);
   
   int ret = i2c_io(full_addr | I2C_START | I2C_STOP,
                    (unsigned char *) data,
@@ -61,12 +66,15 @@ i2c_write(const unsigned char i2c_addr,
 
 /* Write to I2C slave targeting an initial register */
 char
-i2c_reg_read(const unsigned char i2c_addr,
+i2c_reg_read(unsigned char i2c_addr,
              const unsigned char reg_addr,
              unsigned char * data,
-             const char len)
+             const char len,
+             char i2c_bus)
 {
-  short int full_addr = MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, i2c_addr);
+  i2c_addr <<= 1;
+  i2c_addr |= 1;
+  short int full_addr = MO_CHANNEL_ADDRESS(i2c_bus, i2c_addr);
   char ret = i2c_dev_read_reg(full_addr,
                               reg_addr,
                               data,
@@ -76,12 +84,14 @@ i2c_reg_read(const unsigned char i2c_addr,
 
 /* Read from I2C slave targeting an initial register */
 char
-i2c_reg_write(const unsigned char i2c_addr,
+i2c_reg_write(unsigned char i2c_addr,
               const unsigned char reg_addr,
               const unsigned char data[],
-              const char len)
+              const char len,
+              char i2c_bus)
 {
-  short int full_addr = MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, i2c_addr);
+  i2c_addr <<= 1;
+  short int full_addr = MO_CHANNEL_ADDRESS(i2c_bus, i2c_addr);
   char ret = i2c_dev_write_reg(full_addr,
                                reg_addr,
                                (unsigned char *) data,

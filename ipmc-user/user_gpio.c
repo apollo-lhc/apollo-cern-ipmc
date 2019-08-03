@@ -167,6 +167,7 @@ void
 gpio_init(void)
 {
   int i;
+  enable_expert_mode();
   for (i = 0; i < N_PINS; i++) {
     if (pin_map[i].output == 1) {
       if (pin_map[i].initial > 0) {
@@ -177,5 +178,6 @@ gpio_init(void)
       }
     }
   }
+  disable_expert_mode();
   return;
 }
