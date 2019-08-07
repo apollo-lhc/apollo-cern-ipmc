@@ -1,2 +1,5 @@
 - [X] create a config template for the devkit -> SM 0
-- [ ] make expert_mode associated to a specific connection (not global) 
+- [ ] make expert_mode associated to a specific connection (not global)
+- [ ] change signal name: SENSE_RST --> SENSE_RST_B
+- [ ] investigate if debug messages can be sent via TCP/IP from IPMC to computer directly, i.e. independent of the received requests.
+- [ ] expose other signals of interest in the GPIO API
