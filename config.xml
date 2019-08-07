@@ -63,14 +63,14 @@
   
   <LANConfig>
     
-    <MACAddr>00:50:51:FF:00:05</MACAddr>
+    <MACAddr>00:50:51:FF:00:07</MACAddr>
     <NetMask>255.255.0.0</NetMask>
     <GatewayIP>192.168.20.1</GatewayIP>
     
     <!-- <EnableDHCP /> -->
     
     <IPAddrList> <!-- Default IP Addresses (used if DHCP is not active) -->
-      <IPAddr slot_addr="default">192.168.20.56</IPAddr>
+      <IPAddr slot_addr="default">192.168.20.69</IPAddr>
       <IPAddr slot_addr="0x41">192.168.20.20</IPAddr>
       <IPAddr slot_addr="0x42">192.168.20.21</IPAddr>
       <IPAddr slot_addr="0x43">192.168.20.22</IPAddr>

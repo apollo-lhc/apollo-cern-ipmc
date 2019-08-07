@@ -1,10 +1,8 @@
 /***********************************************************************
-
 Nom ......... : user_tcpserv.c
 Role ........ : TCP/IP server for L0MDT project
 Auteur ...... : Thiago Costa de Paiva <tcpaiva@cern.ch>
-Version ..... : V0.1 - 18/05/2019
-
+Version ..... : V0.2 - 2019-07-31
 ***********************************************************************/
 
 #include <app.h>
@@ -23,6 +21,7 @@ Version ..... : V0.1 - 18/05/2019
 #include <user_pca9545.h>
 #include <user_tcn75a.h>
 #include <user_gpio.h>
+#include <user_i2c.h>
 
 #include <user_helpers.h>
 
@@ -32,13 +31,19 @@ Version ..... : V0.1 - 18/05/2019
 
 #define MAX_USER_TCPSERV_CLIENT 10
 #define CMD_LINE_MAX_LEN 50
+#define MAX_PARAM_LEN 20
 
+// structure to hold status of a connection
 typedef struct cmd_buf_n {
   char data[CMD_LINE_MAX_LEN];
   unsigned short len;
+  char expert;
+  char hex;
+  char eol[3];
+  char i2c_bus;
 } cmd_buf_t;
 
-cmd_buf_t cmd_buf[MAX_USER_TCPSERV_CLIENT];
+cmd_buf_t cmd_buf[MAX_USER_TCPSERV_CLIENT] = {{.i2c_bus = 2}};
 
 /* ================================================================ */
 
@@ -48,7 +53,7 @@ lowercase(char s[]);
 void
 remove_extra_spaces(char s[]);
 
-void
+int
 get_next_param(char * param, char * line);
 
 int
@@ -149,63 +154,189 @@ static const char tcn75a_help_str[] =
 static const char error_str[] =
   "Something has gone wrong.\n";
 
-static const char version_str[] = "0.0.0-10\n";
+static const char version_str[] = "0.0.0-11\n";
 static const char version_help_str[] =
   "Usage: version\n";
 
 static const char echo_str[] =
   "Command not recognized. Echoing:\n";
 
+static const char help_i2c_write[] =
+  "Low level I2C write operation with no target register.\n"
+  "Usage: i2c_w <i2c_addr> <data>\n"
+  "  <i2c_addr> is the target 7-bit I2C address.\n"
+  "  <data> multiple values to be written separated by spaces.\n";
+
+static const char help_i2c_reg_write[] =
+  "Low level I2C write operation with target register.\n"
+  "Usage: i2c_reg_w <i2c_addr> <reg_addr> <data>\n"
+  "  <i2c_addr> is the target 7-bit I2C address.\n"
+  "  <reg_addr> is the target register.\n"
+  "  <data> multiple values to be written separated by spaces.\n";
+
+static const char err_i2c_addr[] =
+  "Invalid I2C address.\n";
+
+static const char err_i2c_data[] =
+  "Invalid data.\n";
+
+static const char err_i2c_write_transaction[] =
+  "I2C write transaction unsuccessful.\n";
+
+static const char help_i2c_read[] =
+  "Low level I2C read operation with no target register.\n"
+  "Usage: i2c_r <i2c_addr> [nbytes]\n"
+  "  <i2c_addr> is the target 7-bit I2C address.\n"
+  "  [nbytes] number of bytes to be read, 1 if empty.\n";
+
+static const char help_i2c_reg_read[] =
+  "Low level I2C read operation with target register.\n"
+  "Usage: i2c_reg_r <i2c_addr> <reg_addr> [nbytes]\n"
+  "  <i2c_addr> is the target 7-bit I2C address.\n"
+  "  <reg_addr> is the target register.\n"
+  "  [nbytes] number of bytes to be read, 1 if empty.\n";
+
+static const char err_i2c_read_transaction[] =
+  "I2C read transaction unsuccessful.\n";
+
+static const char err_i2c_itoa[] =
+  "Conversion from integer to ASCII failed.\n";
+
+static const char err_i2c_len[] =
+  "Invalid length.\n";
+
+static const char err_param[] =
+  "Unexpected parameters format.\n";
+
+static const char err_i2c_reg_addr[] =
+  "Invalid register address.\n";
+
+static const char help_set_i2c_bus[] =
+  "Usage: set_i2c_bus <bus ID>\n"
+  "  <bus ID>:\n"
+  "    M for management bus \n"
+  "    S for sensor bus\n";
+
+static const char help_get_i2c_bus[] =
+  "Usage: get_i2c_bus\n";
+
+static const char err_i2c_bus[] =
+  "Invalid I2C bus ID.\n";
+
+static const char str_i2c_bus_management[] =
+  "Management\n";
+
+static const char str_i2c_bus_sensor[] =
+  "Sensor\n";
+
+
 /* ================================================================ */
 
 int
-write_gpio_signal(char * params, unsigned char * reply);
+cmd_write_gpio_signal(char * params,
+                      unsigned char * reply,
+                      int conn_idx);
 
 int
-read_gpio_signal(char * params, unsigned char * reply);
+cmd_read_gpio_signal(char * params,
+                     unsigned char * reply,
+                     int conn_idx);
+                     
 
 int
-set_expert_mode(char * params, unsigned char * reply);
+cmd_set_expert_mode(char * params,
+                    unsigned char * reply,
+                    int conn_idx);
 
 int
-help(char * params, unsigned char * reply);
+cmd_help(char * params,
+         unsigned char * reply,
+         int conn_idx);
 
 int
-write_i2c_mux(char * params, unsigned char * reply);
+cmd_write_i2c_mux(char * params,
+                  unsigned char * reply,
+                  int conn_idx);
 
 int
-read_i2c_mux(char * params, unsigned char * reply);
+cmd_read_i2c_mux(char * params,
+                 unsigned char * reply,
+                 int conn_idx);
 
 int
-read_tcn75a(char * params, unsigned char * reply);
+cmd_read_tcn75a(char * params,
+                unsigned char * reply,
+                int conn_idx);
 
 int
-version(char * params, unsigned char * reply);
+cmd_i2c_write(char * params,
+              unsigned char * reply,
+              int conn_idx);
+
+int
+cmd_i2c_read(char * params,
+             unsigned char * reply,
+             int conn_idx);
+
+int
+cmd_i2c_reg_write(char * params,
+                  unsigned char * reply,
+                  int conn_idx);
+
+int
+cmd_i2c_reg_read(char * params,
+                 unsigned char * reply,
+                 int conn_idx);
+
+int
+cmd_version(char * params,
+            unsigned char * reply,
+            int conn_idx);
+
+int
+cmd_set_i2c_bus(char * params,
+                unsigned char * reply,
+                int conn_idx);
+
+int
+cmd_get_i2c_bus(char * params,
+                unsigned char * reply,
+                int conn_idx);
 
 /* ================================================================ */
 
 typedef struct cmd_map_n {
   const char * cmd;
-  int (*fnc_ptr)(char *, unsigned char *);
+  int (*fnc_ptr)(char *, unsigned char *, int);
 } cmd_map_t;
 
 static cmd_map_t cmd_map[] = {
-  {"expert_mode"    , & set_expert_mode  },
-  {"get_gpio"       , & read_gpio_signal },
-  {"read_i2c_mux"   , & read_i2c_mux     },
-  {"read_tcn75a"    , & read_tcn75a      },
-  {"set_gpio"       , & write_gpio_signal},
-  {"write_i2c_mux"  , & write_i2c_mux    },
-  {"version"        , & version          },
-  {help_str         , & help             },
-  {question_mark_str, & help             },
+  {"expert_mode"    , cmd_set_expert_mode  },
+  {"get_gpio"       , cmd_read_gpio_signal },
+  {"get_i2c_bus"    , cmd_get_i2c_bus      },
+  {"set_i2c_bus"    , cmd_set_i2c_bus      },
+  {"i2c_reg_r"      , cmd_i2c_reg_read     },
+  {"i2c_reg_w"      , cmd_i2c_reg_write    },
+  {"i2c_r"          , cmd_i2c_read         },
+  {"i2c_w"          , cmd_i2c_write        },
+  {"read_i2c_mux"   , cmd_read_i2c_mux     },
+  {"read_tcn75a"    , cmd_read_tcn75a      },
+  {"set_gpio"       , cmd_write_gpio_signal},
+  {"write_i2c_mux"  , cmd_write_i2c_mux    },
+  {"version"        , cmd_version          },
+  {help_str         , cmd_help             },
+  {question_mark_str, cmd_help             },
 };
 
 static const int N_COMMANDS = sizeof(cmd_map) / sizeof(cmd_map[0]);
 
 /* ================================================================ */
 
-char cmd_buffer[MAX_USER_TCPSERV_CLIENT][CMD_LINE_MAX_LEN];
+// buffer to hold expert mode for each connection
+char buff_expert[MAX_USER_TCPSERV_CLIENT];
+
+// buffer to hold output mode; 0: integer; 1: hexadecimal
+char buff_hex[MAX_USER_TCPSERV_CLIENT];
 
 /* ================================================================ */
 
@@ -278,7 +409,7 @@ user_tcpserv_connect_handler(const ip_addr_t from,
   unsigned i;
   
   /* Display information in debug console */
-  debug_printf(connection_request_str);
+  // debug_printf(connection_request_str);
   
   /* Save client information in a list */
 
@@ -313,7 +444,7 @@ user_tcpserv_connect_handler(const ip_addr_t from,
   }
 
   /* Print a warning message when no slot is available */
-  debug_printf(conn_not_avail_str);
+  // debug_printf(conn_not_avail_str);
 	
   /* And quit de function with error */
   return 1;
@@ -337,7 +468,7 @@ user_tcpserv_disconnect_handler(const ip_addr_t from,
   unsigned i;
   
   /* Display information in debug console */
-  debug_printf(disconn_req_str);
+  // debug_printf(disconn_req_str);
   
   /* Search for the client slot in the array */
   for(i=0; i < MAX_USER_TCPSERV_CLIENT; i++){
@@ -393,7 +524,7 @@ user_tcpserv_data_handler(const ip_addr_t to,
   int conn_idx = -1;
 
 
-  debug_printf("<_> ======= 1\n");
+  // debug_printf("<_> ======= 1\n");
 
   for(i = 0; i < MAX_USER_TCPSERV_CLIENT; i++){
 		
@@ -411,7 +542,7 @@ user_tcpserv_data_handler(const ip_addr_t to,
     return -1;
   }
 
-  debug_printf("<_> ======= 2\n");
+  // debug_printf("<_> ======= 2\n");
 
   // append received data to associated buffer
   // check for overflow
@@ -421,7 +552,7 @@ user_tcpserv_data_handler(const ip_addr_t to,
 
   char cmd_line[CMD_LINE_MAX_LEN];
 
-  debug_printf("<_> ======= 3\n");
+  // debug_printf("<_> ======= 3\n");
 
   // look for termination
   // copy from buffer to cmd line;
@@ -430,7 +561,7 @@ user_tcpserv_data_handler(const ip_addr_t to,
   // returns the len of the command found, or -1 otherwise
   int cmd_len = chomp_cmd(cmd_line, conn_idx);
   
-  debug_printf("<_> ======= 4\n");
+  // debug_printf("<_> ======= 4\n");
   
   if (cmd_len < 0) {
     *replyLen = 0;
@@ -438,54 +569,31 @@ user_tcpserv_data_handler(const ip_addr_t to,
   }
   
   
-  // if (data[len-2] == '\r') {
-  //   cmd_len = len-2;
-  // }
-  // else if (data[len-1] == '\n') {
-  //   cmd_len = len-1;
-  // }
-  // else {
-  //   cmd_len = len;
-  // }
+  // debug_printf("<_> user_tcpserv command line: %s\n", cmd_line);
 
-  
-  // memcpy(cmd_line, , cmd_len);
-
-  // cmd_line[cmd_len] = '\0';
-
-  // debug_printf("<_> user_tcpserv command line: ");
-  // debug_printf(cmd_line);
-  // debug_printf("\n");
-
-  debug_printf("<_> ======= 5: cmd line below\n");
-  debug_printf(cmd_line);
-  debug_printf("\n");
-  debug_printf("<_> =========: end of cmd line\n");
+  debug_printf("<_> ======= cmd line: %s\n", cmd_line);
 
   remove_extra_spaces(cmd_line);
-  // debug_printf("<_> >>>>>> no extra spaces: ");
-  // debug_printf(cmd_line);
-  // debug_printf("\n");
+  // debug_printf("<_> >>>>>> no extra spaces: %s\n", cmd_line);
 
   lowercase(cmd_line);
-  // debug_printf("<_> >>>>>> all lowercase: ");
-  // debug_printf(cmd_line);
-  // debug_printf("\n");
+  // debug_printf("<_> >>>>>> all lowercase: %s\n", cmd_line);
 
-
-  char cmd[30];
+  char cmd[MAX_PARAM_LEN];
   get_next_param(cmd, cmd_line);
   debug_printf("<_> >>>>>> cmd: %s\n", cmd);
 
   int cmd_idx = get_cmd_index(cmd);
   debug_printf("<_> >>>>>> cmd_idx: %d\n", cmd_idx);
- 
+
+  // if a command was found, execute it.
   if (cmd_idx >= 0) { 
     // execute command, get reply and associated length
-    *replyLen = cmd_map[cmd_idx].fnc_ptr(cmd_line, reply);
+    *replyLen = cmd_map[cmd_idx].fnc_ptr(cmd_line, reply, conn_idx);
     debug_printf("<_> >>>>>> cmd reply len: %d\n", *replyLen);
   }
 
+  // if a command was not found, echo it.
   else {
 
     int l = strlen(echo_str);
@@ -515,7 +623,7 @@ user_tcpserv_data_handler(const ip_addr_t to,
   }
 
   unsigned char * p = &reply[*replyLen];
-  memcpy(p, prompt_str, 3); 
+  memcpy(p, prompt_str, 3);
   *replyLen += 3;
   reply[*replyLen] = '\0';
 
@@ -531,7 +639,8 @@ user_tcpserv_data_handler(const ip_addr_t to,
 /* ================================================================ */
 
 // convert string to lowercase
-void lowercase(char s[])
+void
+lowercase(char s[])
 {
   int c = 0;
   
@@ -545,7 +654,8 @@ void lowercase(char s[])
 }
 
 
-void remove_extra_spaces(char s[])
+void
+remove_extra_spaces(char s[])
 {
   char *p, *q;
 
@@ -661,7 +771,7 @@ get_cmd_index(const char * cmd)
 
 // copy the first word from line (until delimiter) to param, removing
 // it from the content of the line.
-void
+int
 get_next_param(char * param,
                char * line)
 {
@@ -676,6 +786,12 @@ get_next_param(char * param,
   }
   *target = '\0';
 
+  // stop if no param was available
+  if (target == param) {
+    return 1;
+  }
+
+  // shift remaining characters to the beginning of the command line
   target = line;
   if (*l != '\0') {  
     l++;
@@ -687,7 +803,7 @@ get_next_param(char * param,
   }
   *target = '\0';
 
-  return;
+  return 0;
 }
 
 // append received data to associated buffer
@@ -698,14 +814,14 @@ append_to_cmd_buffer(int conn_idx,
                      unsigned short len)
 {
 
-  debug_printf("<_> ++++ append starting\n");
+  // debug_printf("<_> ++++ append starting\n");
 
   char tmp[50];
   memcpy(tmp, data, len);
   tmp[len] = '\0';
   
-  debug_printf("<_> ++++ len: %d\n", len);
-  debug_printf("<_> ++++ data: %s\n", tmp);
+  // debug_printf("<_> ++++ len: %d\n", len);
+  // debug_printf("<_> ++++ data: %s\n", tmp);
 
   int l = cmd_buf[conn_idx].len; 
   if (l + len >= CMD_LINE_MAX_LEN) {
@@ -716,7 +832,7 @@ append_to_cmd_buffer(int conn_idx,
   cmd_buf[conn_idx].len += len;
   cmd_buf[conn_idx].data[cmd_buf[conn_idx].len] = '\0';
 
-  debug_printf("<_> ++++ buf: %s\n", cmd_buf[conn_idx].data);
+  // debug_printf("<_> ++++ buf: %s\n", cmd_buf[conn_idx].data);
   
   return 0;
 }
@@ -733,13 +849,13 @@ chomp_cmd(char * cmd_line,
 {
   int i;
 
-  debug_printf("<_> ~~~~ chomp starting\n");
-  debug_printf("<_> ~~~~ cmd_idx: %d\n", conn_idx);
-  debug_printf("<_> ~~~~ cmd_len: %d\n", cmd_buf[conn_idx].len);
+  // debug_printf("<_> ~~~~ chomp starting\n");
+  // debug_printf("<_> ~~~~ cmd_idx: %d\n", conn_idx);
+  // debug_printf("<_> ~~~~ cmd_len: %d\n", cmd_buf[conn_idx].len);
 
   for (i = 0; i < cmd_buf[conn_idx].len; i++) {
 
-    debug_printf("<_> ~~~~ cmd_buff[i]: %c\n", cmd_buf[conn_idx].data[i]);
+    // debug_printf("<_> ~~~~ cmd_buff[i]: %c\n", cmd_buf[conn_idx].data[i]);
 
     if (cmd_buf[conn_idx].data[i] == '\n'
         || cmd_buf[conn_idx].data[i] == '\r'){
@@ -748,7 +864,7 @@ chomp_cmd(char * cmd_line,
       memcpy(cmd_line, cmd_buf[conn_idx].data, i);
       cmd_line[i] = '\0';
 
-      debug_printf("<_> ~~~~ terminated: %s\n", cmd_line);
+      // debug_printf("<_> ~~~~ terminated: %s\n", cmd_line);
       
 
       //remove terminator(s)
@@ -782,12 +898,13 @@ chomp_cmd(char * cmd_line,
 /* ================================================================ */
 
 int
-write_gpio_signal(char * params,
-                  unsigned char * reply)
+cmd_write_gpio_signal(char * params,
+                      unsigned char * reply,
+                      int conn_idx)
 {
   // debug_printf("<_> ======= write_gpio_signal\n");
 
-  char param[30];
+  char param[MAX_PARAM_LEN];
   get_next_param(param, params);
 
   int msg_len;
@@ -807,8 +924,6 @@ write_gpio_signal(char * params,
         msg_len = strlen(ok_str);
         memcpy(reply, ok_str, msg_len);
         return msg_len;
-        msg_len = strlen(ok_str);
-        memcpy(reply, ok_str, msg_len);
       }
     }
     else if (param[0] == '0' || param[0] == 'l') {
@@ -830,13 +945,14 @@ write_gpio_signal(char * params,
 // read pin and fill reply string with associated value. returns the
 // size of the reply.
 int
-read_gpio_signal(char * params,
-                 unsigned char * reply)
+cmd_read_gpio_signal(char * params,
+                     unsigned char * reply,
+                     int conn_idx)
 {
 
   // debug_printf("<_> ======= read_gpio_signal\n");
 
-  char param[30];
+  char param[MAX_PARAM_LEN];
   get_next_param(param, params);
 
   // debug_printf("<_> ======= ");
@@ -882,13 +998,14 @@ read_gpio_signal(char * params,
 }
 
 int
-set_expert_mode(char * params,
-                unsigned char * reply)
+cmd_set_expert_mode(char * params,
+                    unsigned char * reply,
+                    int conn_idx)
 {
 
   int reply_len = 0;
   
-  char param[30];
+  char param[MAX_PARAM_LEN];
   get_next_param(param, params);
 
 
@@ -913,8 +1030,9 @@ set_expert_mode(char * params,
 }
 
 int
-help (char * params,
-      unsigned char * reply)
+cmd_help (char * params,
+          unsigned char * reply,
+          int conn_idx)
 {
   // debug_printf("..... help 0\n");
 
@@ -982,12 +1100,14 @@ help (char * params,
 
 
 int
-write_i2c_mux(char * params, unsigned char * reply)
+cmd_write_i2c_mux(char * params,
+                  unsigned char * reply,
+                  int conn_idx)
 {
 
   int reply_len = 0;
   
-  char param[30];
+  char param[MAX_PARAM_LEN];
   get_next_param(param, params);
 
 
@@ -1013,12 +1133,14 @@ write_i2c_mux(char * params, unsigned char * reply)
 
 
 int
-read_i2c_mux(char * params, unsigned char * reply)
+cmd_read_i2c_mux(char * params,
+                 unsigned char * reply,
+                 int conn_idx)
 {
 
   int reply_len = 0;
   
-  char param[30];
+  char param[MAX_PARAM_LEN];
   get_next_param(param, params);
 
 
@@ -1042,13 +1164,15 @@ read_i2c_mux(char * params, unsigned char * reply)
 }
 
 int
-read_tcn75a(char * params, unsigned char * reply)
+cmd_read_tcn75a(char * params,
+                unsigned char * reply,
+                int conn_idx)
 {
   int reply_len = 0;
-  
-  char param[30];
-  get_next_param(param, params);
+  char ret;
+  char param[MAX_PARAM_LEN];
 
+  get_next_param(param, params);
 
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
@@ -1058,25 +1182,33 @@ read_tcn75a(char * params, unsigned char * reply)
   }
 
   unsigned char temp;
-  char ret = tcn75a_read((unsigned char *) param, &temp);
-  
-  if(ret == 0){
-    itoa(temp, (char *) reply);
-    reply_len = strlen((char *) reply);
-    reply[reply_len]='\n';
-    reply_len++;
-    reply[reply_len]='\0';    
+  ret = tcn75a_read((unsigned char *) param, &temp);
+  if (ret != 0) {
+    reply_len = strlen(error_str);
+    memcpy(reply, error_str, reply_len);
     return reply_len;
   }
-  
-  reply_len = strlen(error_str);
-  memcpy(reply, error_str, reply_len);
-  return reply_len;
 
+  
+  ret = a_from_i((char *) reply,
+                 temp,
+                 0);
+  if(ret != 0){
+    reply_len = strlen(err_i2c_itoa);
+    memcpy(reply, err_i2c_itoa, reply_len);
+    return reply_len;
+  }
+
+  reply_len = strlen((char *) reply);
+  reply[reply_len++]='\n';
+  reply[reply_len]='\0';    
+  return reply_len;
 }
 
 int
-version(char * params, unsigned char * reply)
+cmd_version(char * params,
+            unsigned char * reply,
+            int conn_idx)
 {
   int reply_len = 0;
   
@@ -1094,4 +1226,465 @@ version(char * params, unsigned char * reply)
   memcpy(reply, version_str, reply_len);
   return reply_len;
 
+}
+
+
+int
+cmd_i2c_write(char * params,
+              unsigned char * reply,
+              int conn_idx)
+{
+  int reply_len = 0;
+  char ret;
+  int aux;
+  
+  char param[MAX_PARAM_LEN];
+  ret = get_next_param(param, params);
+  if (ret != 0) {
+    reply_len = strlen(err_param);
+    memcpy(reply, err_param, reply_len);
+    return reply_len;  
+  }
+
+  if (str_eq(param, help_str) == 1
+      || str_eq(param, question_mark_str) == 1) {
+    reply_len = strlen(help_i2c_write);
+    memcpy(reply, help_i2c_write, reply_len);
+    return reply_len;
+  }
+
+
+  // getting I2C address
+  ret = i_from_a (&aux,
+                  param,
+                  &(cmd_buf[conn_idx].hex));
+  if (ret != 0) {
+    reply_len = strlen(err_i2c_addr);
+    memcpy(reply, err_i2c_addr, reply_len);
+    return reply_len;  
+  }
+
+  char i2c_addr = (char) aux;
+
+  // getting the data
+  unsigned char i2c_data[10];
+  int i2c_len = 0;
+  while (get_next_param(param, params) == 0) {
+    ret = i_from_a(&aux,
+                   param,
+                   &(cmd_buf[conn_idx].hex));
+    if (ret != 0) {
+      reply_len = strlen(err_i2c_data);
+      memcpy(reply, err_i2c_data, reply_len);
+      return reply_len;  
+    }
+
+    i2c_data[i2c_len] = (char) aux;
+    i2c_len++;
+  }
+
+  // making sure we have something to send to the target...
+  if (i2c_len == 0) {
+    reply_len = strlen(err_i2c_data);
+    memcpy(reply, err_i2c_data, reply_len);
+    return reply_len;  
+  }
+
+  // but it can not be too much...
+  if (i2c_len > 10) {
+    reply_len = strlen(err_i2c_len);
+    memcpy(reply, err_i2c_len, reply_len);
+    return reply_len;  
+  }
+
+  // writing to the I2C address
+  ret = i2c_write(i2c_addr,
+                  i2c_data,
+                  i2c_len,
+                  cmd_buf[conn_idx].i2c_bus);
+  if(ret != 0){
+    reply_len = strlen(err_i2c_write_transaction);
+    memcpy(reply, err_i2c_write_transaction, reply_len);
+    return reply_len;
+  }
+
+  reply_len = strlen(ok_str);
+  memcpy(reply, ok_str, reply_len);
+  return reply_len;  
+}
+
+int
+cmd_i2c_read(char * params,
+             unsigned char * reply,
+             int conn_idx)
+{
+  int reply_len = 0;
+  char ret;
+  int aux;  
+  
+  char param[MAX_PARAM_LEN];
+  ret = get_next_param(param, params);
+  if (ret != 0) {
+    reply_len = strlen(err_param);
+    memcpy(reply, err_param, reply_len);
+    return reply_len;  
+  }
+  
+  if (str_eq(param, help_str) == 1
+      || str_eq(param, question_mark_str) == 1) {
+    reply_len = strlen(help_i2c_read);
+    memcpy(reply, help_i2c_read, reply_len);
+    return reply_len;
+  }
+
+  debug_printf("~~~~~~~~ %s\n", param);
+  
+  // getting I2C address
+  ret = i_from_a(&aux,
+                 param,
+                 &(cmd_buf[conn_idx].hex));
+  if (ret != 0) {
+    reply_len = strlen(err_i2c_addr);
+    memcpy(reply, err_i2c_addr, reply_len);
+    return reply_len;  
+  }
+  unsigned char i2c_addr = (char) aux;
+
+  // getting the length of the reading; default to 1.
+  int i2c_len = 1;
+  if (get_next_param(param, params) == 0) {
+    // lets fake the hex parsing
+    char tmp; 
+    ret = i_from_a (&i2c_len,
+                    param,
+                    &tmp);
+    if (ret != 0 || i2c_len > 10) {
+      reply_len = strlen(err_i2c_len);
+      memcpy(reply, err_i2c_len, reply_len);
+      return reply_len;  
+    }
+  }
+
+  unsigned char i2c_raw_data[10];
+  ret = i2c_read(i2c_addr,
+                 i2c_raw_data,
+                 i2c_len,
+                 cmd_buf[conn_idx].i2c_bus);
+  if(ret != 0){
+    reply_len = strlen(err_i2c_read_transaction);
+    memcpy(reply, err_i2c_read_transaction, reply_len);
+    return reply_len;
+  }
+
+
+  int i;
+  unsigned char i2c_data[10][6];
+  for (i = 0; i < i2c_len; i++) {
+    ret = a_from_i((char *) &i2c_data[i],
+                   i2c_raw_data[i],
+                   cmd_buf[conn_idx].hex);
+    if(ret != 0){
+      reply_len = strlen(err_i2c_itoa);
+      memcpy(reply, err_i2c_itoa, reply_len);
+      return reply_len;
+    }
+  }
+
+  unsigned char * p = reply;
+  for (i = 0; i < i2c_len; i++) {
+    p += strlcpy((char *) p, (const char *) i2c_data[i]);
+    *p = ' ';
+    p++;
+  }
+  *(p-1) = '\0';
+
+  return strlen((const char *) reply);
+}
+
+
+int
+cmd_i2c_reg_write(char * params,
+                  unsigned char * reply,
+                  int conn_idx)
+{
+  int reply_len = 0;
+  char ret;
+  int aux;
+  
+  char param[MAX_PARAM_LEN];
+  ret = get_next_param(param, params);
+  if (ret != 0) {
+    reply_len = strlen(err_param);
+    memcpy(reply, err_param, reply_len);
+    return reply_len;  
+  }
+
+  if (str_eq(param, help_str) == 1
+      || str_eq(param, question_mark_str) == 1) {
+    reply_len = strlen(help_i2c_reg_write);
+    memcpy(reply, help_i2c_reg_write, reply_len);
+    return reply_len;
+  }
+
+  // getting I2C address
+  ret = i_from_a (&aux,
+                  param,
+                  &(cmd_buf[conn_idx].hex));
+  if (ret != 0) {
+    reply_len = strlen(err_i2c_addr);
+    memcpy(reply, err_i2c_addr, reply_len);
+    return reply_len;  
+  }
+  char i2c_addr = (char) aux;
+
+  // getting register address
+  ret = get_next_param(param, params);
+  if (ret != 0) {
+    reply_len = strlen(err_i2c_reg_addr);
+    memcpy(reply, err_i2c_reg_addr, reply_len);
+    return reply_len;  
+  }
+  ret = i_from_a(&aux,
+                 param,
+                 &(cmd_buf[conn_idx].hex));
+  if (ret != 0) {
+    reply_len = strlen(err_i2c_reg_addr);
+    memcpy(reply, err_i2c_reg_addr, reply_len);
+    return reply_len;  
+  }
+  unsigned char reg_addr = (char) aux;
+
+  // getting the data
+  unsigned char i2c_data[10];
+  int i2c_len = 0;
+  while (get_next_param(param, params) == 0) {
+    ret = i_from_a(&aux,
+                   param,
+                   &(cmd_buf[conn_idx].hex));
+    if (ret != 0) {
+      reply_len = strlen(err_i2c_data);
+      memcpy(reply, err_i2c_data, reply_len);
+      return reply_len;  
+    }
+
+    i2c_data[i2c_len] = (char) aux;
+    i2c_len++;
+  }
+
+  // making sure we have something to send to the target...
+  if (i2c_len == 0) {
+    reply_len = strlen(err_i2c_data);
+    memcpy(reply, err_i2c_data, reply_len);
+    return reply_len;  
+  }
+
+  // but it can not be too much...
+  if (i2c_len > 10) {
+    reply_len = strlen(err_i2c_len);
+    memcpy(reply, err_i2c_len, reply_len);
+    return reply_len;  
+  }
+
+  // writing to the I2C address
+  ret = i2c_reg_write(i2c_addr,
+                      reg_addr,
+                      i2c_data,
+                      i2c_len,
+                      cmd_buf[conn_idx].i2c_bus);
+  if(ret != 0){
+    reply_len = strlen(err_i2c_write_transaction);
+    memcpy(reply, err_i2c_write_transaction, reply_len);
+    return reply_len;
+  }
+
+  reply_len = strlen(ok_str);
+  memcpy(reply, ok_str, reply_len);
+  return reply_len;  
+}
+
+int
+cmd_i2c_reg_read(char * params,
+                 unsigned char * reply,
+                 int conn_idx)
+{
+  int reply_len = 0;
+  char ret;
+  int aux;  
+  
+  char param[MAX_PARAM_LEN];
+  ret = get_next_param(param, params);
+  if (ret != 0) {
+    reply_len = strlen(err_param);
+    memcpy(reply, err_param, reply_len);
+    return reply_len;  
+  }
+  
+  if (str_eq(param, help_str) == 1
+      || str_eq(param, question_mark_str) == 1) {
+    reply_len = strlen(help_i2c_reg_read);
+    memcpy(reply, help_i2c_reg_read, reply_len);
+    return reply_len;
+  }
+
+  debug_printf("== %s\n", param);
+  
+  // getting I2C address
+  ret = i_from_a(&aux,
+                 param,
+                 &(cmd_buf[conn_idx].hex));
+  if (ret != 0) {
+    reply_len = strlen(err_i2c_addr);
+    memcpy(reply, err_i2c_addr, reply_len);
+    return reply_len;  
+  }
+  unsigned char i2c_addr = (char) aux;
+
+  // getting register address
+  ret = get_next_param(param, params);
+  if (ret != 0) {
+    reply_len = strlen(err_i2c_reg_addr);
+    memcpy(reply, err_i2c_reg_addr, reply_len);
+    return reply_len;  
+  }
+  ret = i_from_a(&aux,
+                 param,
+                 &(cmd_buf[conn_idx].hex));
+  if (ret != 0) {
+    reply_len = strlen(err_i2c_reg_addr);
+    memcpy(reply, err_i2c_reg_addr, reply_len);
+    return reply_len;  
+  }
+  unsigned char reg_addr = (char) aux;
+
+  // getting the length of the reading; default to 1.
+  int i2c_len = 1;
+  if (get_next_param(param, params) == 0) {
+    // lets fake the hex parsing
+    char tmp; 
+    ret = i_from_a (&i2c_len,
+                    param,
+                    &tmp);
+    if (ret != 0 || i2c_len > 10) {
+      reply_len = strlen(err_i2c_len);
+      memcpy(reply, err_i2c_len, reply_len);
+      return reply_len;  
+    }
+  }
+
+  unsigned char i2c_raw_data[10];
+  ret = i2c_reg_read(i2c_addr,
+                     reg_addr,
+                     i2c_raw_data,
+                     i2c_len,
+                     cmd_buf[conn_idx].i2c_bus);
+  if(ret != 0){
+    reply_len = strlen(err_i2c_read_transaction);
+    memcpy(reply, err_i2c_read_transaction, reply_len);
+    return reply_len;
+  }
+
+  int i;
+  unsigned char i2c_data[10][6];
+  for (i = 0; i < i2c_len; i++) {
+    ret = a_from_i((char *) &i2c_data[i],
+                   i2c_raw_data[i],
+                   cmd_buf[conn_idx].hex);
+    if(ret != 0){
+      reply_len = strlen(err_i2c_itoa);
+      memcpy(reply, err_i2c_itoa, reply_len);
+      return reply_len;
+    }
+
+    debug_printf("## %s\n", i2c_data[i]);
+  }
+
+  unsigned char * p = reply;
+  for (i = 0; i < i2c_len; i++) {
+    p += strlcpy((char *) p, (const char *) i2c_data[i]);
+    *p = ' ';
+    p++;
+  }
+  *(p-1) = '\0';
+
+  debug_printf("## %s\n", reply);
+
+  return strlen((const char *) reply);
+}
+
+int
+cmd_set_i2c_bus(char * params,
+                unsigned char * reply,
+                int conn_idx)
+{
+  int reply_len = 0;
+  char ret;
+  
+  char param[MAX_PARAM_LEN];
+  ret = get_next_param(param, params);
+  if (ret != 0) {
+    reply_len = strlen(err_param);
+    memcpy(reply, err_param, reply_len);
+    return reply_len;  
+  }
+  
+  if (str_eq(param, help_str) == 1
+      || str_eq(param, question_mark_str) == 1) {
+    reply_len = strlen(help_set_i2c_bus);
+    memcpy(reply, help_set_i2c_bus, reply_len);
+    return reply_len;
+  }
+
+  // debug_printf("== %s\n", param);
+
+  if (str_eq(param, "m") == 1) {
+    cmd_buf[conn_idx].i2c_bus = 1;
+    reply_len = strlen(ok_str);
+    memcpy(reply, ok_str, reply_len);
+    return reply_len;
+  }
+  
+  if (str_eq(param, "s") == 1) {
+    cmd_buf[conn_idx].i2c_bus = 2;
+    reply_len = strlen(ok_str);
+    memcpy(reply, ok_str, reply_len);
+    return reply_len;
+  }
+  
+  reply_len = strlen(err_i2c_bus);
+  memcpy(reply, err_i2c_bus, reply_len);
+  return reply_len;
+}
+
+
+int
+cmd_get_i2c_bus(char * params,
+                unsigned char * reply,
+                int conn_idx)
+{
+  int reply_len = 0;
+  
+  char param[MAX_PARAM_LEN];
+  get_next_param(param, params);
+  if (str_eq(param, help_str) == 1
+      || str_eq(param, question_mark_str) == 1) {
+    reply_len = strlen(help_get_i2c_bus);
+    memcpy(reply, help_get_i2c_bus, reply_len);
+    return reply_len;
+  }
+
+  // debug_printf("== %s\n", param);
+
+  if (cmd_buf[conn_idx].i2c_bus == 1) {
+    reply_len = strlen(str_i2c_bus_management);
+    memcpy(reply, str_i2c_bus_management, reply_len);
+    return reply_len;
+  }
+
+  if (cmd_buf[conn_idx].i2c_bus == 2) {
+    reply_len = strlen(str_i2c_bus_sensor);
+    memcpy(reply, str_i2c_bus_sensor, reply_len);
+    return reply_len;
+  }
+
+  return 0;
 }
