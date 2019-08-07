@@ -32,25 +32,31 @@
     <!-- <PowerMonitoringEn /> -->
     <!-- <AlertMonitoringEn />-->
     
-    <SerialIntf>SDI_INTF</SerialIntf>
-    <RedirectSDItoSOL/>
+    <SerialIntf>SOL_INTF</SerialIntf>
     
   </GeneralConfig>
   
   <PowerManagement>
     
     <PowerONSeq>
-      <step>PSQ_ENABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step>
-      <!-- GPIO logic are inverted -->
-      <step>PSQ_DISABLE_SIGNAL(USER_IO_3)</step>
-      <step>PSQ_END</step>
+  <!-- Make sure UART ADDR 1 downto 0 is "01" -->        
+      <step>PSQ_DISABLE_SIGNAL(USER_IO_5)</step> <!-- Set ADDR0 to 1-->
+      <step>PSQ_ENABLE_SIGNAL(USER_IO_6)</step>  <!-- Set ADDR1 to 0-->
+      <step>PSQ_ENABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step> <!-- turn on 12V-->       
+      <!-- GPIO logic are inverted -->   
+      <step>PSQ_DISABLE_SIGNAL(USER_IO_3)</step> <!-- Start Zynq power up sequence-->      
+      <step>PSQ_ENABLE_SIGNAL(USER_IO_5)</step>  <!-- Set ADDR0 to 0-->
+      <step>PSQ_ENABLE_SIGNAL(USER_IO_6)</step>  <!-- Set ADDR1 to 0-->
+      <step>PSQ_END</step>     
     </PowerONSeq>
     
     <PowerOFFSeq>
-      <!-- GPIO logic are inverted -->
-      <step>PSQ_ENABLE_SIGNAL(USER_IO_3)</step>
-      <step>PSQ_DISABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step>
-      <step>PSQ_END</step>
+      <!-- GPIO logic are inverted -->   
+      <step>PSQ_DISABLE_SIGNAL(USER_IO_5)</step> <!-- Set ADDR0 to 1-->
+      <step>PSQ_ENABLE_SIGNAL(USER_IO_6)</step>  <!-- Set ADDR1 to 0-->
+      <step>PSQ_ENABLE_SIGNAL(USER_IO_3)</step>  <!-- Shutdow Zynq supplies-->   
+      <step>PSQ_DISABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step> <!-- turn off 12V-->     
+      <step>PSQ_END</step>      
     </PowerOFFSeq>
     
   </PowerManagement>
