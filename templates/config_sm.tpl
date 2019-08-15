@@ -47,11 +47,13 @@
       <step>PSQ_DISABLE_SIGNAL(USER_IO_3)</step> <!-- Start Zynq power up sequence-->      
       <step>PSQ_ENABLE_SIGNAL(USER_IO_5)</step>  <!-- Set ADDR0 to 0-->
       <step>PSQ_ENABLE_SIGNAL(USER_IO_6)</step>  <!-- Set ADDR1 to 0-->
+      <step>PSQ_DISABLE_SIGNAL(USER_IO_9)</step> <!-- enable i2c mux -->
       <step>PSQ_END</step>     
     </PowerONSeq>
     
     <PowerOFFSeq>
-      <!-- GPIO logic are inverted -->   
+      <!-- GPIO logic are inverted -->
+      <step>PSQ_ENABLE_SIGNAL(USER_IO_9)</step> <!-- disable i2c mux -->
       <step>PSQ_DISABLE_SIGNAL(USER_IO_5)</step> <!-- Set ADDR0 to 1-->
       <step>PSQ_ENABLE_SIGNAL(USER_IO_6)</step>  <!-- Set ADDR1 to 0-->
       <step>PSQ_ENABLE_SIGNAL(USER_IO_3)</step>  <!-- Shutdow Zynq supplies-->   
@@ -89,75 +91,6 @@
     
   </LANConfig>
   
-  <!--	
-      <AMCSlots>
-      
-      <AMC site="1">
-      <PhysicalPort>1</PhysicalPort>
-      <MaxCurrent>6.0</MaxCurrent>
-      <PowerGoodTimeout>300</PowerGoodTimeout>
-      <DCDCEfficiency>85</DCDCEfficiency>
-      </AMC>
-      
-      <AMC site="2">
-      <PhysicalPort>2</PhysicalPort>
-      <MaxCurrent>6.0</MaxCurrent>
-      <PowerGoodTimeout>300</PowerGoodTimeout>
-      <DCDCEfficiency>85</DCDCEfficiency>
-      </AMC>
-      
-      <AMC site="3">
-      <PhysicalPort>3</PhysicalPort>
-      <MaxCurrent>6.0</MaxCurrent>
-      <PowerGoodTimeout>300</PowerGoodTimeout>
-      <DCDCEfficiency>85</DCDCEfficiency>
-      </AMC>
-      
-      <AMC site="4">
-      <PhysicalPort>4</PhysicalPort>
-      <MaxCurrent>6.0</MaxCurrent>
-      <PowerGoodTimeout>300</PowerGoodTimeout>
-      <DCDCEfficiency>85</DCDCEfficiency>
-      </AMC>
-      
-      <AMC site="5">
-      <PhysicalPort>5</PhysicalPort>
-      <MaxCurrent>6.0</MaxCurrent>
-      <PowerGoodTimeout>300</PowerGoodTimeout>
-      <DCDCEfficiency>85</DCDCEfficiency>
-      </AMC>
-      
-      <AMC site="6">
-      <PhysicalPort>6</PhysicalPort>
-      <MaxCurrent>6.0</MaxCurrent>
-      <PowerGoodTimeout>300</PowerGoodTimeout>
-      <DCDCEfficiency>85</DCDCEfficiency>
-      </AMC>
-      
-      <AMC site="7">
-      <PhysicalPort>7</PhysicalPort>
-      <MaxCurrent>6.0</MaxCurrent>
-      <PowerGoodTimeout>300</PowerGoodTimeout>
-      <DCDCEfficiency>85</DCDCEfficiency>
-      </AMC>
-      
-      <AMC site="8">
-      <PhysicalPort>8</PhysicalPort>
-      <MaxCurrent>6.0</MaxCurrent>
-      <PowerGoodTimeout>300</PowerGoodTimeout>
-      <DCDCEfficiency>85</DCDCEfficiency>
-      </AMC>
-      
-      </AMCSlots>
-      
-      <iRTMSlot>
-      <PhysicalPort>0</PhysicalPort>
-      <MaxCurrent>6.0</MaxCurrent>
-      <Address>0xea</Address>
-      <PowerGoodTimeout>300</PowerGoodTimeout>
-      <DCDCEfficiency>85</DCDCEfficiency>
-      </iRTMSlot>
-  -->
   <SensorList>
     
     <Sensors type="MCP9801">
