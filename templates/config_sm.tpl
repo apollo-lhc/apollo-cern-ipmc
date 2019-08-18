@@ -94,7 +94,6 @@
   <SensorList>
     
     <Sensors type="MCP9801">
-      
       <Sensor>
 	<Name>Internal temp.</Name>
 	
@@ -120,7 +119,123 @@
 	</Thresholds>
 	
       </Sensor>
+    </Sensors>
+
+    <Sensors type="raw" global_define="CFG_SENSOR_TCN75A" function_name="SENSOR_TCN75A" rawType="TCN75A"> 
+			 
+      <Sensor> 
+        <Name>U34 Temp</Name> 
+        
+        <Type>Temperature</Type> 
+        <Units>degrees C</Units> 
+        
+        <NominalReading>25</NominalReading> 
+        <NormalMaximum>50</NormalMaximum> 
+        <NormalMinimum>0</NormalMinimum> 
+        
+        <Point id="0" x="0" y="0" /> 
+        <Point id="1" x="7" y="7" /> 
+        
+        <Thresholds> 
+          <UpperNonRecovery>50</UpperNonRecovery> 
+          <UpperCritical>43</UpperCritical> 
+          <UpperNonCritical>38</UpperNonCritical> 
+          <LowerNonRecovery>0</LowerNonRecovery> 
+          <LowerCritical>0</LowerCritical> 
+          <LowerNonCritical>0</LowerNonCritical> 
+        </Thresholds> 
+        
+        <Params> 
+          <p type="record_id">100</p>  <!-- mandatory --> 
+          <p type="user">34</p> <!--unsigned char id-->
+          <p type="user">UCGH | UNRGH</p> 
+        </Params> 
+        
+        <AssertEvMask>0x0A80</AssertEvMask> 
+        <DeassertEvMask>0x7A80</DeassertEvMask> 
+        <DiscreteRdMask>0x3838</DiscreteRdMask> 
+        <AnalogDataFmt>UNSIGNED</AnalogDataFmt> 
+        <PosHysteresis>0</PosHysteresis> 
+        <NegHysteresis>0</NegHysteresis> 
+        <MaxReading>80</MaxReading> 
+        <MinReading>0</MinReading> 
+        
+      </Sensor> 
       
+      <Sensor> 
+        <Name>U35 Temp</Name> 
+        
+        <Type>Temperature</Type> 
+        <Units>degrees C</Units> 
+        
+        <NominalReading>25</NominalReading> 
+        <NormalMaximum>50</NormalMaximum> 
+        <NormalMinimum>0</NormalMinimum> 
+        
+        <Point id="0" x="0" y="0" /> 
+        <Point id="1" x="7" y="7" /> 
+        
+        <Thresholds> 
+          <UpperNonRecovery>50</UpperNonRecovery> 
+          <UpperCritical>43</UpperCritical> 
+          <UpperNonCritical>38</UpperNonCritical> 
+          <LowerNonRecovery>0</LowerNonRecovery> 
+          <LowerCritical>0</LowerCritical> 
+          <LowerNonCritical>0</LowerNonCritical> 
+        </Thresholds> 
+        
+        <Params> 
+          <p type="record_id">101</p>  <!-- mandatory --> 
+          <p type="user">35</p> <!--unsigned char id-->
+          <p type="user">UCGH | UNRGH</p> 
+        </Params> 
+        
+        <AssertEvMask>0x0A80</AssertEvMask> 
+        <DeassertEvMask>0x7A80</DeassertEvMask> 
+        <DiscreteRdMask>0x3838</DiscreteRdMask> 
+        <AnalogDataFmt>UNSIGNED</AnalogDataFmt> 
+        <PosHysteresis>0</PosHysteresis> 
+        <NegHysteresis>0</NegHysteresis> 
+        <MaxReading>80</MaxReading> 
+        <MinReading>0</MinReading> 
+      </Sensor> 
+      <Sensor> 
+        <Name>U36 Temp</Name> 
+        
+        <Type>Temperature</Type> 
+        <Units>degrees C</Units> 
+        
+        <NominalReading>25</NominalReading> 
+        <NormalMaximum>50</NormalMaximum> 
+        <NormalMinimum>0</NormalMinimum> 
+        
+        <Point id="0" x="0" y="0" /> 
+        <Point id="1" x="7" y="7" /> 
+        
+        <Thresholds> 
+          <UpperNonRecovery>50</UpperNonRecovery> 
+          <UpperCritical>43</UpperCritical> 
+          <UpperNonCritical>38</UpperNonCritical> 
+          <LowerNonRecovery>0</LowerNonRecovery> 
+          <LowerCritical>0</LowerCritical> 
+          <LowerNonCritical>0</LowerNonCritical> 
+        </Thresholds> 
+        
+        <Params> 
+          <p type="record_id">102</p>  <!-- mandatory --> 
+          <p type="user">36</p> <!--unsigned char id-->
+          <p type="user">UCGH | UNRGH</p> 
+        </Params> 
+        
+        <AssertEvMask>0x0A80</AssertEvMask> 
+        <DeassertEvMask>0x7A80</DeassertEvMask> 
+        <DiscreteRdMask>0x3838</DiscreteRdMask> 
+        <AnalogDataFmt>UNSIGNED</AnalogDataFmt> 
+        <PosHysteresis>0</PosHysteresis> 
+        <NegHysteresis>0</NegHysteresis> 
+        <MaxReading>80</MaxReading> 
+        <MinReading>0</MinReading>     
+      </Sensor> 
     </Sensors>
     
   </SensorList>
