@@ -41,6 +41,7 @@ static pin_map_t pin_map[] = {
   {"fp_latch"         , 0, 0, CFG_HANDLE_SWITCH_SIGNAL  , 0},
   {"blue_led"         , 1, 1, CFG_BLUE_LED_SIGNAL       , 1},
   {"payload_reset_n"  , 0, 1, CFG_PAYLOAD_RESET_SIGNAL  , 1},
+  {"init_flag"        , 1, 1, USER_IO_14                , 0},
 };
 
 /* ================================================================ */
@@ -72,45 +73,60 @@ get_signal_index(const char * sm_signal_name)
   return -1;
 }
 
+int
+unprotected_activate_gpio(int idx)
+{
+  if (pin_map[idx].output == 0) {
+    // pin is input
+    return -2;
+  }
+    
+  signal_t userio_sig = pin_map[idx].ipmc_name;
+  if (1 == str_eq(pin_map[idx].sm_name, "en_12v")) {
+    signal_activate(&userio_sig);
+  } else {
+    // reversed for some reason
+    signal_deactivate(&userio_sig);
+  }
+  
+  return 0;
+}
 
 int
 activate_gpio(int idx)
 {
-  if ( (pin_map[idx].output == 1 && pin_map[idx].expert == 0)
-       || (pin_map[idx].output == 1
-           && pin_map[idx].expert == 1 && expert_mode == 1) ) {
-    
-    signal_t userio_sig = pin_map[idx].ipmc_name;
-    
-    if(1 == str_eq(pin_map[idx].sm_name, "en_12v")){
-      signal_activate(&userio_sig);
-    }
-    else {
-      signal_deactivate(&userio_sig);
-    }
-    return 0;
+  if (pin_map[idx].expert == 1 && expert_mode == 0) {
+    return -1;
   }
-  return -1;
+  return unprotected_activate_gpio(idx);
+}
+
+int
+unprotected_deactivate_gpio(int idx)
+{
+  if (pin_map[idx].output == 0) {
+    // pin is input
+    return -2;
+  }
+    
+  signal_t userio_sig = pin_map[idx].ipmc_name;
+  if (1 == str_eq(pin_map[idx].sm_name, "en_12v")) {
+    signal_deactivate(&userio_sig);
+  } else {
+    // reversed for some reason
+    signal_activate(&userio_sig);
+  }
+  
+  return 0;
 }
 
 int
 deactivate_gpio(int idx)
 {
-  if ( (pin_map[idx].output == 1 && pin_map[idx].expert == 0)
-       || (pin_map[idx].output == 1
-           && pin_map[idx].expert == 1 && expert_mode == 1) ) {
-    
-    signal_t userio_sig = pin_map[idx].ipmc_name;
-    
-    if(1 == str_eq(pin_map[idx].sm_name, "en_12v")){
-      signal_deactivate(&userio_sig);
-    }
-    else {
-      signal_activate(&userio_sig);
-    }
-    return 0;
+  if (pin_map[idx].expert == 1 && expert_mode == 0) {
+    return -1;
   }
-  return -1;
+  return unprotected_deactivate_gpio(idx);
 }
 
 // read pin and fill reply string with associated value. returns the
@@ -167,17 +183,12 @@ void
 gpio_init(void)
 {
   int i;
-  enable_expert_mode();
   for (i = 0; i < N_PINS; i++) {
-    if (pin_map[i].output == 1) {
-      if (pin_map[i].initial > 0) {
-        activate_gpio(i);
-      }
-      else {
-        deactivate_gpio(i);
-      }
+    if (pin_map[i].initial == 1) {
+      unprotected_activate_gpio(i);
+    } else {
+      unprotected_deactivate_gpio(i);
     }
   }
-  disable_expert_mode();
   return;
 }

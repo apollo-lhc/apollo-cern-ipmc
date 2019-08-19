@@ -22,7 +22,7 @@
     <ProductVersion type="major">1</ProductVersion>	
     <ProductVersion type="minor">20</ProductVersion>			
     
-    <MaxCurrent>10.0</MaxCurrent>
+    <MaxCurrent>20.0</MaxCurrent>
     <MaxInternalCurrent>1.0</MaxInternalCurrent>
     
     <!-- Hardware -->
@@ -39,15 +39,40 @@
   <PowerManagement>
     
     <PowerONSeq>
-  <!-- Make sure UART ADDR 1 downto 0 is "01" -->        
+      <!-- =======================
+           GPIO logic are inverted 
+           ======================= -->   
+      
+      <!-- Make sure UART ADDR 1 downto 0 is "01" -->        
       <step>PSQ_DISABLE_SIGNAL(USER_IO_5)</step> <!-- Set ADDR0 to 1-->
       <step>PSQ_ENABLE_SIGNAL(USER_IO_6)</step>  <!-- Set ADDR1 to 0-->
-      <step>PSQ_ENABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step> <!-- turn on 12V-->       
-      <!-- GPIO logic are inverted -->   
-      <step>PSQ_DISABLE_SIGNAL(USER_IO_3)</step> <!-- Start Zynq power up sequence-->      
+
+      <!-- turn on 12V-->       
+      <step>PSQ_ENABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step> 
+
+      <!-- Start Zynq power up sequence-->      
+      <step>PSQ_DISABLE_SIGNAL(USER_IO_3)</step>
+
+      <!-- let's wait 1s for power good to be received, fail if not -->
+      <step>PSQ_SET_TIMER(0, 1000)</step> <!-- timer 0 -->
+      <step>PSQ_JUMP_IFNOT_TIMEOUT(0, 1)</step>
+      <step>PSQ_FAIL</step>
+      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(USER_IO_13, -2)</step> <!-- eth_sw_pwr_good == 0? -->
+
+      <!-- Make sure UART ADDR 1 downto 0 is "00" -->        
       <step>PSQ_ENABLE_SIGNAL(USER_IO_5)</step>  <!-- Set ADDR0 to 0-->
       <step>PSQ_ENABLE_SIGNAL(USER_IO_6)</step>  <!-- Set ADDR1 to 0-->
-      <step>PSQ_DISABLE_SIGNAL(USER_IO_9)</step> <!-- enable i2c mux -->
+
+      <!-- let's wait 10s for Zynq to wake up, fail if not -->
+      <step>PSQ_SET_TIMER(1, 10000)</step> <!-- timer 1 -->
+      <step>PSQ_JUMP_IFNOT_TIMEOUT(1, 1)</step>
+      <step>PSQ_FAIL</step>
+      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(USER_IO_14, -2)</step> <!-- init_flatg == 0? -->
+
+      <!-- enable i2c mux -->
+      <step>PSQ_DISABLE_SIGNAL(USER_IO_9)</step>
+
+      <!-- sucess!! -->
       <step>PSQ_END</step>     
     </PowerONSeq>
     
@@ -94,7 +119,6 @@
   <SensorList>
     
     <Sensors type="MCP9801">
-      
       <Sensor>
 	<Name>Internal temp.</Name>
 	
@@ -120,7 +144,123 @@
 	</Thresholds>
 	
       </Sensor>
+    </Sensors>
+
+    <Sensors type="raw" global_define="CFG_SENSOR_TCN75A" function_name="SENSOR_TCN75A" rawType="TCN75A"> 
+			 
+      <Sensor> 
+        <Name>U34 Temp</Name> 
+        
+        <Type>Temperature</Type> 
+        <Units>degrees C</Units> 
+        
+        <NominalReading>25</NominalReading> 
+        <NormalMaximum>50</NormalMaximum> 
+        <NormalMinimum>0</NormalMinimum> 
+        
+        <Point id="0" x="0" y="0" /> 
+        <Point id="1" x="7" y="7" /> 
+        
+        <Thresholds> 
+          <UpperNonRecovery>50</UpperNonRecovery> 
+          <UpperCritical>43</UpperCritical> 
+          <UpperNonCritical>38</UpperNonCritical> 
+          <LowerNonRecovery>0</LowerNonRecovery> 
+          <LowerCritical>0</LowerCritical> 
+          <LowerNonCritical>0</LowerNonCritical> 
+        </Thresholds> 
+        
+        <Params> 
+          <p type="record_id">100</p>  <!-- mandatory --> 
+          <p type="user">34</p> <!--unsigned char id-->
+          <p type="user">UCGH | UNRGH</p> 
+        </Params> 
+        
+        <AssertEvMask>0x0A80</AssertEvMask> 
+        <DeassertEvMask>0x7A80</DeassertEvMask> 
+        <DiscreteRdMask>0x3838</DiscreteRdMask> 
+        <AnalogDataFmt>UNSIGNED</AnalogDataFmt> 
+        <PosHysteresis>0</PosHysteresis> 
+        <NegHysteresis>0</NegHysteresis> 
+        <MaxReading>80</MaxReading> 
+        <MinReading>0</MinReading> 
+        
+      </Sensor> 
       
+      <Sensor> 
+        <Name>U35 Temp</Name> 
+        
+        <Type>Temperature</Type> 
+        <Units>degrees C</Units> 
+        
+        <NominalReading>25</NominalReading> 
+        <NormalMaximum>50</NormalMaximum> 
+        <NormalMinimum>0</NormalMinimum> 
+        
+        <Point id="0" x="0" y="0" /> 
+        <Point id="1" x="7" y="7" /> 
+        
+        <Thresholds> 
+          <UpperNonRecovery>50</UpperNonRecovery> 
+          <UpperCritical>43</UpperCritical> 
+          <UpperNonCritical>38</UpperNonCritical> 
+          <LowerNonRecovery>0</LowerNonRecovery> 
+          <LowerCritical>0</LowerCritical> 
+          <LowerNonCritical>0</LowerNonCritical> 
+        </Thresholds> 
+        
+        <Params> 
+          <p type="record_id">101</p>  <!-- mandatory --> 
+          <p type="user">35</p> <!--unsigned char id-->
+          <p type="user">UCGH | UNRGH</p> 
+        </Params> 
+        
+        <AssertEvMask>0x0A80</AssertEvMask> 
+        <DeassertEvMask>0x7A80</DeassertEvMask> 
+        <DiscreteRdMask>0x3838</DiscreteRdMask> 
+        <AnalogDataFmt>UNSIGNED</AnalogDataFmt> 
+        <PosHysteresis>0</PosHysteresis> 
+        <NegHysteresis>0</NegHysteresis> 
+        <MaxReading>80</MaxReading> 
+        <MinReading>0</MinReading> 
+      </Sensor> 
+      <Sensor> 
+        <Name>U36 Temp</Name> 
+        
+        <Type>Temperature</Type> 
+        <Units>degrees C</Units> 
+        
+        <NominalReading>25</NominalReading> 
+        <NormalMaximum>50</NormalMaximum> 
+        <NormalMinimum>0</NormalMinimum> 
+        
+        <Point id="0" x="0" y="0" /> 
+        <Point id="1" x="7" y="7" /> 
+        
+        <Thresholds> 
+          <UpperNonRecovery>50</UpperNonRecovery> 
+          <UpperCritical>43</UpperCritical> 
+          <UpperNonCritical>38</UpperNonCritical> 
+          <LowerNonRecovery>0</LowerNonRecovery> 
+          <LowerCritical>0</LowerCritical> 
+          <LowerNonCritical>0</LowerNonCritical> 
+        </Thresholds> 
+        
+        <Params> 
+          <p type="record_id">102</p>  <!-- mandatory --> 
+          <p type="user">36</p> <!--unsigned char id-->
+          <p type="user">UCGH | UNRGH</p> 
+        </Params> 
+        
+        <AssertEvMask>0x0A80</AssertEvMask> 
+        <DeassertEvMask>0x7A80</DeassertEvMask> 
+        <DiscreteRdMask>0x3838</DiscreteRdMask> 
+        <AnalogDataFmt>UNSIGNED</AnalogDataFmt> 
+        <PosHysteresis>0</PosHysteresis> 
+        <NegHysteresis>0</NegHysteresis> 
+        <MaxReading>80</MaxReading> 
+        <MinReading>0</MinReading>     
+      </Sensor> 
     </Sensors>
     
   </SensorList>

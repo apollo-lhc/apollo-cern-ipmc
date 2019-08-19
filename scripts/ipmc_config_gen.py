@@ -6,11 +6,13 @@ ip_addr_map = {}
 ip_addr_map[0] = "192.168.1.34"
 ip_addr_map[3] = "192.168.20.72"
 ip_addr_map[5] = "192.168.20.56"
+ip_addr_map[7] = "192.168.20.69"
 
 mac_addr_map = {}
 mac_addr_map[0] = "0A:0A:0A:0A:0A:CC"
 mac_addr_map[3] = "00:50:51:FF:00:03"
 mac_addr_map[5] = "00:50:51:FF:00:05"
+mac_addr_map[7] = "00:50:51:FF:00:07"
 
 def fill_template(template_file, ipmc_id):
 

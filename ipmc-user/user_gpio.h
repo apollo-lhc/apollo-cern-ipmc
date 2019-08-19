@@ -26,7 +26,13 @@ int
 activate_gpio(int idx);
 
 int
+unprotected_activate_gpio(int idx);
+
+int
 deactivate_gpio(int idx);
+
+int
+unprotected_deactivate_gpio(int idx);
 
 int
 get_gpio_state(int idx);
