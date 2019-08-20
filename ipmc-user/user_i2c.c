@@ -73,7 +73,7 @@ i2c_reg_read(unsigned char i2c_addr,
              char i2c_bus)
 {
   i2c_addr <<= 1;
-  i2c_addr |= 1;
+  // i2c_addr |= 1;
   short int full_addr = MO_CHANNEL_ADDRESS(i2c_bus, i2c_addr);
   char ret = i2c_dev_read_reg(full_addr,
                               reg_addr,
