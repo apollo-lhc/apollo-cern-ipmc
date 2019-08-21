@@ -22,6 +22,7 @@ Version ..... : V0.2 - 2019-07-31
 #include <user_tcn75a.h>
 #include <user_gpio.h>
 #include <user_i2c.h>
+#include <user_version.h>
 
 #include <user_helpers.h>
 
@@ -154,7 +155,6 @@ static const char tcn75a_help_str[] =
 static const char error_str[] =
   "Something has gone wrong.\n";
 
-static const char version_str[] = "0.0.0-11\n";
 static const char version_help_str[] =
   "Usage: version\n";
 
@@ -1222,10 +1222,8 @@ cmd_version(char * params,
     return reply_len;
   }
 
-  reply_len = strlen(version_str);
-  memcpy(reply, version_str, reply_len);
+  reply_len = get_version(reply);
   return reply_len;
-
 }
 
 
