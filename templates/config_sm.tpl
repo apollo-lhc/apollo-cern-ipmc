@@ -22,7 +22,7 @@
     <ProductVersion type="major">1</ProductVersion>	
     <ProductVersion type="minor">20</ProductVersion>			
     
-    <MaxCurrent>10.0</MaxCurrent>
+    <MaxCurrent>20.0</MaxCurrent>
     <MaxInternalCurrent>1.0</MaxInternalCurrent>
     
     <!-- Hardware -->
@@ -39,15 +39,40 @@
   <PowerManagement>
     
     <PowerONSeq>
-  <!-- Make sure UART ADDR 1 downto 0 is "01" -->        
+      <!-- =======================
+           GPIO logic are inverted 
+           ======================= -->   
+      
+      <!-- Make sure UART ADDR 1 downto 0 is "01" -->        
       <step>PSQ_DISABLE_SIGNAL(USER_IO_5)</step> <!-- Set ADDR0 to 1-->
       <step>PSQ_ENABLE_SIGNAL(USER_IO_6)</step>  <!-- Set ADDR1 to 0-->
-      <step>PSQ_ENABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step> <!-- turn on 12V-->       
-      <!-- GPIO logic are inverted -->   
-      <step>PSQ_DISABLE_SIGNAL(USER_IO_3)</step> <!-- Start Zynq power up sequence-->      
+
+      <!-- turn on 12V-->       
+      <step>PSQ_ENABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step> 
+
+      <!-- Start Zynq power up sequence-->      
+      <step>PSQ_DISABLE_SIGNAL(USER_IO_3)</step>
+
+      <!-- let's wait 1s for power good to be received, fail if not -->
+      <step>PSQ_SET_TIMER(0, 1000)</step> <!-- timer 0 -->
+      <step>PSQ_JUMP_IFNOT_TIMEOUT(0, 1)</step>
+      <step>PSQ_FAIL</step>
+      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(USER_IO_13, -2)</step> <!-- eth_sw_pwr_good == 0? -->
+
+      <!-- Make sure UART ADDR 1 downto 0 is "00" -->        
       <step>PSQ_ENABLE_SIGNAL(USER_IO_5)</step>  <!-- Set ADDR0 to 0-->
       <step>PSQ_ENABLE_SIGNAL(USER_IO_6)</step>  <!-- Set ADDR1 to 0-->
-      <step>PSQ_DISABLE_SIGNAL(USER_IO_9)</step> <!-- enable i2c mux -->
+
+      <!-- let's wait 10s for Zynq to wake up, fail if not -->
+      <step>PSQ_SET_TIMER(1, 10000)</step> <!-- timer 1 -->
+      <step>PSQ_JUMP_IFNOT_TIMEOUT(1, 1)</step>
+      <step>PSQ_FAIL</step>
+      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(USER_IO_14, -2)</step> <!-- init_flatg == 0? -->
+
+      <!-- enable i2c mux -->
+      <step>PSQ_DISABLE_SIGNAL(USER_IO_9)</step>
+
+      <!-- sucess!! -->
       <step>PSQ_END</step>     
     </PowerONSeq>
     
