@@ -41,7 +41,7 @@ static pin_map_t pin_map[] = {
   {"fp_latch"         , 0, 0, CFG_HANDLE_SWITCH_SIGNAL  , 0},
   {"blue_led"         , 1, 1, CFG_BLUE_LED_SIGNAL       , 1},
   {"payload_reset_n"  , 0, 1, CFG_PAYLOAD_RESET_SIGNAL  , 1},
-  {"startup_flag"     , 1, 1, USER_IO_14                , 0},
+  {"startup_flag"     , 1, 1, USER_IO_14                , 0}
 };
 
 /* ================================================================ */

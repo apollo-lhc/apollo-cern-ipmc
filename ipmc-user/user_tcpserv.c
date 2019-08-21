@@ -23,6 +23,7 @@ Version ..... : V0.2 - 2019-07-31
 #include <user_gpio.h>
 #include <user_i2c.h>
 #include <user_version.h>
+#include <user_zynq.h>
 
 #include <user_helpers.h>
 
@@ -77,14 +78,16 @@ chomp_cmd(char * cmd_line,
 // in stack.
 
 static const char connection_request_str[] =
-  "<_> user_tcpserv: " "New connection request\n";
+  "<_> user_tcpserv: "
+  "New connection request\n";
 
 static const char conn_not_avail_str[] =
   "<W> user_tcpserv: "
   "No user_tcpserv connection slot available\n";
 
 static const char disconn_req_str[] =
-  "<_> user_tcpserv: " "Disconnect request received\n";
+  "<_> user_tcpserv: "
+  "Disconnect request received\n";
 
 static const char expert_str[] =
   "Expert mode is enabled.\n";
@@ -229,6 +232,13 @@ static const char str_i2c_bus_management[] =
 static const char str_i2c_bus_sensor[] =
   "Sensor\n";
 
+static const char help_zynq_reset[] =
+  "Reset only Zynq.\n"
+  "Usage: zynq_reset\n";
+
+static const char err_zynq_reset[] =
+  "Zynq reset did not happen.\n";
+
 
 /* ================================================================ */
 
@@ -303,6 +313,11 @@ cmd_get_i2c_bus(char * params,
                 unsigned char * reply,
                 int conn_idx);
 
+int
+cmd_zynq_reset(char * params,
+               unsigned char * reply,
+               int conn_idx);
+
 /* ================================================================ */
 
 typedef struct cmd_map_n {
@@ -324,19 +339,20 @@ static cmd_map_t cmd_map[] = {
   {"set_gpio"       , cmd_write_gpio_signal},
   {"write_i2c_mux"  , cmd_write_i2c_mux    },
   {"version"        , cmd_version          },
+  {"zynq_reset"     , cmd_zynq_reset       },
   {help_str         , cmd_help             },
-  {question_mark_str, cmd_help             },
+  {question_mark_str, cmd_help             }
 };
 
 static const int N_COMMANDS = sizeof(cmd_map) / sizeof(cmd_map[0]);
 
 /* ================================================================ */
 
-// buffer to hold expert mode for each connection
-char buff_expert[MAX_USER_TCPSERV_CLIENT];
-
-// buffer to hold output mode; 0: integer; 1: hexadecimal
-char buff_hex[MAX_USER_TCPSERV_CLIENT];
+// // buffer to hold expert mode for each connection
+// char buff_expert[MAX_USER_TCPSERV_CLIENT];
+// 
+// // buffer to hold output mode; 0: integer; 1: hexadecimal
+// char buff_hex[MAX_USER_TCPSERV_CLIENT];
 
 /* ================================================================ */
 
@@ -1686,3 +1702,28 @@ cmd_get_i2c_bus(char * params,
 
   return 0;
 }
+
+
+int
+cmd_zynq_reset(char * params,
+               unsigned char * reply,
+               int conn_idx)
+{
+//   char param[MAX_PARAM_LEN];
+//   if (get_next_param(param, params) == 0) {
+//     if (str_eq(param, help_str) == 1
+//         || str_eq(param, question_mark_str) == 1) {
+//       return strlcpy((char *) reply, (char *) help_zynq_reset);
+//     }
+//   }
+// 
+//   if (zynq_reset()) {
+//     return strlcpy((char *) reply, (char *) ok_str);
+//   }
+//   
+//   return strlcpy((char *) reply, (char *) err_zynq_reset);
+  return 0;
+}
+
+  
+

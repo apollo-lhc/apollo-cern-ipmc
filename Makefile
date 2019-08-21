@@ -2,12 +2,12 @@
 
 REVISION := $(shell svn info --show-item revision)
 BRANCH := $(shell basename $$(pwd))
-REVISION_STR := 'static const char version_str[] = "$(REVISION) $(BRANCH)";'
-
+DATE := $(shell date)
+REVISION_STR := 'static const char version_str[] = "$(REVISION) $(BRANCH) $(DATE)";'
 
 .ONESHELL:
 all:
 	@echo $(REVISION_STR) > ipmc-user/user_version_def.h
-	echo "Current repository: $(REVISION) $(BRANCH)"
+	echo "Current repository: $(REVISION) $(BRANCH) $(DATE)"
 	python ./compile.py
 
