@@ -31,7 +31,7 @@ static pin_map_t pin_map[] = {
   {"uart_addr1"       , 1, 0, USER_IO_6                 , 0}, 
   {"zynq_boot_mode0"  , 1, 1, USER_IO_7                 , 1}, 
   {"zynq_boot_mode1"  , 1, 1, USER_IO_8                 , 1}, 
-  {"sense_rst_n"      , 1, 0, USER_IO_9                 , 0}, 
+  {"sense_rst_n"      , 1, 0, USER_IO_9                 , 1}, 
   {"mezz2_en"         , 1, 0, USER_IO_10                , 0}, 
   {"mezz1_en"         , 1, 0, USER_IO_11                , 0}, 
   {"m24512_we_n"      , 1, 0, USER_IO_12                , 1}, 
@@ -41,7 +41,7 @@ static pin_map_t pin_map[] = {
   {"fp_latch"         , 0, 0, CFG_HANDLE_SWITCH_SIGNAL  , 0},
   {"blue_led"         , 1, 1, CFG_BLUE_LED_SIGNAL       , 1},
   {"payload_reset_n"  , 0, 1, CFG_PAYLOAD_RESET_SIGNAL  , 1},
-  {"init_flag"        , 1, 1, USER_IO_14                , 0},
+  {"startup_flag"     , 1, 1, USER_IO_14                , 0},
 };
 
 /* ================================================================ */
@@ -186,9 +186,9 @@ gpio_init(void)
   for (i = 0; i < N_PINS; i++) {
     if (pin_map[i].initial == 1) {
       unprotected_activate_gpio(i);
-    } else {
-      unprotected_deactivate_gpio(i);
+    } else if (pin_map[i].initial == 0) {
+       unprotected_deactivate_gpio(i);
     }
-  }
+ }
   return;
 }

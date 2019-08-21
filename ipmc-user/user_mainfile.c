@@ -49,16 +49,16 @@ TIMER_CALLBACK(100ms, usermain_timercback)
     return;
   }
 
-  // get the index of the init_flag index once for all
-  int init_flag_idx = get_signal_index("init_flag");
+  // get the index of the startup_flag index once for all
+  int startup_flag_idx = get_signal_index("startup_flag");
 
   unsigned char version;
   if (zynq_read_version(& version)) {
     // reading error
-    unprotected_deactivate_gpio(init_flag_idx);
+    unprotected_deactivate_gpio(startup_flag_idx);
   } else {
     // reading success
-    unprotected_activate_gpio(init_flag_idx);
+    unprotected_activate_gpio(startup_flag_idx);
   }
 
   return;
