@@ -29,6 +29,12 @@ Version ..... : V0.2 - 2019-07-31
 #define NULL ((void *)0)
 #endif
 
+enum {
+      INTERNAL_I2C_BUS,
+      MANAGEMENT_I2C_BUS,
+      SENSOR_I2C_BUS
+};
+
 #define MAX_USER_TCPSERV_CLIENT 10
 #define CMD_LINE_MAX_LEN 50
 #define MAX_PARAM_LEN 20
@@ -43,7 +49,7 @@ typedef struct cmd_buf_n {
   unsigned char i2c_bus;
 } cmd_buf_t;
 
-cmd_buf_t cmd_buf[MAX_USER_TCPSERV_CLIENT] = {{.i2c_bus = 2}};
+cmd_buf_t cmd_buf[MAX_USER_TCPSERV_CLIENT];
 
 /* ================================================================ */
 
@@ -446,7 +452,11 @@ user_tcpserv_connect_handler(const ip_addr_t from,
       user_tcpserv_clients[i].opened = 1;
       cmd_buf[i].data[0] = '\0';
       cmd_buf[i].len = 0;
-
+      cmd_buf[i].expert = 0;
+      cmd_buf[i].hex = 0;
+      cmd_buf[i].eol[0] = '\n';
+      cmd_buf[i].eol[1] = '\0';
+      cmd_buf[i].i2c_bus = SENSOR_I2C_BUS;
 
       // didn't work, leaving it out for now.
       //
@@ -590,26 +600,26 @@ user_tcpserv_data_handler(const ip_addr_t to,
   
   // debug_printf("<_> user_tcpserv command line: %s\n", cmd_line);
 
-  debug_printf("<_> ======= cmd line: %s|\n", cmd_line);
+  // debug_printf("<_> ======= cmd line: %s|\n", cmd_line);
 
   remove_extra_spaces(cmd_line);
-  debug_printf("<_> >>>>>> no extra spaces: %s|\n", cmd_line);
+  // debug_printf("<_> >>>>>> no extra spaces: %s|\n", cmd_line);
 
   lowercase(cmd_line);
-  debug_printf("<_> >>>>>> all lowercase: %s|\n", cmd_line);
+  // debug_printf("<_> >>>>>> all lowercase: %s|\n", cmd_line);
 
   unsigned char cmd[MAX_PARAM_LEN];
   get_next_param(cmd, cmd_line);
-  debug_printf("<_> >>>>>> cmd: %s|\n", cmd);
+  // debug_printf("<_> >>>>>> cmd: %s|\n", cmd);
 
   int cmd_idx = get_cmd_index(cmd);
-  debug_printf("<_> >>>>>> cmd_idx: %d\n", cmd_idx);
+  // debug_printf("<_> >>>>>> cmd_idx: %d\n", cmd_idx);
 
   // if a command was found, execute it.
   if (cmd_idx >= 0) { 
     // execute command, get reply and associated length
     *replyLen = cmd_map[cmd_idx].fnc_ptr(cmd_line, reply, conn_idx);
-    debug_printf("<_> >>>>>> cmd reply len: %d\n", *replyLen);
+    // debug_printf("<_> >>>>>> cmd reply len: %d\n", *replyLen);
   }
 
   // if a command was not found, echo it.
@@ -926,13 +936,9 @@ set_gpio(unsigned char * params,
   unsigned char param[MAX_PARAM_LEN];
   get_next_param(param, params);
 
-  int msg_len;
-  
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
-    msg_len = strlen(set_gpio_help_str);
-    memcpy(reply, set_gpio_help_str, msg_len);
-    return msg_len;
+    return strlcpy(reply, set_gpio_help_str);
   }
   
   int idx = user_get_signal_index(param);
@@ -940,25 +946,17 @@ set_gpio(unsigned char * params,
     get_next_param(param, params);
     if (param[0] == '1' || param[0] == 'h'){
       if (user_activate_gpio(idx) == 0) {
-        msg_len = strlen(ok_str);
-        memcpy(reply, ok_str, msg_len);
-        return msg_len;
+        return strlcpy(reply, ok_str);
       }
     }
     else if (param[0] == '0' || param[0] == 'l') {
       if (user_deactivate_gpio(idx) == 0) {
-        msg_len = strlen(ok_str);
-        memcpy(reply, ok_str, msg_len);
-        return msg_len;
+        return strlcpy(reply, ok_str);
       }      
     }
-    msg_len = strlen(set_gpio_error_str);
-    memcpy(reply, set_gpio_error_str, msg_len);
-    return msg_len;
+    return strlcpy(reply, set_gpio_error_str);
   }
-  msg_len = strlen(signal_not_found_str);
-  memcpy(reply, signal_not_found_str, msg_len);
-  return msg_len;
+  return strlcpy(reply, signal_not_found_str);
 }
 
 // read pin and fill reply string with associated value. returns the
@@ -978,16 +976,12 @@ get_gpio(unsigned char * params,
   // debug_printf(sm_signal_name);
   // debug_printf("\n");
 
-  int reply_len = 0;
-
   // debug_printf("######## read_gpio_signal 1\n");
 
 
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
-    reply_len = strlen(get_gpio_help_str);
-    memcpy(reply, get_gpio_help_str, reply_len);
-    return reply_len;
+    return strlcpy(reply, get_gpio_help_str);
   }
 
   // debug_printf("######## read_gpio_signal 1.3\n");
@@ -1001,19 +995,12 @@ get_gpio(unsigned char * params,
     int v = user_get_gpio_state(idx);
     
     if (v > 0) {
-      reply_len = strlen(gpio_enabled_str);
-      memcpy(reply, gpio_enabled_str, reply_len);
-      return reply_len;
-    }
-    else {
-      reply_len = strlen(gpio_disabled_str);
-      memcpy(reply, gpio_disabled_str, reply_len);
-      return reply_len;
+      return strlcpy(reply, gpio_enabled_str);
+    } else {
+      return strlcpy(reply, gpio_disabled_str);
     }
   }
-  reply_len = strlen(signal_not_found_str);
-  memcpy(reply, signal_not_found_str, reply_len);
-  return reply_len;
+  return strlcpy(reply, signal_not_found_str);
 }
 
 int
@@ -1021,31 +1008,23 @@ expert_mode(unsigned char * params,
             unsigned char * reply,
             int conn_idx)
 {
-
-  int reply_len = 0;
-  
   unsigned char param[MAX_PARAM_LEN];
   get_next_param(param, params);
 
 
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
-    reply_len = strlen(expert_help_str);
-    memcpy(reply, expert_help_str, reply_len);
-    return reply_len;
+    return strlcpy(reply, expert_help_str);
   }
 
   
   if (str_eq(param, (unsigned char *) "on") == 1){
     user_enable_expert_mode();
-    reply_len = 0;
-    return reply_len;
+    return 0;
   }
 
   user_disable_expert_mode();
-  reply_len = strlen(expert_off_str);
-  memcpy(reply, expert_off_str, reply_len);
-  return reply_len;
+  return strlcpy(reply, expert_off_str);
 }
 
 int
@@ -1115,31 +1094,22 @@ write_i2c_mux(unsigned char * params,
               unsigned char * reply,
               int conn_idx)
 {
-
-  int reply_len = 0;
-  
   unsigned char param[MAX_PARAM_LEN];
   get_next_param(param, params);
 
 
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
-    reply_len = strlen(i2c_mux_write_help_str);
-    memcpy(reply, i2c_mux_write_help_str, reply_len);
-    return reply_len;
+    return strlcpy(reply, i2c_mux_write_help_str);
   }
 
   char ret = user_pca9545_write((unsigned char) *param);
 
   if(ret == 0){
-    reply_len = strlen(ok_str);
-    memcpy(reply, ok_str, reply_len);
-    return reply_len;
+    return strlcpy(reply, ok_str);
   }
-  
-  reply_len = strlen(i2c_mux_error_str);
-  memcpy(reply, i2c_mux_error_str, reply_len);
-  return reply_len;
+
+  return strlcpy(reply, i2c_mux_error_str);
 }
 
 
@@ -1148,18 +1118,13 @@ read_i2c_mux(unsigned char * params,
              unsigned char * reply,
              int conn_idx)
 {
-
-  int reply_len = 0;
-  
   unsigned char param[MAX_PARAM_LEN];
   get_next_param(param, params);
 
 
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
-    reply_len = strlen(i2c_mux_read_help_str);
-    memcpy(reply, i2c_mux_read_help_str, reply_len);
-    return reply_len;
+    return strlcpy(reply, i2c_mux_read_help_str);
   }
 
   char ret = user_pca9545_read(reply);
@@ -1168,10 +1133,8 @@ read_i2c_mux(unsigned char * params,
     reply[1] = '\n';
     return 2;
   }
-  
-  reply_len = strlen(i2c_mux_error_str);
-  memcpy(reply, i2c_mux_error_str, reply_len);
-  return reply_len;
+
+  return strlcpy(reply, i2c_mux_error_str);
 }
 
 int
@@ -1187,9 +1150,7 @@ read_tcn75a(unsigned char * params,
 
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
-    reply_len = strlen(tcn75a_help_str);
-    memcpy(reply, tcn75a_help_str, reply_len);
-    return reply_len;
+    return strlcpy(reply, tcn75a_help_str);
   }
 
   unsigned char temp;
@@ -1201,17 +1162,13 @@ read_tcn75a(unsigned char * params,
 
   ret = user_tcn75a_read((char) id, &temp);
   if (ret != 0) {
-    reply_len = strlen(error_str);
-    memcpy(reply, error_str, reply_len);
-    return reply_len;
+    return strlcpy(reply, error_str);
   }
 
   
   ret = a_from_i(reply, temp, 0);
   if(ret != 0){
-    reply_len = strlen(err_i2c_itoa);
-    memcpy(reply, err_i2c_itoa, reply_len);
-    return reply_len;
+    return strlcpy(reply, err_i2c_itoa);
   }
 
   reply_len = strlen(reply);
@@ -1225,16 +1182,12 @@ version(unsigned char * params,
         unsigned char * reply,
         int conn_idx)
 {
-  int reply_len = 0;
-  
   unsigned char param[20];
   get_next_param(param, params);
 
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
-    reply_len = strlen(version_help_str);
-    memcpy(reply, version_help_str, reply_len);
-    return reply_len;
+    return strlcpy(reply, version_help_str);
   }
 
   return user_get_version(reply);
@@ -1246,23 +1199,18 @@ i2c_w(unsigned char * params,
           unsigned char * reply,
           int conn_idx)
 {
-  int reply_len = 0;
   char ret;
   int aux;
   
   unsigned char param[MAX_PARAM_LEN];
   ret = get_next_param(param, params);
   if (ret != 0) {
-    reply_len = strlen(err_param);
-    memcpy(reply, err_param, reply_len);
-    return reply_len;  
+    return strlcpy(reply, err_param);
   }
 
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
-    reply_len = strlen(help_i2c_write);
-    memcpy(reply, help_i2c_write, reply_len);
-    return reply_len;
+    return strlcpy(reply, help_i2c_write);
   }
 
 
@@ -1271,9 +1219,7 @@ i2c_w(unsigned char * params,
                   param,
                   &(cmd_buf[conn_idx].hex));
   if (ret != 0) {
-    reply_len = strlen(err_i2c_addr);
-    memcpy(reply, err_i2c_addr, reply_len);
-    return reply_len;  
+    return strlcpy(reply, err_i2c_addr);
   }
 
   char i2c_addr = (char) aux;
@@ -1286,9 +1232,7 @@ i2c_w(unsigned char * params,
                    param,
                    &(cmd_buf[conn_idx].hex));
     if (ret != 0) {
-      reply_len = strlen(err_i2c_data);
-      memcpy(reply, err_i2c_data, reply_len);
-      return reply_len;  
+      return strlcpy(reply, err_i2c_data);
     }
 
     i2c_data[i2c_len] = (char) aux;
@@ -1297,16 +1241,12 @@ i2c_w(unsigned char * params,
 
   // making sure we have something to send to the target...
   if (i2c_len == 0) {
-    reply_len = strlen(err_i2c_data);
-    memcpy(reply, err_i2c_data, reply_len);
-    return reply_len;  
+    return strlcpy(reply, err_i2c_data);
   }
 
   // but it can not be too much...
   if (i2c_len > 10) {
-    reply_len = strlen(err_i2c_len);
-    memcpy(reply, err_i2c_len, reply_len);
-    return reply_len;  
+    return strlcpy(reply, err_i2c_len);
   }
 
   // writing to the I2C address
@@ -1315,14 +1255,10 @@ i2c_w(unsigned char * params,
                        i2c_len,
                        cmd_buf[conn_idx].i2c_bus);
   if(ret != 0){
-    reply_len = strlen(err_i2c_write_transaction);
-    memcpy(reply, err_i2c_write_transaction, reply_len);
-    return reply_len;
+    return strlcpy(reply, err_i2c_write_transaction);
   }
 
-  reply_len = strlen(ok_str);
-  memcpy(reply, ok_str, reply_len);
-  return reply_len;  
+  return strlcpy(reply, ok_str);
 }
 
 int
@@ -1330,23 +1266,18 @@ i2c_r(unsigned char * params,
          unsigned char * reply,
          int conn_idx)
 {
-  int reply_len = 0;
   char ret;
   int aux;  
   
   unsigned char param[MAX_PARAM_LEN];
   ret = get_next_param(param, params);
   if (ret != 0) {
-    reply_len = strlen(err_param);
-    memcpy(reply, err_param, reply_len);
-    return reply_len;  
+    return strlcpy(reply, err_param);
   }
   
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
-    reply_len = strlen(help_i2c_read);
-    memcpy(reply, help_i2c_read, reply_len);
-    return reply_len;
+    return strlcpy(reply, help_i2c_read);
   }
 
   debug_printf("~~~~~~~~ %s\n", param);
@@ -1356,9 +1287,7 @@ i2c_r(unsigned char * params,
                  param,
                  &(cmd_buf[conn_idx].hex));
   if (ret != 0) {
-    reply_len = strlen(err_i2c_addr);
-    memcpy(reply, err_i2c_addr, reply_len);
-    return reply_len;  
+    return strlcpy(reply, err_i2c_addr);
   }
   unsigned char i2c_addr = (char) aux;
 
@@ -1371,9 +1300,7 @@ i2c_r(unsigned char * params,
                     param,
                     &tmp);
     if (ret != 0 || i2c_len > 10) {
-      reply_len = strlen(err_i2c_len);
-      memcpy(reply, err_i2c_len, reply_len);
-      return reply_len;  
+      return strlcpy(reply, err_i2c_len);
     }
   }
 
@@ -1383,9 +1310,7 @@ i2c_r(unsigned char * params,
                       i2c_len,
                       cmd_buf[conn_idx].i2c_bus);
   if(ret != 0){
-    reply_len = strlen(err_i2c_read_transaction);
-    memcpy(reply, err_i2c_read_transaction, reply_len);
-    return reply_len;
+    return strlcpy(reply, err_i2c_read_transaction);
   }
 
 
@@ -1396,9 +1321,7 @@ i2c_r(unsigned char * params,
                    i2c_raw_data[i],
                    cmd_buf[conn_idx].hex);
     if(ret != 0){
-      reply_len = strlen(err_i2c_itoa);
-      memcpy(reply, err_i2c_itoa, reply_len);
-      return reply_len;
+      return strlcpy(reply, err_i2c_itoa);
     }
   }
 
@@ -1419,23 +1342,18 @@ i2c_reg_w(unsigned char * params,
                   unsigned char * reply,
                   int conn_idx)
 {
-  int reply_len = 0;
   char ret;
   int aux;
   
   unsigned char param[MAX_PARAM_LEN];
   ret = get_next_param(param, params);
   if (ret != 0) {
-    reply_len = strlen(err_param);
-    memcpy(reply, err_param, reply_len);
-    return reply_len;  
+    return strlcpy(reply, err_param);
   }
 
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
-    reply_len = strlen(help_i2c_reg_write);
-    memcpy(reply, help_i2c_reg_write, reply_len);
-    return reply_len;
+    return strlcpy(reply, help_i2c_reg_write);
   }
 
   // getting I2C address
@@ -1443,26 +1361,20 @@ i2c_reg_w(unsigned char * params,
                   param,
                   &(cmd_buf[conn_idx].hex));
   if (ret != 0) {
-    reply_len = strlen(err_i2c_addr);
-    memcpy(reply, err_i2c_addr, reply_len);
-    return reply_len;  
+    return strlcpy(reply, err_i2c_addr);
   }
   char i2c_addr = (char) aux;
 
   // getting register address
   ret = get_next_param(param, params);
   if (ret != 0) {
-    reply_len = strlen(err_i2c_reg_addr);
-    memcpy(reply, err_i2c_reg_addr, reply_len);
-    return reply_len;  
+    return strlcpy(reply, err_i2c_reg_addr);
   }
   ret = i_from_a(&aux,
                  param,
                  &(cmd_buf[conn_idx].hex));
   if (ret != 0) {
-    reply_len = strlen(err_i2c_reg_addr);
-    memcpy(reply, err_i2c_reg_addr, reply_len);
-    return reply_len;  
+    return strlcpy(reply, err_i2c_reg_addr);
   }
   unsigned char reg_addr = (char) aux;
 
@@ -1474,9 +1386,7 @@ i2c_reg_w(unsigned char * params,
                    param,
                    &(cmd_buf[conn_idx].hex));
     if (ret != 0) {
-      reply_len = strlen(err_i2c_data);
-      memcpy(reply, err_i2c_data, reply_len);
-      return reply_len;  
+      return strlcpy(reply, err_i2c_data);
     }
 
     i2c_data[i2c_len] = (char) aux;
@@ -1485,16 +1395,12 @@ i2c_reg_w(unsigned char * params,
 
   // making sure we have something to send to the target...
   if (i2c_len == 0) {
-    reply_len = strlen(err_i2c_data);
-    memcpy(reply, err_i2c_data, reply_len);
-    return reply_len;  
+    return strlcpy(reply, err_i2c_data);
   }
 
   // but it can not be too much...
   if (i2c_len > 10) {
-    reply_len = strlen(err_i2c_len);
-    memcpy(reply, err_i2c_len, reply_len);
-    return reply_len;  
+    return strlcpy(reply, err_i2c_len);
   }
 
   // writing to the I2C address
@@ -1504,14 +1410,10 @@ i2c_reg_w(unsigned char * params,
                            i2c_len,
                            cmd_buf[conn_idx].i2c_bus);
   if(ret != 0){
-    reply_len = strlen(err_i2c_write_transaction);
-    memcpy(reply, err_i2c_write_transaction, reply_len);
-    return reply_len;
+    return strlcpy(reply, err_i2c_write_transaction);
   }
 
-  reply_len = strlen(ok_str);
-  memcpy(reply, ok_str, reply_len);
-  return reply_len;  
+  return strlcpy(reply, ok_str);
 }
 
 int
@@ -1526,16 +1428,12 @@ i2c_reg_r(unsigned char * params,
   unsigned char param[MAX_PARAM_LEN];
   ret = get_next_param(param, params);
   if (ret != 0) {
-    reply_len = strlen(err_param);
-    memcpy(reply, err_param, reply_len);
-    return reply_len;  
+    return strlcpy(reply, err_param);
   }
   
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
-    reply_len = strlen(help_i2c_reg_read);
-    memcpy(reply, help_i2c_reg_read, reply_len);
-    return reply_len;
+    return strlcpy(reply, help_i2c_reg_read);
   }
 
   debug_printf("== %s\n", param);
@@ -1545,26 +1443,20 @@ i2c_reg_r(unsigned char * params,
                  param,
                  &(cmd_buf[conn_idx].hex));
   if (ret != 0) {
-    reply_len = strlen(err_i2c_addr);
-    memcpy(reply, err_i2c_addr, reply_len);
-    return reply_len;  
+    return strlcpy(reply, err_i2c_addr);
   }
   unsigned char i2c_addr = (char) aux;
 
   // getting register address
   ret = get_next_param(param, params);
   if (ret != 0) {
-    reply_len = strlen(err_i2c_reg_addr);
-    memcpy(reply, err_i2c_reg_addr, reply_len);
-    return reply_len;  
+    return strlcpy(reply, err_i2c_reg_addr);
   }
   ret = i_from_a(&aux,
                  param,
                  &(cmd_buf[conn_idx].hex));
   if (ret != 0) {
-    reply_len = strlen(err_i2c_reg_addr);
-    memcpy(reply, err_i2c_reg_addr, reply_len);
-    return reply_len;  
+    return strlcpy(reply, err_i2c_reg_addr);
   }
   unsigned char reg_addr = (char) aux;
 
@@ -1577,9 +1469,7 @@ i2c_reg_r(unsigned char * params,
                     param,
                     &tmp);
     if (ret != 0 || i2c_len > 10) {
-      reply_len = strlen(err_i2c_len);
-      memcpy(reply, err_i2c_len, reply_len);
-      return reply_len;  
+      return strlcpy(reply, err_i2c_len);
     }
   }
 
@@ -1602,9 +1492,7 @@ i2c_reg_r(unsigned char * params,
                    i2c_raw_data[i],
                    cmd_buf[conn_idx].hex);
     if(ret != 0){
-      reply_len = strlen(err_i2c_itoa);
-      memcpy(reply, err_i2c_itoa, reply_len);
-      return reply_len;
+      return strlcpy(reply, err_i2c_itoa);
     }
 
     debug_printf("## %s\n", i2c_data[i]);
@@ -1628,43 +1516,32 @@ set_i2c_bus(unsigned char * params,
                 unsigned char * reply,
                 int conn_idx)
 {
-  int reply_len = 0;
   char ret;
   
   unsigned char param[MAX_PARAM_LEN];
   ret = get_next_param(param, params);
   if (ret != 0) {
-    reply_len = strlen(err_param);
-    memcpy(reply, err_param, reply_len);
-    return reply_len;  
+    return strlcpy(reply, err_param);
   }
   
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
-    reply_len = strlen(help_set_i2c_bus);
-    memcpy(reply, help_set_i2c_bus, reply_len);
-    return reply_len;
+    return strlcpy(reply, help_set_i2c_bus);
   }
 
   // debug_printf("== %s\n", param);
 
-  if (str_eq(param, (unsigned char *) "m") == 1) {
-    cmd_buf[conn_idx].i2c_bus = 1;
-    reply_len = strlen(ok_str);
-    memcpy(reply, ok_str, reply_len);
-    return reply_len;
+  if (param[0] == 'm') {
+    cmd_buf[conn_idx].i2c_bus = MANAGEMENT_I2C_BUS;
+    return strlcpy(reply, ok_str);
   }
   
-  if (str_eq(param, (unsigned char *) "s") == 1) {
-    cmd_buf[conn_idx].i2c_bus = 2;
-    reply_len = strlen(ok_str);
-    memcpy(reply, ok_str, reply_len);
-    return reply_len;
+  if (param[0] == 's') {
+    cmd_buf[conn_idx].i2c_bus = SENSOR_I2C_BUS;
+    return strlcpy(reply, ok_str);
   }
   
-  reply_len = strlen(err_i2c_bus);
-  memcpy(reply, err_i2c_bus, reply_len);
-  return reply_len;
+  return strlcpy(reply, err_i2c_bus);
 }
 
 
@@ -1673,32 +1550,24 @@ get_i2c_bus(unsigned char * params,
             unsigned char * reply,
             int conn_idx)
 {
-  int reply_len = 0;
-  
   unsigned char param[MAX_PARAM_LEN];
   get_next_param(param, params);
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
-    reply_len = strlen(help_get_i2c_bus);
-    memcpy(reply, help_get_i2c_bus, reply_len);
-    return reply_len;
+    return strlcpy(reply, help_get_i2c_bus);
   }
 
   // debug_printf("== %s\n", param);
 
   if (cmd_buf[conn_idx].i2c_bus == 1) {
-    reply_len = strlen(str_i2c_bus_management);
-    memcpy(reply, str_i2c_bus_management, reply_len);
-    return reply_len;
+    return strlcpy(reply, str_i2c_bus_management);
   }
 
   if (cmd_buf[conn_idx].i2c_bus == 2) {
-    reply_len = strlen(str_i2c_bus_sensor);
-    memcpy(reply, str_i2c_bus_sensor, reply_len);
-    return reply_len;
+    return strlcpy(reply, str_i2c_bus_sensor);
   }
 
-  return 0;
+  return strlcpy(reply, err_i2c_bus);
 }
 
 
