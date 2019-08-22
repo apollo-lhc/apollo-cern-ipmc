@@ -24,6 +24,9 @@ Version ..... : V0.1 - 30/05/2019
 // temp address just for testing
 #define TCN75A_U34_I2C_ADDR MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, 0x90) 
 
+// Zynq was not killed... yet.
+static char resurrect_zynq = 0;
+
 char
 user_zynq_read_version(unsigned char * version)
 {
@@ -41,18 +44,36 @@ user_zynq_read_version(unsigned char * version)
 }
 
 char
-user_zynq_reset(void)
+user_zynq_reset(char delay)
 {
   // Make sure UART ADDR [1:0] is "01"
   user_unprotected_set_gpio(uart_addr1, 0);
   user_unprotected_set_gpio(uart_addr0, 1);
 
-  // Shutdow Zynq supplies
+  // kill Zynq
   user_unprotected_set_gpio(ipmc_zynq_en, 0);
 
-  // Zynq is tired, let it rest
-  udelay(1000 * 1000);
-  
+  // resurrect Zynq needed
+  resurrect_zynq = delay;
+
+  return 0;
+}
+
+// people like to kill the poor Zynq sometimes
+// let's resurrect it!
+TIMER_CALLBACK(1s, user_zynq_timercback)
+{
+
+  // Does Zynq need to revive?
+  if (resurrect_zynq == 0) {
+    return;
+  }
+
+  // counting down for Zynq to awake!
+  if (--resurrect_zynq) {
+    return;
+  }
+
   // Start Zynq power up sequence
   user_unprotected_set_gpio(ipmc_zynq_en, 1);
 
@@ -60,5 +81,5 @@ user_zynq_reset(void)
   user_unprotected_set_gpio(uart_addr1, 0);
   user_unprotected_set_gpio(uart_addr0, 0);
 
-  return 0;
+  return;
 }

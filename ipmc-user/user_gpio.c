@@ -19,38 +19,39 @@ Version ..... : V0.1 - 18/05/2019
 #include <user_helpers.h>
 
 #define NAME(Variable) (#Variable)
-#define PIN(n,o,e,s,d) [n]={(unsigned char *) NAME(n), o, e, s, d}
+#define PIN(n,o,e,s,d,i) [n]={(unsigned char *) NAME(n), o, e, s, d, i}
 
 /* ================================================================ */
 
 
 typedef struct pin_map_n {
   const unsigned char * sm_name;
-  const int output;
-  const int expert;
+  const char output;
+  const char expert;
   const signal_t ipmc_name;
-  const int initial;
+  const char initial;
+  const char inverted;
 } pin_map_t;
 
 static pin_map_t
 pin_map[] = {
-             PIN(ipmc_zynq_en     , 1, 1, USER_IO_3                 , 0),
-             PIN(en_one_jtag_chain, 1, 0, USER_IO_4                 , 0), 
-             PIN(uart_addr0       , 1, 0, USER_IO_5                 , 1), 
-             PIN(uart_addr1       , 1, 0, USER_IO_6                 , 0), 
-             PIN(zynq_boot_mode0  , 1, 1, USER_IO_7                 , 1), 
-             PIN(zynq_boot_mode1  , 1, 1, USER_IO_8                 , 1), 
-             PIN(sense_rst_n      , 1, 0, USER_IO_9                 , 1), 
-             PIN(mezz2_en         , 1, 0, USER_IO_10                , 0), 
-             PIN(mezz1_en         , 1, 0, USER_IO_11                , 0), 
-             PIN(m24512_we_n      , 1, 0, USER_IO_12                , 1), 
-             PIN(eth_sw_pwr_good  , 0, 0, USER_IO_13                , 0), 
-             PIN(eth_sw_reset_n   , 1, 1, USER_IO_16                , 1),
-             PIN(en_12v           , 1, 1, CFG_PAYLOAD_DCDC_EN_SIGNAL, 0),
-             PIN(fp_latch         , 0, 0, CFG_HANDLE_SWITCH_SIGNAL  , 0),
-             PIN(blue_led         , 1, 1, CFG_BLUE_LED_SIGNAL       , 1),
-             PIN(payload_reset_n  , 0, 1, CFG_PAYLOAD_RESET_SIGNAL  , 1),
-             PIN(startup_flag     , 1, 1, USER_IO_14                , 0)
+             PIN(ipmc_zynq_en     , 1, 1, USER_IO_3                 , 0, 1),
+             PIN(en_one_jtag_chain, 1, 0, USER_IO_4                 , 0, 1), 
+             PIN(uart_addr0       , 1, 0, USER_IO_5                 , 1, 1), 
+             PIN(uart_addr1       , 1, 0, USER_IO_6                 , 0, 1), 
+             PIN(zynq_boot_mode0  , 1, 1, USER_IO_7                 , 1, 1), 
+             PIN(zynq_boot_mode1  , 1, 1, USER_IO_8                 , 1, 1), 
+             PIN(sense_rst_n      , 1, 0, USER_IO_9                 , 1, 1), 
+             PIN(mezz2_en         , 1, 0, USER_IO_10                , 0, 1), 
+             PIN(mezz1_en         , 1, 0, USER_IO_11                , 0, 1), 
+             PIN(m24512_we_n      , 1, 0, USER_IO_12                , 1, 1), 
+             PIN(eth_sw_pwr_good  , 0, 0, USER_IO_13                , 0, 1), 
+             PIN(eth_sw_reset_n   , 1, 1, USER_IO_16                , 1, 1),
+             PIN(en_12v           , 1, 1, CFG_PAYLOAD_DCDC_EN_SIGNAL, 0, 0),
+             PIN(fp_latch         , 0, 0, CFG_HANDLE_SWITCH_SIGNAL  , 0, 1),
+             PIN(blue_led         , 1, 1, CFG_BLUE_LED_SIGNAL       , 1, 0),
+             PIN(payload_reset_n  , 0, 1, CFG_PAYLOAD_RESET_SIGNAL  , 1, 1),
+             PIN(startup_flag     , 1, 1, USER_IO_14                , 0, 1)
 };
 
 /* ================================================================ */
@@ -101,23 +102,19 @@ user_unprotected_set_gpio(sm_signal_t sm_signal, int level)
     return -2;
   }
 
+
+  // Some signals use inverted logic for some reason...
+  if (1 == pin_map[sm_signal].inverted){
+    level = !level;
+  }
+  
   if (1 == level) {
-    if (1 == str_eq(pin_map[sm_signal].sm_name, pin_map[en_12v].sm_name)) {
-      signal_activate(&pin_map[sm_signal].ipmc_name);
-    } else {
-      // reversed for some reason
-      signal_deactivate(&pin_map[sm_signal].ipmc_name);
-    }
+    signal_activate(&pin_map[sm_signal].ipmc_name);
     return 0;
   }
   
   if (0 == level) {
-    if (1 == str_eq(pin_map[sm_signal].sm_name, pin_map[en_12v].sm_name)) {
-      signal_activate(&pin_map[sm_signal].ipmc_name);
-    } else {
-      // reversed for some reason
-      signal_deactivate(&pin_map[sm_signal].ipmc_name);
-    }
+    signal_deactivate(&pin_map[sm_signal].ipmc_name);
     return 0;
   }
   
@@ -139,10 +136,13 @@ int
 user_get_gpio_state(sm_signal_t sm_signal)
 {
   int value = signal_read(&pin_map[sm_signal].ipmc_name);
-  if(1 == str_eq(pin_map[sm_signal].sm_name, pin_map[en_12v].sm_name)){
-    return value;
+
+  // Some signals use inverted logic for some reason...
+  if (1 == pin_map[sm_signal].inverted){
+    return !value;
   }
-  return !value;
+
+  return value;
 }
 
 

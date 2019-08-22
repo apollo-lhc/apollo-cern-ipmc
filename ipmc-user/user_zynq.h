@@ -6,6 +6,6 @@ char
 user_zynq_read_version(unsigned char * version);
 
 char
-user_zynq_reset(void);
+user_zynq_reset(char delay);
 
 #endif /* USER_ZYNQ_H */

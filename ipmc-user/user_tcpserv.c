@@ -238,7 +238,8 @@ static const unsigned char str_i2c_bus_sensor[] =
 
 static const unsigned char help_zynq_reset[] =
   "Reset only Zynq.\n"
-  "Usage: zynq_reset\n";
+  "Usage: zynq_reset [delay]\n"
+  "  [delay]: integer, seconds, defaults to 2.\n";
 
 static const unsigned char err_zynq_reset[] =
   "Zynq reset did not happen.\n";
@@ -1577,14 +1578,27 @@ zynq_reset(unsigned char * params,
            int conn_idx)
 {
   unsigned char param[MAX_PARAM_LEN];
-  if (get_next_param(param, params) == 0) {
+  int delay = 2;
+
+  char ret = get_next_param(param, params);
+
+  if (ret == 0) {
     if (str_eq(param, help_str) == 1
         || str_eq(param, question_mark_str) == 1) {
       return strlcpy(reply, help_zynq_reset);
     }
+
+    unsigned char tmp; 
+    ret = i_from_a (&delay,
+                    param,
+                    &tmp);
+    if (ret != 0) {
+      return strlcpy(reply, err_param);
+    }
   }
 
-  if (user_zynq_reset() == 0) { 
+  
+  if (user_zynq_reset((char) delay) == 0) { 
     return strlcpy(reply, ok_str);
   }
   
