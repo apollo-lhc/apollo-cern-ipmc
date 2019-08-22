@@ -52,10 +52,10 @@ TIMER_CALLBACK(100ms, usermain_timercback)
   unsigned char version;
   if (user_zynq_read_version(& version)) {
     // reading error
-    user_unprotected_deactivate_gpio(startup_flag);
+    user_unprotected_set_gpio(startup_flag, 0);
   } else {
     // reading success
-    user_unprotected_activate_gpio(startup_flag);
+    user_unprotected_set_gpio(startup_flag, 1);
   }
 
   return;

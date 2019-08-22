@@ -42,16 +42,10 @@ int
 user_is_expert_constrained(sm_signal_t sm_signal);
 
 int
-user_activate_gpio(sm_signal_t sm_signal);
+user_set_gpio(sm_signal_t sm_signal, int level);
 
 int
-user_unprotected_activate_gpio(sm_signal_t sm_signal);
-
-int
-user_deactivate_gpio(sm_signal_t sm_signal);
-
-int
-user_unprotected_deactivate_gpio(sm_signal_t sm_signal);
+user_unprotected_set_gpio(sm_signal_t sm_signal, int level);
 
 int
 user_get_gpio_state(sm_signal_t sm_signal);

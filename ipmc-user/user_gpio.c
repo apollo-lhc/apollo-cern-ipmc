@@ -94,57 +94,43 @@ user_get_signal_index(const unsigned char * sm_signal_name)
 }
 
 int
-user_unprotected_activate_gpio(sm_signal_t sm_signal)
+user_unprotected_set_gpio(sm_signal_t sm_signal, int level)
 {
   if (pin_map[sm_signal].output == 0) {
     // pin is input
     return -2;
   }
-    
-  if (1 == str_eq(pin_map[sm_signal].sm_name, pin_map[en_12v].sm_name)) {
-    signal_activate(&pin_map[sm_signal].ipmc_name);
-  } else {
-    // reversed for some reason
-    signal_deactivate(&pin_map[sm_signal].ipmc_name);
+
+  if (1 == level) {
+    if (1 == str_eq(pin_map[sm_signal].sm_name, pin_map[en_12v].sm_name)) {
+      signal_activate(&pin_map[sm_signal].ipmc_name);
+    } else {
+      // reversed for some reason
+      signal_deactivate(&pin_map[sm_signal].ipmc_name);
+    }
+    return 0;
   }
   
-  return 0;
+  if (0 == level) {
+    if (1 == str_eq(pin_map[sm_signal].sm_name, pin_map[en_12v].sm_name)) {
+      signal_activate(&pin_map[sm_signal].ipmc_name);
+    } else {
+      // reversed for some reason
+      signal_deactivate(&pin_map[sm_signal].ipmc_name);
+    }
+    return 0;
+  }
+  
+  return -3;
 }
 
 int
-user_activate_gpio(sm_signal_t sm_signal)
+user_set_gpio(sm_signal_t sm_signal, int level)
 {
   if (pin_map[sm_signal].expert == 1 && expert_mode == 0) {
     return -1;
   }
-  return user_unprotected_activate_gpio(sm_signal);
-}
-
-int
-user_unprotected_deactivate_gpio(sm_signal_t sm_signal)
-{
-  if (pin_map[sm_signal].output == 0) {
-    // pin is input
-    return -2;
-  }
-    
-  if (1 == str_eq(pin_map[sm_signal].sm_name, pin_map[en_12v].sm_name)) {
-    signal_deactivate(&pin_map[sm_signal].ipmc_name);
-  } else {
-    // reversed for some reason
-    signal_activate(&pin_map[sm_signal].ipmc_name);
-  }
-  
-  return 0;
-}
-
-int
-user_deactivate_gpio(sm_signal_t sm_signal)
-{
-  if (pin_map[sm_signal].expert == 1 && expert_mode == 0) {
-    return -1;
-  }
-  return user_unprotected_deactivate_gpio(sm_signal);
+  return user_unprotected_set_gpio(sm_signal, level);
 }
 
 // read pin and fill reply string with associated value. returns the
@@ -197,11 +183,7 @@ user_gpio_init(void)
 {
   int i;
   for (i = 0; i < N_PINS; i++) {
-    if (pin_map[i].initial == 1) {
-      user_unprotected_activate_gpio(i);
-    } else if (pin_map[i].initial == 0) {
-      user_unprotected_deactivate_gpio(i);
-    }
- }
+    user_set_gpio(i, pin_map[i].initial);
+  }
   return;
 }

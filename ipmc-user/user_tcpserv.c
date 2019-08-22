@@ -945,12 +945,12 @@ set_gpio(unsigned char * params,
   if (idx >= 0) {
     get_next_param(param, params);
     if (param[0] == '1' || param[0] == 'h'){
-      if (user_activate_gpio(idx) == 0) {
+      if (user_set_gpio(idx, 1) == 0) {
         return strlcpy(reply, ok_str);
       }
     }
     else if (param[0] == '0' || param[0] == 'l') {
-      if (user_deactivate_gpio(idx) == 0) {
+      if (user_set_gpio(idx, 0) == 0) {
         return strlcpy(reply, ok_str);
       }      
     }

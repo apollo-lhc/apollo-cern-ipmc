@@ -44,21 +44,21 @@ char
 user_zynq_reset(void)
 {
   // Make sure UART ADDR [1:0] is "01"
-  user_unprotected_deactivate_gpio(uart_addr1);
-  user_unprotected_activate_gpio(uart_addr0);
+  user_unprotected_set_gpio(uart_addr1, 0);
+  user_unprotected_set_gpio(uart_addr0, 1);
 
   // Shutdow Zynq supplies
-  user_unprotected_deactivate_gpio(ipmc_zynq_en);
+  user_unprotected_set_gpio(ipmc_zynq_en, 0);
 
   // Zynq is tired, let it rest
   udelay(1000 * 1000);
   
   // Start Zynq power up sequence
-  user_unprotected_deactivate_gpio(ipmc_zynq_en);
+  user_unprotected_set_gpio(ipmc_zynq_en, 1);
 
   // Make sure UART ADDR [1:0] is "00"
-  user_unprotected_deactivate_gpio(uart_addr1);
-  user_unprotected_deactivate_gpio(uart_addr0);
+  user_unprotected_set_gpio(uart_addr1, 0);
+  user_unprotected_set_gpio(uart_addr0, 0);
 
   return 0;
 }
