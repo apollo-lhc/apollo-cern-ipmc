@@ -62,19 +62,19 @@ static const int N_PINS = sizeof(pin_map) / sizeof(pin_map[0]);
 /* ================================================================ */
 
 int
-get_n_pins(void)
+user_get_n_pins(void)
 {
   return N_PINS;
 }
 
-const char *
-get_signal_sm_name(sm_signal_t sm_signal)
+const unsigned char *
+user_get_signal_sm_name(sm_signal_t sm_signal)
 {
   return pin_map[sm_signal].sm_name;
 }
 
 const int
-get_signal_expert_mode(sm_signal_t sm_signal)
+user_get_signal_expert_mode(sm_signal_t sm_signal)
 {
   return pin_map[sm_signal].expert;
 }
@@ -82,7 +82,7 @@ get_signal_expert_mode(sm_signal_t sm_signal)
 // look for signal information in the pin map table and return its
 // position. -1 is returned in case no signal is found.
 int
-get_signal_index(const unsigned char * sm_signal_name)
+user_get_signal_index(const unsigned char * sm_signal_name)
 {
   int i = 0;
   for (i = 0; i < N_PINS; i++) {
@@ -94,7 +94,7 @@ get_signal_index(const unsigned char * sm_signal_name)
 }
 
 int
-unprotected_activate_gpio(sm_signal_t sm_signal)
+user_unprotected_activate_gpio(sm_signal_t sm_signal)
 {
   if (pin_map[sm_signal].output == 0) {
     // pin is input
@@ -112,16 +112,16 @@ unprotected_activate_gpio(sm_signal_t sm_signal)
 }
 
 int
-activate_gpio(sm_signal_t sm_signal)
+user_activate_gpio(sm_signal_t sm_signal)
 {
   if (pin_map[sm_signal].expert == 1 && expert_mode == 0) {
     return -1;
   }
-  return unprotected_activate_gpio(sm_signal);
+  return user_unprotected_activate_gpio(sm_signal);
 }
 
 int
-unprotected_deactivate_gpio(sm_signal_t sm_signal)
+user_unprotected_deactivate_gpio(sm_signal_t sm_signal)
 {
   if (pin_map[sm_signal].output == 0) {
     // pin is input
@@ -139,18 +139,18 @@ unprotected_deactivate_gpio(sm_signal_t sm_signal)
 }
 
 int
-deactivate_gpio(sm_signal_t sm_signal)
+user_deactivate_gpio(sm_signal_t sm_signal)
 {
   if (pin_map[sm_signal].expert == 1 && expert_mode == 0) {
     return -1;
   }
-  return unprotected_deactivate_gpio(sm_signal);
+  return user_unprotected_deactivate_gpio(sm_signal);
 }
 
 // read pin and fill reply string with associated value. returns the
 // size of the reply.
 int
-get_gpio_state(sm_signal_t sm_signal)
+user_get_gpio_state(sm_signal_t sm_signal)
 {
   int value = signal_read(&pin_map[sm_signal].ipmc_name);
   if(1 == str_eq(pin_map[sm_signal].sm_name, pin_map[en_12v].sm_name)){
@@ -161,19 +161,19 @@ get_gpio_state(sm_signal_t sm_signal)
 
 
 int
-is_expert_constrained(sm_signal_t sm_signal)
+user_is_expert_constrained(sm_signal_t sm_signal)
 {
   return pin_map[sm_signal].expert;
 }
 
 int
-enable_expert_mode(void){
+user_enable_expert_mode(void){
   expert_mode = 1;
   return 0;
 }
 
 int
-disable_expert_mode(void)
+user_disable_expert_mode(void)
 {
   expert_mode = 0;
   return 0;
@@ -181,26 +181,26 @@ disable_expert_mode(void)
 
 
 int
-is_expert_mode_on(void)
+user_is_expert_mode_on(void)
 {
   return expert_mode;
 }
 
 pin_map_t
-get_gpio_signal(sm_signal_t sm_signal)
+user_get_gpio_signal(sm_signal_t sm_signal)
 {
   return pin_map[sm_signal];
 }
 
 void
-gpio_init(void)
+user_gpio_init(void)
 {
   int i;
   for (i = 0; i < N_PINS; i++) {
     if (pin_map[i].initial == 1) {
-      unprotected_activate_gpio(i);
+      user_unprotected_activate_gpio(i);
     } else if (pin_map[i].initial == 0) {
-       unprotected_deactivate_gpio(i);
+      user_unprotected_deactivate_gpio(i);
     }
  }
   return;

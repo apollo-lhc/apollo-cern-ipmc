@@ -101,7 +101,7 @@ unsigned char
 read_sensor_tcn75a(unsigned char id)
 {
   unsigned char temp;
-  char ret = tcn75a_read(34, &temp);
+  char ret = user_tcn75a_read(34, &temp);
 
   // problem in the sensor reading... 
   if (ret != 0) {

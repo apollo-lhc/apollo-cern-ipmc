@@ -21,7 +21,7 @@ static const char i2c_debug_str[] =
 
 /* Write to I2C slave without registers */
 char
-i2c_read(unsigned char i2c_addr,
+user_i2c_read(unsigned char i2c_addr,
          unsigned char * data,
          const char len,
          char i2c_bus)
@@ -43,7 +43,7 @@ i2c_read(unsigned char i2c_addr,
 
 /* Read from I2C slave without registers */
 char
-i2c_write(unsigned char i2c_addr,
+user_i2c_write(unsigned char i2c_addr,
           const unsigned char data[],
           const unsigned char len,
           char i2c_bus)
@@ -66,7 +66,7 @@ i2c_write(unsigned char i2c_addr,
 
 /* Write to I2C slave targeting an initial register */
 char
-i2c_reg_read(unsigned char i2c_addr,
+user_i2c_reg_read(unsigned char i2c_addr,
              const unsigned char reg_addr,
              unsigned char * data,
              const char len,
@@ -84,7 +84,7 @@ i2c_reg_read(unsigned char i2c_addr,
 
 /* Read from I2C slave targeting an initial register */
 char
-i2c_reg_write(unsigned char i2c_addr,
+user_i2c_reg_write(unsigned char i2c_addr,
               const unsigned char reg_addr,
               const unsigned char data[],
               const char len,

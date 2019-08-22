@@ -27,7 +27,7 @@ static char init_lock = 1;
 INIT_CALLBACK(usermain_init)
 {
   // init gpios
-  gpio_init();
+  user_gpio_init();
 
   // unlock Zynq I2C poll
   init_lock = 0; 
@@ -49,16 +49,13 @@ TIMER_CALLBACK(100ms, usermain_timercback)
     return;
   }
 
-  // get the index of the startup_flag index once for all
-  // int startup_flag_idx = get_signal_index("startup_flag");
-
   unsigned char version;
-  if (zynq_read_version(& version)) {
+  if (user_zynq_read_version(& version)) {
     // reading error
-    unprotected_deactivate_gpio(startup_flag);
+    user_unprotected_deactivate_gpio(startup_flag);
   } else {
     // reading success
-    unprotected_activate_gpio(startup_flag);
+    user_unprotected_activate_gpio(startup_flag);
   }
 
   return;

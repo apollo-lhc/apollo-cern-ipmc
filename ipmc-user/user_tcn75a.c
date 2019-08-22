@@ -30,21 +30,21 @@ static const char i2c_debug_str[] =
   "+++++ PCA9545 @ 0x%03x, data: 0x%02x, stats: %d.\n";
 
 char
-tcn75a_read(char id, unsigned char * temp)
+user_tcn75a_read(char id, unsigned char * temp)
 {
 
   char ret;
 
   if(34 == id){
-    if (pca9545_write(0x01) != 0) return -3;
+    if (user_pca9545_write(0x01) != 0) return -3;
     ret = i2c_dev_read_reg(TCN75A_U34_I2C_ADDR, 0x00, temp, 1);
   }
   else if(35 == id){
-    if (pca9545_write(0x01) != 0) return -3;
+    if (user_pca9545_write(0x01) != 0) return -3;
     ret = i2c_dev_read_reg(TCN75A_U35_I2C_ADDR, 0x00, temp, 1);
   }
   else if(36 == id){
-    if (pca9545_write(0x01) != 0) return -3;
+    if (user_pca9545_write(0x01) != 0) return -3;
     ret = i2c_dev_read_reg(TCN75A_U36_I2C_ADDR, 0x00, temp, 1);
   }
   else {

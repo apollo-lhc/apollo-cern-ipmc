@@ -2,10 +2,10 @@
 
 #include <debug.h>
 
-const unsigned char msg_i_c_n[] =
+const char msg_i_c_n[] =
   "~~~~~~~ i: %d; c: %x; n: %d\n";
 
-const unsigned char msg_i_c_n_2[] =
+const char msg_i_c_n_2[] =
   "------- i: %d; c: %x; n: %d\n";
 
 

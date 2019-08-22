@@ -3,9 +3,9 @@
 
 /* check if zynq is active */
 char
-zynq_read_version(unsigned char * version);
+user_zynq_read_version(unsigned char * version);
 
 char
-zynq_reset(void);
+user_zynq_reset(void);
 
 #endif /* USER_ZYNQ_H */

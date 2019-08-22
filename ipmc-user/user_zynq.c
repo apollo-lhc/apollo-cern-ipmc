@@ -25,11 +25,11 @@ Version ..... : V0.1 - 30/05/2019
 #define TCN75A_U34_I2C_ADDR MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, 0x90) 
 
 char
-zynq_read_version(unsigned char * version)
+user_zynq_read_version(unsigned char * version)
 {
 
  // temporary for testing
- if (pca9545_write(0x01) != 0) return -2;
+ if (user_pca9545_write(0x01) != 0) return -2;
  char ret = i2c_dev_read_reg(TCN75A_U34_I2C_ADDR, 0x00, version, 1);
 
  // if (pca9545_write(0x08) != 0) {
@@ -41,24 +41,24 @@ zynq_read_version(unsigned char * version)
 }
 
 char
-zynq_reset(void)
+user_zynq_reset(void)
 {
   // Make sure UART ADDR [1:0] is "01"
-  unprotected_deactivate_gpio(uart_addr1);
-  unprotected_activate_gpio(uart_addr0);
+  user_unprotected_deactivate_gpio(uart_addr1);
+  user_unprotected_activate_gpio(uart_addr0);
 
   // Shutdow Zynq supplies
-  unprotected_deactivate_gpio(ipmc_zynq_en);
+  user_unprotected_deactivate_gpio(ipmc_zynq_en);
 
   // Zynq is tired, let it rest
   udelay(1000 * 1000);
   
   // Start Zynq power up sequence
-  unprotected_deactivate_gpio(ipmc_zynq_en);
+  user_unprotected_deactivate_gpio(ipmc_zynq_en);
 
   // Make sure UART ADDR [1:0] is "00"
-  unprotected_deactivate_gpio(uart_addr1);
-  unprotected_deactivate_gpio(uart_addr0);
+  user_unprotected_deactivate_gpio(uart_addr1);
+  user_unprotected_deactivate_gpio(uart_addr0);
 
   return 0;
 }

@@ -24,46 +24,46 @@ enum {
 
 
 void
-gpio_init(void);
+user_gpio_init(void);
 
 int
-get_n_pins(void);
+user_get_n_pins(void);
 
-// int
-// get_signal_index(const char * sm_signal_name);
+int
+user_get_signal_index(const unsigned char * sm_signal_name);
 
-const char *
-get_signal_sm_name(sm_signal_t sm_signal);
+const unsigned char *
+user_get_signal_sm_name(sm_signal_t sm_signal);
 
 const int
-get_signal_expert_mode(sm_signal_t sm_signal);
+user_get_signal_expert_mode(sm_signal_t sm_signal);
 
 int
-is_expert_constrained(sm_signal_t sm_signal);
+user_is_expert_constrained(sm_signal_t sm_signal);
 
 int
-activate_gpio(sm_signal_t sm_signal);
+user_activate_gpio(sm_signal_t sm_signal);
 
 int
-unprotected_activate_gpio(sm_signal_t sm_signal);
+user_unprotected_activate_gpio(sm_signal_t sm_signal);
 
 int
-deactivate_gpio(sm_signal_t sm_signal);
+user_deactivate_gpio(sm_signal_t sm_signal);
 
 int
-unprotected_deactivate_gpio(sm_signal_t sm_signal);
+user_unprotected_deactivate_gpio(sm_signal_t sm_signal);
 
 int
-get_gpio_state(sm_signal_t sm_signal);
+user_get_gpio_state(sm_signal_t sm_signal);
 
 int
-enable_expert_mode(void);
+user_enable_expert_mode(void);
 
 int
-disable_expert_mode(void);
+user_disable_expert_mode(void);
 
 int
-is_expert_mode_on(void);
+user_is_expert_mode_on(void);
 
 // pin_map_t
 // get_gpio_signal(sm_signal_t sm_signal);
