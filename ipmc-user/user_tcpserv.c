@@ -18,12 +18,12 @@ Version ..... : V0.2 - 2019-07-31
 
 #include <app/signal.h>
 
+#include <user_zynq.h>
 #include <user_pca9545.h>
 #include <user_tcn75a.h>
 #include <user_gpio.h>
 #include <user_i2c.h>
 #include <user_version.h>
-#include <user_zynq.h>
 
 #include <user_helpers.h>
 
@@ -1709,20 +1709,19 @@ cmd_zynq_reset(char * params,
                unsigned char * reply,
                int conn_idx)
 {
-//   char param[MAX_PARAM_LEN];
-//   if (get_next_param(param, params) == 0) {
-//     if (str_eq(param, help_str) == 1
-//         || str_eq(param, question_mark_str) == 1) {
-//       return strlcpy((char *) reply, (char *) help_zynq_reset);
-//     }
-//   }
-// 
-//   if (zynq_reset()) {
-//     return strlcpy((char *) reply, (char *) ok_str);
-//   }
-//   
-//   return strlcpy((char *) reply, (char *) err_zynq_reset);
-  return 0;
+  char param[MAX_PARAM_LEN];
+  if (get_next_param(param, params) == 0) {
+    if (str_eq(param, help_str) == 1
+        || str_eq(param, question_mark_str) == 1) {
+      return strlcpy((char *) reply, (char *) help_zynq_reset);
+    }
+  }
+
+  if (zynq_reset() == 0) { 
+    return strlcpy((char *) reply, (char *) ok_str);
+  }
+  
+  return strlcpy((char *) reply, (char *) err_zynq_reset);
 }
 
   

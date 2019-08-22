@@ -11,8 +11,6 @@ Version ..... : V0.1 - 18/05/2019
 #include <log.h>
 #include <debug.h>
 
-#include <app/signal.h>
-
 #include <user_helpers.h>
 
 #include <user_gpio.h>

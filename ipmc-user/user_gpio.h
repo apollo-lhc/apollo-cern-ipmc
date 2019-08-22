@@ -1,6 +1,8 @@
 #ifndef USER_GPIO_H
 #define USER_GPIO_H
 
+#include <app/signal.h>
+
 typedef struct pin_map_n {
   const char * sm_name;
   const int output;

@@ -12,8 +12,8 @@ Version ..... : V0.1 - 30/05/2019
 #include <i2c_dev.h>
 
 // our headers
-#include <user_pca9545.h>
 #include <user_gpio.h>
+#include <user_pca9545.h>
 
 /* sensor I2C bus number */
 #define SENSOR_I2C_BUS     2
@@ -28,42 +28,42 @@ char
 zynq_read_version(unsigned char * version)
 {
 
-  // temporary for testing
-  if (pca9545_write(0x01) != 0) return -2;
-  char ret = i2c_dev_read_reg(TCN75A_U34_I2C_ADDR, 0x00, version, 1);
+ // temporary for testing
+ if (pca9545_write(0x01) != 0) return -2;
+ char ret = i2c_dev_read_reg(TCN75A_U34_I2C_ADDR, 0x00, version, 1);
 
-//   // if (pca9545_write(0x08) != 0) {
-//   //   // not possible to set I2C mux
-//   //   return -2;
-//   // }
-//   // char ret = i2c_dev_read_reg(ZYNQ_I2C_ADDR, 0x00, version, 1);
-  return (ret < I2C_OK) ? (-1) : 0;
+ // if (pca9545_write(0x08) != 0) {
+ //   // not possible to set I2C mux
+ //   return -2;
+ // }
+ // char ret = i2c_dev_read_reg(ZYNQ_I2C_ADDR, 0x00, version, 1);
+ return (ret < I2C_OK) ? (-1) : 0;
 }
 
-// char
-// zynq_reset(void)
-// {
-//   // get signal index from pin map
-//   int uart_addr0_idx = get_signal_index("uart_addr_0");
-//   int uart_addr1_idx = get_signal_index("uart_addr_1");
-//   int ipmc_zynq_en_idx = get_signal_index("ipmc_zynq_en");
-// 
-//   // Make sure UART ADDR [1:0] is "01"
-//   unprotected_deactivate_gpio(uart_addr1_idx);
-//   unprotected_activate_gpio(uart_addr0_idx);
-// 
-//   // Shutdow Zynq supplies
-//   unprotected_deactivate_gpio(ipmc_zynq_en_idx);
-// 
-//   // Zynq is tired, let it rest
-//   udelay(1000 * 1000);
-//   
-//   // Start Zynq power up sequence
-//   unprotected_deactivate_gpio(ipmc_zynq_en_idx);
-// 
-//   // Make sure UART ADDR [1:0] is "00"
-//   unprotected_deactivate_gpio(uart_addr1_idx);
-//   unprotected_deactivate_gpio(uart_addr0_idx);
-// 
-//   return 0;
-// }
+char
+zynq_reset(void)
+{
+  // get signal index from pin map
+  int uart_addr0_idx = get_signal_index("uart_addr_0");
+  int uart_addr1_idx = get_signal_index("uart_addr_1");
+  int ipmc_zynq_en_idx = get_signal_index("ipmc_zynq_en");
+
+  // Make sure UART ADDR [1:0] is "01"
+  unprotected_deactivate_gpio(uart_addr1_idx);
+  unprotected_activate_gpio(uart_addr0_idx);
+
+  // Shutdow Zynq supplies
+  unprotected_deactivate_gpio(ipmc_zynq_en_idx);
+
+  // Zynq is tired, let it rest
+  udelay(1000 * 1000);
+  
+  // Start Zynq power up sequence
+  unprotected_deactivate_gpio(ipmc_zynq_en_idx);
+
+  // Make sure UART ADDR [1:0] is "00"
+  unprotected_deactivate_gpio(uart_addr1_idx);
+  unprotected_deactivate_gpio(uart_addr0_idx);
+
+  return 0;
+}
