@@ -66,9 +66,9 @@ get_n_pins(void)
 }
 
 const char *
-get_signal_sm_name(int idx)
+get_signal_sm_name(sm_signal_t sm_signal)
 {
-  return pin_map[idx].sm_name;
+  return pin_map[sm_signal].sm_name;
 }
 
 const int

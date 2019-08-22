@@ -1,7 +1,7 @@
 #ifndef USER_GPIO_H
 #define USER_GPIO_H
 
-enum signals {
+typedef enum {
               ipmc_zynq_en,
               en_one_jtag_chain,
               uart_addr0,
@@ -19,7 +19,7 @@ enum signals {
               blue_led,
               payload_reset_n,
               startup_flag
-};
+} sm_signal_t;
 
 
 void
@@ -32,7 +32,7 @@ get_n_pins(void);
 // get_signal_index(const char * sm_signal_name);
 
 const char *
-get_signal_sm_name(int idx);
+get_signal_sm_name(sm_signal_t sm_signal);
 
 const int
 get_signal_expert_mode(int idx);
