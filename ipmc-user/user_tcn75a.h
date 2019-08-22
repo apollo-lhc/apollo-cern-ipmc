@@ -3,6 +3,6 @@
 
 /* Read the TCN75A I2C temperature sensor */
 char
-tcn75a_read(unsigned char * id, unsigned char * temp);
+tcn75a_read(char id, unsigned char * temp);
 
 #endif /* SENSOR_PCA9545_H */

@@ -5,6 +5,9 @@ Auteur ...... : Thiago Costa de Paiva <tcpaiva@cern.ch>
 Version ..... : V0.1 - 18/05/2019
 ***********************************************************************/
 
+#include <user_gpio.h>
+
+// their headers
 #include <app.h>
 #include <cfgint.h>
 #include <ipmc.h>
@@ -12,18 +15,17 @@ Version ..... : V0.1 - 18/05/2019
 #include <debug.h>
 #include <app/signal.h>
 
+// our headers
 #include <user_helpers.h>
 
-#include <user_gpio.h>
-
 #define NAME(Variable) (#Variable)
-#define PIN(n,o,e,s,d) [n]={NAME(n), o, e, s, d}
+#define PIN(n,o,e,s,d) [n]={(unsigned char *) NAME(n), o, e, s, d}
 
 /* ================================================================ */
 
 
 typedef struct pin_map_n {
-  const char * sm_name;
+  const unsigned char * sm_name;
   const int output;
   const int expert;
   const signal_t ipmc_name;
@@ -72,15 +74,15 @@ get_signal_sm_name(sm_signal_t sm_signal)
 }
 
 const int
-get_signal_expert_mode(int idx)
+get_signal_expert_mode(sm_signal_t sm_signal)
 {
-  return pin_map[idx].expert;
+  return pin_map[sm_signal].expert;
 }
 
 // look for signal information in the pin map table and return its
 // position. -1 is returned in case no signal is found.
 int
-get_signal_index(const char * sm_signal_name)
+get_signal_index(const unsigned char * sm_signal_name)
 {
   int i = 0;
   for (i = 0; i < N_PINS; i++) {
@@ -92,83 +94,76 @@ get_signal_index(const char * sm_signal_name)
 }
 
 int
-unprotected_activate_gpio(int idx)
+unprotected_activate_gpio(sm_signal_t sm_signal)
 {
-  if (pin_map[idx].output == 0) {
+  if (pin_map[sm_signal].output == 0) {
     // pin is input
     return -2;
   }
     
-  signal_t userio_sig = pin_map[idx].ipmc_name;
-  if (1 == str_eq(pin_map[idx].sm_name, "en_12v")) {
-    signal_activate(&userio_sig);
+  if (1 == str_eq(pin_map[sm_signal].sm_name, pin_map[en_12v].sm_name)) {
+    signal_activate(&pin_map[sm_signal].ipmc_name);
   } else {
     // reversed for some reason
-    signal_deactivate(&userio_sig);
+    signal_deactivate(&pin_map[sm_signal].ipmc_name);
   }
   
   return 0;
 }
 
 int
-activate_gpio(int idx)
+activate_gpio(sm_signal_t sm_signal)
 {
-  if (pin_map[idx].expert == 1 && expert_mode == 0) {
+  if (pin_map[sm_signal].expert == 1 && expert_mode == 0) {
     return -1;
   }
-  return unprotected_activate_gpio(idx);
+  return unprotected_activate_gpio(sm_signal);
 }
 
 int
-unprotected_deactivate_gpio(int idx)
+unprotected_deactivate_gpio(sm_signal_t sm_signal)
 {
-  if (pin_map[idx].output == 0) {
+  if (pin_map[sm_signal].output == 0) {
     // pin is input
     return -2;
   }
     
-  signal_t userio_sig = pin_map[idx].ipmc_name;
-  if (1 == str_eq(pin_map[idx].sm_name, "en_12v")) {
-    signal_deactivate(&userio_sig);
+  if (1 == str_eq(pin_map[sm_signal].sm_name, pin_map[en_12v].sm_name)) {
+    signal_deactivate(&pin_map[sm_signal].ipmc_name);
   } else {
     // reversed for some reason
-    signal_activate(&userio_sig);
+    signal_activate(&pin_map[sm_signal].ipmc_name);
   }
   
   return 0;
 }
 
 int
-deactivate_gpio(int idx)
+deactivate_gpio(sm_signal_t sm_signal)
 {
-  if (pin_map[idx].expert == 1 && expert_mode == 0) {
+  if (pin_map[sm_signal].expert == 1 && expert_mode == 0) {
     return -1;
   }
-  return unprotected_deactivate_gpio(idx);
+  return unprotected_deactivate_gpio(sm_signal);
 }
 
 // read pin and fill reply string with associated value. returns the
 // size of the reply.
 int
-get_gpio_state(int idx)
+get_gpio_state(sm_signal_t sm_signal)
 {
-  signal_t userio_sig = pin_map[idx].ipmc_name;
-
-  int value = signal_read(&userio_sig);
-
-  if(1 == str_eq(pin_map[idx].sm_name, "en_12v")){
+  int value = signal_read(&pin_map[sm_signal].ipmc_name);
+  if(1 == str_eq(pin_map[sm_signal].sm_name, pin_map[en_12v].sm_name)){
     return value;
   }
-  else {
-    return !value;
-  }
+  return !value;
 }
 
 
 int
-is_expert_constrained(int idx)
+is_expert_constrained(sm_signal_t sm_signal)
 {
-  return pin_map[idx].expert;
+  return pin_map[sm_signal].expert;
 }
 
 int
@@ -192,9 +187,9 @@ is_expert_mode_on(void)
 }
 
 pin_map_t
-get_gpio_signal(int idx)
+get_gpio_signal(sm_signal_t sm_signal)
 {
-  return pin_map[idx];
+  return pin_map[sm_signal];
 }
 
 void

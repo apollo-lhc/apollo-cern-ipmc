@@ -3,7 +3,7 @@
 REVISION := $(shell svn info --show-item revision)
 BRANCH := $(shell basename $$(pwd))
 DATE := $(shell date)
-REVISION_STR := 'static const char version_str[] = "$(REVISION) $(BRANCH) $(DATE)";'
+REVISION_STR := 'static const unsigned char version_str[] = "$(REVISION) $(BRANCH) $(DATE)";'
 
 .ONESHELL:
 all:

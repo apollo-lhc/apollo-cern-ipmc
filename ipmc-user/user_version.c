@@ -4,5 +4,5 @@
 
 int
 get_version(unsigned char * version) {
-  return strlcpy((char *) version, version_str);
+  return strlcpy(version, version_str);
 }
