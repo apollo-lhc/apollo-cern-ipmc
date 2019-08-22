@@ -1086,16 +1086,10 @@ cmd_help (char * params,
   // debug_printf("..... help 4\n");
 
   for (i = 0; i < get_n_pins(); i++) {
-    memcpy(r, "  ", 2);
-    r += 2;
-    pin_map_t signal = get_gpio_signal(i);
-    len = strlen(signal.sm_name);
-    memcpy(r, signal.sm_name, len);
-    r += len;
-    if (signal.expert == 1) {
-      len = strlen(expert_label_str);
-      memcpy(r, expert_label_str, len);
-      r += len;
+    r += strlcpy(r, "  ");
+    r += strlcpy(r, get_signal_sm_name(i));
+    if (get_signal_expert_mode(i) == 1) {
+      r += strlcpy(r, expert_label_str);
     }
     *r = '\n';
     r++;
@@ -1103,9 +1097,7 @@ cmd_help (char * params,
 
   // debug_printf("..... help 5\n");
 
-  len = strlen(help_footer_str);
-  memcpy(r, help_footer_str, len);
-  r += len;
+  r += strlcpy(r, help_footer_str);
   *r = '\0';
 
   // debug_printf("..... help 6\n");

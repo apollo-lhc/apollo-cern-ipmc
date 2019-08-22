@@ -43,27 +43,22 @@ zynq_read_version(unsigned char * version)
 char
 zynq_reset(void)
 {
-  // get signal index from pin map
-  int uart_addr0_idx = get_signal_index("uart_addr_0");
-  int uart_addr1_idx = get_signal_index("uart_addr_1");
-  int ipmc_zynq_en_idx = get_signal_index("ipmc_zynq_en");
-
   // Make sure UART ADDR [1:0] is "01"
-  unprotected_deactivate_gpio(uart_addr1_idx);
-  unprotected_activate_gpio(uart_addr0_idx);
+  unprotected_deactivate_gpio(uart_addr1);
+  unprotected_activate_gpio(uart_addr0);
 
   // Shutdow Zynq supplies
-  unprotected_deactivate_gpio(ipmc_zynq_en_idx);
+  unprotected_deactivate_gpio(ipmc_zynq_en);
 
   // Zynq is tired, let it rest
   udelay(1000 * 1000);
   
   // Start Zynq power up sequence
-  unprotected_deactivate_gpio(ipmc_zynq_en_idx);
+  unprotected_deactivate_gpio(ipmc_zynq_en);
 
   // Make sure UART ADDR [1:0] is "00"
-  unprotected_deactivate_gpio(uart_addr1_idx);
-  unprotected_deactivate_gpio(uart_addr0_idx);
+  unprotected_deactivate_gpio(uart_addr1);
+  unprotected_deactivate_gpio(uart_addr0);
 
   return 0;
 }

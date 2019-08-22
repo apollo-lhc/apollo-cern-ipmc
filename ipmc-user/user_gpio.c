@@ -10,36 +10,45 @@ Version ..... : V0.1 - 18/05/2019
 #include <ipmc.h>
 #include <log.h>
 #include <debug.h>
+#include <app/signal.h>
 
 #include <user_helpers.h>
 
 #include <user_gpio.h>
 
-
-#ifndef NULL
-#define NULL ((void *)0)
-#endif
+#define NAME(Variable) (#Variable)
+#define PIN(n,o,e,s,d) [n]={NAME(n), o, e, s, d}
 
 /* ================================================================ */
 
-static pin_map_t pin_map[] = {
-  {"ipmc_zynq_en"     , 1, 1, USER_IO_3                 , 0}, 
-  {"en_one_jtag_chain", 1, 0, USER_IO_4                 , 0}, 
-  {"uart_addr0"       , 1, 0, USER_IO_5                 , 1}, 
-  {"uart_addr1"       , 1, 0, USER_IO_6                 , 0}, 
-  {"zynq_boot_mode0"  , 1, 1, USER_IO_7                 , 1}, 
-  {"zynq_boot_mode1"  , 1, 1, USER_IO_8                 , 1}, 
-  {"sense_rst_n"      , 1, 0, USER_IO_9                 , 1}, 
-  {"mezz2_en"         , 1, 0, USER_IO_10                , 0}, 
-  {"mezz1_en"         , 1, 0, USER_IO_11                , 0}, 
-  {"m24512_we_n"      , 1, 0, USER_IO_12                , 1}, 
-  {"eth_sw_pwr_good"  , 0, 0, USER_IO_13                , 0}, 
-  {"eth_sw_reset_n"   , 1, 1, USER_IO_16                , 1},
-  {"en_12v"           , 1, 1, CFG_PAYLOAD_DCDC_EN_SIGNAL, 0},
-  {"fp_latch"         , 0, 0, CFG_HANDLE_SWITCH_SIGNAL  , 0},
-  {"blue_led"         , 1, 1, CFG_BLUE_LED_SIGNAL       , 1},
-  {"payload_reset_n"  , 0, 1, CFG_PAYLOAD_RESET_SIGNAL  , 1},
-  {"startup_flag"     , 1, 1, USER_IO_14                , 0}
+
+typedef struct pin_map_n {
+  const char * sm_name;
+  const int output;
+  const int expert;
+  const signal_t ipmc_name;
+  const int initial;
+} pin_map_t;
+
+static pin_map_t
+pin_map[] = {
+             PIN(ipmc_zynq_en     , 1, 1, USER_IO_3                 , 0),
+             PIN(en_one_jtag_chain, 1, 0, USER_IO_4                 , 0), 
+             PIN(uart_addr0       , 1, 0, USER_IO_5                 , 1), 
+             PIN(uart_addr1       , 1, 0, USER_IO_6                 , 0), 
+             PIN(zynq_boot_mode0  , 1, 1, USER_IO_7                 , 1), 
+             PIN(zynq_boot_mode1  , 1, 1, USER_IO_8                 , 1), 
+             PIN(sense_rst_n      , 1, 0, USER_IO_9                 , 1), 
+             PIN(mezz2_en         , 1, 0, USER_IO_10                , 0), 
+             PIN(mezz1_en         , 1, 0, USER_IO_11                , 0), 
+             PIN(m24512_we_n      , 1, 0, USER_IO_12                , 1), 
+             PIN(eth_sw_pwr_good  , 0, 0, USER_IO_13                , 0), 
+             PIN(eth_sw_reset_n   , 1, 1, USER_IO_16                , 1),
+             PIN(en_12v           , 1, 1, CFG_PAYLOAD_DCDC_EN_SIGNAL, 0),
+             PIN(fp_latch         , 0, 0, CFG_HANDLE_SWITCH_SIGNAL  , 0),
+             PIN(blue_led         , 1, 1, CFG_BLUE_LED_SIGNAL       , 1),
+             PIN(payload_reset_n  , 0, 1, CFG_PAYLOAD_RESET_SIGNAL  , 1),
+             PIN(startup_flag     , 1, 1, USER_IO_14                , 0)
 };
 
 /* ================================================================ */
@@ -56,6 +65,17 @@ get_n_pins(void)
   return N_PINS;
 }
 
+const char *
+get_signal_sm_name(int idx)
+{
+  return pin_map[idx].sm_name;
+}
+
+const int
+get_signal_expert_mode(int idx)
+{
+  return pin_map[idx].expert;
+}
 
 // look for signal information in the pin map table and return its
 // position. -1 is returned in case no signal is found.
