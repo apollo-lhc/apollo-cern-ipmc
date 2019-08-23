@@ -37,21 +37,21 @@ static char sensor_tcn75a_init(sensor_t *sensor);
 sensor_methods_t PROGMEM sensor_tcn75a_methods =
   { 
    /* Called when the core asks for event */ 
-  fill_event:           &sensor_threshold_fill_event,
+  .fill_event     = &sensor_threshold_fill_event,
   /* Called when the core asks for sensor value */ 
-  fill_reading:	&sensor_tcn75a_fill_rd,
+  .fill_reading   = &sensor_tcn75a_fill_rd,
   /* Called when the core asks for sensor arm */ 
-  rearm:		&sensor_threshold_rearm,
+  .rearm          = &sensor_threshold_rearm,
   /* Called when a new threshold value is forced */ 
-  set_thresholds:	&sensor_threshold_set_thresholds,
+  .set_thresholds = &sensor_threshold_set_thresholds,
   /* Called when thresholds value are requested */ 
-  get_thresholds:	&sensor_threshold_get_thresholds,
+  .get_thresholds = &sensor_threshold_get_thresholds,
   /* Called to set a new threshold hysteresis value */ 
-  set_hysteresis:	&sensor_threshold_set_hysteresis,
+  .set_hysteresis = &sensor_threshold_set_hysteresis,
   /* Called to get the threshold hysteresis value */ 
-  get_hysteresis:	&sensor_threshold_get_hysteresis,
+  .get_hysteresis = &sensor_threshold_get_hysteresis,
   /* Called when the core asks for sensor init */
-  init:			&sensor_tcn75a_init
+  .init           = &sensor_tcn75a_init
 }; 
 
 /* ------------------------------------------------------------------ */ 
@@ -61,10 +61,9 @@ sensor_methods_t PROGMEM sensor_tcn75a_methods =
 static const
 sensor_tcn75a_ro_t PROGMEM sensor_tcn75a_ro[] = {CFG_SENSOR_TCN75A}; 
 
+#define SENSOR_TCN75A_COUNT	sizeofarray(sensor_tcn75a_ro)
 
-
-
-#define SENSOR_TCN75A_COUNT	sizeofarray(sensor_tcn75a_ro) 
+#define N_TRIES 10
 
 /* Read-write info structures of TCN75A temperature sensors */ 
 static struct sensor_tcn75a { 
@@ -100,14 +99,20 @@ initialize_sensor_tcn75a(unsigned char id)
 unsigned char
 read_sensor_tcn75a(unsigned char id)
 {
-  unsigned char temp;
-  char ret = user_tcn75a_read(34, &temp);
+  static unsigned char temp = 25;
+  static char attempts = 0;
 
-  // problem in the sensor reading... 
+  unsigned char aux;
+  char ret = user_tcn75a_read(id, &aux);
+  attempts++;
+
+  
   if (ret != 0) {
-    return 0xFF;     
+    return attempts <= N_TRIES ? temp : 0xff;
   }
 
+  attempts = 0;
+  temp = aux;
   return temp;
 } 
 
@@ -121,9 +126,9 @@ sensor_tcn75a_fill_rd(sensor_t *sensor, unsigned char *msg)
 { 
   /* Get instance index using the pointer address */ 
   unsigned char i, sval; 
-  unsigned short snum; 
-  
-  i = ((sensor_tcn75a_t *) sensor) - sensor_tcn75a; 
+  unsigned short snum;
+
+  i = ((sensor_tcn75a_t *) sensor) - sensor_tcn75a;  
   sval = read_sensor_tcn75a(sensor_tcn75a_ro[i].id); 
   snum = i + sensor_tcn75a_first; 
   
@@ -153,23 +158,25 @@ sensor_tcn75a_init(sensor_t *sensor)
 /* 1 second callback */ 
 TIMER_CALLBACK(1s, sensor_tcn75a_1s_callback)
 { 
-    unsigned char flags; 
- 
-    /* 
-     * -> Save interrupt state and disable interrupts 
-     *   Note: that ensure flags variable is not written by 
-     *         two processes at the same time. 
-     */ 
-    save_flags_cli(flags); 
- 
-    /* Change flag to schedule and update */ 
-    sensor_tcn75a_global_flags |= TCN75A_GLOBAL_UPDATE; 
- 
-    /* 
-     * -> Restore interrupt state and enable interrupts 
-     *   Note: restore the system 
-     */ 
-    restore_flags(flags); 
+  unsigned char flags; 
+  
+  /*
+   * -> Save interrupt state and disable interrupts 
+   *    Note: that ensure flags variable is not written by 
+   *          two processes at the same time. 
+   */ 
+  save_flags_cli(flags); 
+  
+  /* Change flag to schedule and update */ 
+  sensor_tcn75a_global_flags |= TCN75A_GLOBAL_UPDATE; 
+  
+  /* 
+   * -> Restore interrupt state and enable interrupts 
+   *   Note: restore the system 
+   */ 
+  restore_flags(flags);
+
+  return;
 } 
  
 /* Initialization callback */ 
@@ -198,53 +205,52 @@ INIT_CALLBACK(sensor_tcn75a_init_all)
 MAIN_LOOP_CALLBACK(sensor_tcn75a_poll)
 { 
  
-    unsigned char i, flags, gflags, pcheck, sval; 
-    unsigned short snum; 
+  unsigned char i, flags, gflags, pcheck, sval; 
+  unsigned short snum; 
  
-    /* Disable interrupts */ 
-    save_flags_cli(flags); 
+  /* Disable interrupts */ 
+  save_flags_cli(flags); 
  
-    /* Saved flag state into a local variable */ 
-    gflags = sensor_tcn75a_global_flags; 
+  /* Saved flag state into a local variable */ 
+  gflags = sensor_tcn75a_global_flags; 
  
-    /* Clear flags */ 
-    sensor_tcn75a_global_flags = 0; 
+  /* Clear flags */ 
+  sensor_tcn75a_global_flags = 0; 
  
-    /* Enable interrupts */ 
-    restore_flags(flags); 
+  /* Enable interrupts */ 
+  restore_flags(flags); 
  
-    if (gflags & TCN75A_GLOBAL_INIT) { 
- 
-        /* initialize all Template sensors */ 
-        for (i = 0; i < SENSOR_TCN75A_COUNT; i++) { 
- 
-        	/* Check if the sensor is present         */ 
-        	/*    e.g.: can be absent in case of RTM  */ 
-            pcheck = sensor_tcn75a[i].sensor.s.status; 
- 
-            if (!(pcheck & STATUS_NOT_PRESENT)) { 
-                initialize_sensor_tcn75a(sensor_tcn75a_ro[i].id); 
-            } 
-		} 
+  if (gflags & TCN75A_GLOBAL_INIT) { 
+
+    /* initialize all Template sensors */ 
+    for (i = 0; i < SENSOR_TCN75A_COUNT; i++) { 
+      
+      /* Check if the sensor is present         */ 
+      /*    e.g.: can be absent in case of RTM  */ 
+      pcheck = sensor_tcn75a[i].sensor.s.status; 
+      
+      if (!(pcheck & STATUS_NOT_PRESENT)) { 
+        initialize_sensor_tcn75a(sensor_tcn75a_ro[i].id); 
+      } 
     } 
+  } 
  
-    if (gflags & TCN75A_GLOBAL_UPDATE) { 
- 
-    	/* update all sensor readings */ 
-        for (i = 0; i < SENSOR_TCN75A_COUNT; i++) { 
- 
-        	/* Check if the sensor is present         */ 
-        	/*    e.g.: can be absent in case of RTM  */ 
-        	pcheck = sensor_tcn75a[i].sensor.s.status; 
-        	snum = sensor_tcn75a_first + i; 
-            if (!(pcheck & STATUS_NOT_PRESENT)) { 
-                WDT_RESET; 
-                sval = read_sensor_tcn75a(sensor_tcn75a_ro[i].id); 
-                sensor_threshold_update(&master_sensor_set, snum, sval, flags); 
-            } 
-        } 
+  if (gflags & TCN75A_GLOBAL_UPDATE) { 
+    
+    /* update all sensor readings */ 
+    for (i = 0; i < SENSOR_TCN75A_COUNT; i++) { 
+      
+      /* Check if the sensor is present         */ 
+      /*    e.g.: can be absent in case of RTM  */ 
+      pcheck = sensor_tcn75a[i].sensor.s.status; 
+      snum = sensor_tcn75a_first + i; 
+      if (!(pcheck & STATUS_NOT_PRESENT)) { 
+        WDT_RESET; 
+        sval = read_sensor_tcn75a(sensor_tcn75a_ro[i].id); 
+        sensor_threshold_update(&master_sensor_set, snum, sval, flags); 
+      } 
     } 
- 
+  } 
 } 
  
 #endif /* CFG_SENSOR_TCN75A */ 
