@@ -1,9 +1,0 @@
-nvm.ihx
-hpm1all.img
-hpm1boot.img
-hpm1fru.img
-hpm1fw.img
-hpm1iap.img
-compile.py
-ipmc-user/user_version_def.h
-config.xml
