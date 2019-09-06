@@ -5,6 +5,8 @@ Auteur ...... : Thiago Costa de Paiva <tcpaiva@cern.ch>
 Version ..... : V0.2 - 2019-07-31
 ***********************************************************************/
 
+static const char debug = 0;
+
 #include <app.h>
 #include <cfgint.h>
 #include <ipmc.h>
@@ -550,7 +552,9 @@ user_tcpserv_data_handler(const ip_addr_t to,
   int conn_idx = -1;
 
 
-  // debug_printf("<_> ======= 1\n");
+  if (debug) {
+    debug_printf("<_> ======= 1\n");
+  }
 
   for(i = 0; i < MAX_USER_TCPSERV_CLIENT; i++){
 		
@@ -568,8 +572,10 @@ user_tcpserv_data_handler(const ip_addr_t to,
     return -1;
   }
 
-  // debug_printf("<_> ======= 2\n");
-
+  if (debug) {
+    debug_printf("<_> ======= 2\n");
+  }
+  
   // append received data to associated buffer
   // check for overflow
   if (append_to_cmd_buffer(conn_idx, data, len) != 0){
@@ -578,8 +584,10 @@ user_tcpserv_data_handler(const ip_addr_t to,
 
   unsigned char cmd_line[CMD_LINE_MAX_LEN];
 
-  // debug_printf("<_> ======= 3\n");
-
+  if (debug) {
+    debug_printf("<_> ======= 3\n");
+  }
+  
   // look for termination
   // copy from buffer to cmd line;
   // terminates cmd line with '\0' for str_eq
@@ -587,31 +595,42 @@ user_tcpserv_data_handler(const ip_addr_t to,
   // returns the len of the command found, or -1 otherwise
   int cmd_len = chomp_cmd(cmd_line, conn_idx);
   
-  // debug_printf("<_> ======= 4\n");
-  
+  if (debug) {
+    debug_printf("<_> ======= 4\n");
+  }
+
   if (cmd_len < 0) {
     *replyLen = 0;
     return 0;
   }
   
   
-  // debug_printf("<_> user_tcpserv command line: %s\n", cmd_line);
-
-  // debug_printf("<_> ======= cmd line: %s|\n", cmd_line);
+  if (debug) {
+    debug_printf("<_> ======= cmd line: %s|\n", cmd_line);
+  }
+    
 
   remove_extra_spaces(cmd_line);
-  // debug_printf("<_> >>>>>> no extra spaces: %s|\n", cmd_line);
+  if (debug) {
+    debug_printf("<_> >>>>>> no extra spaces: %s|\n", cmd_line);
+  }
 
   lowercase(cmd_line);
-  // debug_printf("<_> >>>>>> all lowercase: %s|\n", cmd_line);
+  if (debug) {
+    debug_printf("<_> >>>>>> all lowercase: %s|\n", cmd_line);
+  }
 
   unsigned char cmd[MAX_PARAM_LEN];
   get_next_param(cmd, cmd_line);
-  // debug_printf("<_> >>>>>> cmd: %s|\n", cmd);
+  if (debug) {
+    debug_printf("<_> >>>>>> cmd: %s|\n", cmd);
+  }
 
   int cmd_idx = get_cmd_index(cmd);
-  // debug_printf("<_> >>>>>> cmd_idx: %d\n", cmd_idx);
-
+  if (debug) {
+    debug_printf("<_> >>>>>> cmd_idx: %d\n", cmd_idx);
+  }
+  
   // if a command was found, execute it.
   if (cmd_idx >= 0) { 
     // execute command, get reply and associated length

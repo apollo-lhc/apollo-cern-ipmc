@@ -8,6 +8,12 @@ Legend:
 
 To do:
 
+[ ] weird behavior of the command line interface, which is hanging...
+
+    - hard to track because it does not always happen.
+
+[X] temperature sensors not available in shelf manager when I2C mux is blocked. 
+
 [X] initial state for signals
 
 [ ] delay between 12v and zynq enables

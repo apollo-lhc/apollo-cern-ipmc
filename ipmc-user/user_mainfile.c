@@ -35,19 +35,19 @@ INIT_CALLBACK(usermain_init)
 }
 
 
-// This is a function to coordenate the initialization of the Zynq and
-// the power negotiation with the shelf manager.
-TIMER_CALLBACK(1s, usermain_timercback)
-{
-  static int cnt = 0;
-
-  unsigned char version[70];
-
-  if (++cnt % 10 == 0){
-    user_get_version(version);
-    debug_printf("Version: %s\n", version);
-    user_dump_gpios();
-  }
-  
-  return;
-}
+// // This is a function to coordenate the initialization of the Zynq and
+// // the power negotiation with the shelf manager.
+// TIMER_CALLBACK(1s, usermain_timercback)
+// {
+//   static int cnt = 0;
+// 
+//   unsigned char version[70];
+// 
+//   if (++cnt % 10 == 0){
+//     user_get_version(version);
+//     debug_printf("Version: %s\n", version);
+//     user_dump_gpios();
+//   }
+//   
+//   return;
+// }
