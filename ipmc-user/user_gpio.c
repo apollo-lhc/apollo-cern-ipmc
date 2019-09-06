@@ -14,6 +14,7 @@ Version ..... : V0.1 - 18/05/2019
 #include <log.h>
 #include <debug.h>
 #include <app/signal.h>
+#include <app/master/fru_led.h>
 
 // our headers
 #include <user_helpers.h>
@@ -35,23 +36,30 @@ typedef struct pin_map_n {
 
 static pin_map_t
 pin_map[] = {
-             PIN(ipmc_zynq_en     , 1, 1, USER_IO_3                 , 0, 1),
-             PIN(en_one_jtag_chain, 1, 0, USER_IO_4                 , 0, 1), 
-             PIN(uart_addr0       , 1, 0, USER_IO_5                 , 1, 1), 
-             PIN(uart_addr1       , 1, 0, USER_IO_6                 , 0, 1), 
-             PIN(zynq_boot_mode0  , 1, 1, USER_IO_7                 , 1, 1), 
-             PIN(zynq_boot_mode1  , 1, 1, USER_IO_8                 , 1, 1), 
-             PIN(sense_rst_n      , 1, 0, USER_IO_9                 , 1, 1), 
-             PIN(mezz2_en         , 1, 0, USER_IO_10                , 0, 1), 
-             PIN(mezz1_en         , 1, 0, USER_IO_11                , 0, 1), 
-             PIN(m24512_we_n      , 1, 0, USER_IO_12                , 1, 1), 
-             PIN(eth_sw_pwr_good  , 0, 0, USER_IO_13                , 0, 1), 
-             PIN(eth_sw_reset_n   , 1, 1, USER_IO_16                , 1, 1),
-             PIN(en_12v           , 1, 1, CFG_PAYLOAD_DCDC_EN_SIGNAL, 0, 0),
-             PIN(fp_latch         , 0, 0, CFG_HANDLE_SWITCH_SIGNAL  , 0, 1),
-             PIN(blue_led         , 1, 1, CFG_BLUE_LED_SIGNAL       , 1, 0),
-             PIN(payload_reset_n  , 0, 1, CFG_PAYLOAD_RESET_SIGNAL  , 1, 1),
-             PIN(startup_flag     , 1, 1, USER_IO_14                , 0, 1)
+    PIN(ipmc_zynq_en      , 1, 1, USER_IO_3                 , 0, 1) // 0
+    , PIN(en_one_jtag_chain , 1, 0, USER_IO_4                 , 0, 1) // 1
+    , PIN(uart_addr0        , 1, 0, USER_IO_5                 , 1, 1) // 2
+    , PIN(uart_addr1        , 1, 0, USER_IO_6                 , 1, 1) // 3
+    , PIN(zynq_boot_mode0   , 1, 1, USER_IO_7                 , 1, 1) // 4
+    , PIN(zynq_boot_mode1   , 1, 1, USER_IO_8                 , 1, 1) // 5
+    , PIN(sense_rst_n       , 1, 0, USER_IO_9                 , 1, 1) // 6
+    , PIN(mezz2_en          , 1, 0, USER_IO_10                , 0, 1) // 7
+    , PIN(mezz1_en          , 1, 0, USER_IO_11                , 0, 1) // 8
+    , PIN(m24512_we_n       , 1, 0, USER_IO_12                , 1, 1) // 9
+    , PIN(eth_sw_pwr_good   , 0, 0, USER_IO_13                , 0, 1) // 10
+    , PIN(eth_sw_reset_n    , 1, 1, USER_IO_16                , 1, 1) // 11
+    , PIN(en_12v            , 1, 1, CFG_PAYLOAD_DCDC_EN_SIGNAL, 0, 0) // 12
+    , PIN(fp_latch          , 0, 0, CFG_HANDLE_SWITCH_SIGNAL  , 0, 1) // 13
+    , PIN(blue_led          , 1, 1, CFG_BLUE_LED_SIGNAL       , 1, 0) // 14
+    , PIN(payload_reset_n   , 0, 1, CFG_PAYLOAD_RESET_SIGNAL  , 1, 1) // 15
+    , PIN(shelf_operation   , 1, 1, USER_IO_17                , 1, 1) // 16
+    , PIN(zynq_i2c_on       , 1, 1, USER_IO_18                , 0, 1) // 17
+    , PIN(shutdown_req      , 1, 1, USER_IO_19                , 0, 1) // 18
+    // , PIN(red_led           , 1, 0, LED_SIGNAL_RED            , 1, 1) // 19
+    // , PIN(amber_led         , 1, 0, LED_SIGNAL_AMBER          , 1, 1) // 20
+    // , PIN(orange_led        , 1, 0, LED_SIGNAL_ORANGE         , 1, 1) // 21
+    // , PIN(white_led         , 1, 0, LED_SIGNAL_WHITE          , 1, 1) // 22
+    // , PIN(green_led         , 1, 0, LED_SIGNAL_GREEN          , 1, 1) // 23
 };
 
 /* ================================================================ */
@@ -97,12 +105,6 @@ user_get_signal_index(const unsigned char * sm_signal_name)
 int
 user_unprotected_set_gpio(sm_signal_t sm_signal, int level)
 {
-  if (pin_map[sm_signal].output == 0) {
-    // pin is input
-    return -2;
-  }
-
-
   // Some signals use inverted logic for some reason...
   if (1 == pin_map[sm_signal].inverted){
     level = !level;
@@ -127,13 +129,19 @@ user_set_gpio(sm_signal_t sm_signal, int level)
   if (pin_map[sm_signal].expert == 1 && expert_mode == 0) {
     return -1;
   }
+
+  if (pin_map[sm_signal].output == 0 && expert_mode == 0) {
+    // pin is input
+    return -2;
+  }
+
   return user_unprotected_set_gpio(sm_signal, level);
 }
 
 // read pin and fill reply string with associated value. returns the
 // size of the reply.
 int
-user_get_gpio_state(sm_signal_t sm_signal)
+user_get_gpio(sm_signal_t sm_signal)
 {
   int value = signal_read(&pin_map[sm_signal].ipmc_name);
 
@@ -183,7 +191,21 @@ user_gpio_init(void)
 {
   int i;
   for (i = 0; i < N_PINS; i++) {
-    user_set_gpio(i, pin_map[i].initial);
+    if(pin_map[i].output) {
+      user_unprotected_set_gpio(i, pin_map[i].initial);
+    }
   }
   return;
+}
+
+void
+user_dump_gpios(void)
+{
+  int i;
+  for (i = 0; i < N_PINS; i++) {
+    debug_printf("%s = %d\n",
+                 pin_map[i].sm_name,
+                 user_get_gpio(i));
+  }
+  debug_printf("---------\n");
 }

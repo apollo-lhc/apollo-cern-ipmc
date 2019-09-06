@@ -53,8 +53,7 @@ paths might produce unexpected results (meaning errors).
 
     - The CERN IPMC compile script uses a XML configuration file to
       set commonly used resources, it is named as config.xml. For this
-      project and at this moment, it means mainly LAN
-      configuration.
+      project and at this moment, it means LAN and sensors configuration.
 
     - To generate the configuration file needed for this project, a
       helper script (Python 3) is under development (scripts/ipmc_config_gen.py)
@@ -74,14 +73,28 @@ paths might produce unexpected results (meaning errors).
           associated to the ATCA slot addresses. You always want to
           use the "default" field.
 
-    - It is suggested to review all the other LAN parameters, such as netmask or gateway.
+    - It is suggested to review all the other LAN parameters, such as
+      netmask or gateway.
 
-- Run compile.py (it prompts for CERN credentials)
+- Compile the code
 
-    - It is a Python 3 script and requires the following libraries
-      (there are below suggestions about how to install these
-      libraries, but you should use what makes more sense for your
-      system):
+    - To compile the code, our project makes use of the remote
+    framework provided by the CERN IPMC project.
+
+    - Since version is generated during compilation, a Make recipe. It
+      will generate a C header file to be included in the code during
+      compilation. It also provides extra rules to ease upgrade,
+      activation of the new firmware, as well as to SOL use. An
+      environment file "env" is needed by the make recipe. There is an
+      example in the templates folder, adjust it as required.
+
+    - Under the hood, the Make recipe uses the CERN IPMC compilation
+      script provided by the CERN team.
+
+    - The CERN IPMC compilation script is based on Python 3 and
+      requires the following libraries (there are below suggestions
+      about how to install these libraries, but you should use what
+      makes more sense for your system):
 
         - colorama (pip install colorama)
 
@@ -92,10 +105,16 @@ paths might produce unexpected results (meaning errors).
     - There is a read only version of this file in our repository
       named as "compile_ref.py". If you want to make changes, you need
       to make a copy of that. We suggest the name of the changed file
-      as "compile.py", which will be automaticaly ingnored by the svn,
+      as "compile.py", which will be automatically ignored by the svn,
       avoiding mistakes.
 
-    - Command to run the compilation script: python compile.py
+    - Command to run the compilation flow:
+
+        ipmc/trunk $ make
+
+        or
+
+        ipmc/trunk $ make compile
 
 If the compilation works fine, new files will be available in the
 current directory.  After the compilation, you will have some new
@@ -104,35 +123,22 @@ files in your working directory, the only needed one is "hpm1all.img".
 Load IPMC firmware
 ------------------
 
-Assuming you know the IP address of the IPMC, you can use the ipmitool
-to reprogram the IPMC firmware. The CERN IPMC does answer ping
-requests, so if that fails the problem is somewhere in the network
-(wrong IP address, blocked subnets, etc).
+Assuming your blade is inside of an ATCA shelf and that you have the
+IP address of the shelf manager, you can use the ipmitool to reprogram
+the IPMC firmware.
 
-- To verify that the connection with the IPMC is working, use the following command:
+    $ make upgrade
 
-    $ ping <IPMC IP address>
+- Please remember to answer "yes" to the subsequent question raised by
+  the ipmitool "Services may be affected during upgrade. Do you wish
+  to continue? (y/n):". The IPMI channel will be closed without
+  notification if you fail to do that in a reasonable time, which will
+  lead you to a long wait until the ipmitool times out.
 
-If the ping requests are answered, proceed to programming the IPMC using the ipmitool:
-
-    $ ipmitool -I lan -H <IPMC IP address> -P "" hpm upgrade hpm1all.img force
-
-        - Please remember to answer "yes" to the subsequent question
-          raised by the ipmitool "Services may be affected during
-          upgrade. Do you wish to continue? (y/n):". The IPMI channel
-          will be closed without notification if you fail to do that
-          in a reasonable time, which will lead you to a long wait
-          until the ipmitool times out.
-
-        - time needed: approx. 16 minutes
 
 After having the IPMC successfully programmed, the new firmware needs to be activated:
 
-    $ ipmitool -I lan -H <IPMC IP address> -P "" hpm activate
-
-        - this command terminates with what looks like an error:
-          "Close Session command failed". Please ignore it. If you got
-          to that point, the activation was successful.
+    $ make activate
 
 Once the new firmware is activated, the IPMC will reboot and the new
 network configuration should be used from that point on.
@@ -249,6 +255,14 @@ Questions or comments
 - What is the size of the stack?
 
 - What are the values accepted in the second parameter of the signal_set_pin? (SIGNAL_HIGHZ, ...)
+
+
+Other
+-----
+
+To make SVN to ignore files:
+
+    svn propset svn:ignore -F svnignore.txt --recursive .
 
 
 

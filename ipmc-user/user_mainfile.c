@@ -17,7 +17,8 @@ Compilation :
 #include <app/signal.h>
 
 #include <user_gpio.h>
-#include <user_zynq.h>
+#include <user_version.h>
+// #include <user_zynq.h>
 
 // let's lock Zynq I2C poll before initialization
 static char init_lock = 1;
@@ -33,30 +34,20 @@ INIT_CALLBACK(usermain_init)
   init_lock = 0; 
 }
 
+
 // This is a function to coordenate the initialization of the Zynq and
 // the power negotiation with the shelf manager.
-TIMER_CALLBACK(100ms, usermain_timercback)
+TIMER_CALLBACK(1s, usermain_timercback)
 {
+  static int cnt = 0;
 
-  // only runs if user init was performed
-  if (init_lock == 1) {
-    return;
+  unsigned char version[70];
+
+  if (++cnt % 10 == 0){
+    user_get_version(version);
+    debug_printf("Version: %s\n", version);
+    user_dump_gpios();
   }
-
-  // this function will execute each 500ms only
-  static int cnt = 1;
-  if (cnt++ % 5){
-    return;
-  }
-
-  unsigned char version;
-  if (user_zynq_read_version(& version)) {
-    // reading error
-    user_unprotected_set_gpio(startup_flag, 0);
-  } else {
-    // reading success
-    user_unprotected_set_gpio(startup_flag, 1);
-  }
-
+  
   return;
 }

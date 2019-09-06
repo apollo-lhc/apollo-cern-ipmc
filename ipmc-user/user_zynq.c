@@ -10,10 +10,12 @@ Version ..... : V0.1 - 30/05/2019
 // their headers
 #include <hal/i2c.h>
 #include <i2c_dev.h>
+#include <debug.h>
 
 // our headers
 #include <user_gpio.h>
 #include <user_pca9545.h>
+// #include <user_power_sequence.h>
 
 /* sensor I2C bus number */
 #define SENSOR_I2C_BUS     2
@@ -24,8 +26,8 @@ Version ..... : V0.1 - 30/05/2019
 // temp address just for testing
 #define TCN75A_U34_I2C_ADDR MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, 0x90) 
 
-// Zynq was not killed... yet.
-static char resurrect_zynq = 0;
+static char zynq_restart_delay = 5;
+static char zynq_restart = 0;
 
 char
 user_zynq_read_version(unsigned char * version)
@@ -44,42 +46,96 @@ user_zynq_read_version(unsigned char * version)
 }
 
 char
-user_zynq_reset(char delay)
+user_zynq_request_restart(char delay)
 {
-  // Make sure UART ADDR [1:0] is "01"
-  user_unprotected_set_gpio(uart_addr1, 0);
-  user_unprotected_set_gpio(uart_addr0, 1);
-
-  // kill Zynq
-  user_unprotected_set_gpio(ipmc_zynq_en, 0);
-
-  // resurrect Zynq needed
-  resurrect_zynq = delay;
-
+  zynq_restart_delay = delay;
+  zynq_restart = 1;
   return 0;
 }
 
-// people like to kill the poor Zynq sometimes
-// let's resurrect it!
-TIMER_CALLBACK(1s, user_zynq_timercback)
+void
+user_zynq_restart(void)
 {
+  static enum {
+               ZYNQ_POWER_OFF,
+               DELAY,
+               ZYNQ_POWER_ON_ACK
+  } state = ZYNQ_POWER_OFF;
 
-  // Does Zynq need to revive?
-  if (resurrect_zynq == 0) {
+  static char addr0;
+  static char addr1;
+
+  static char restart_delay;
+  
+  switch (state) {
+  case ZYNQ_POWER_OFF:
+    debug_printf("ZYNQ_POWER_OFF");
+
+    addr0 = user_get_gpio(uart_addr0);
+    addr1 = user_get_gpio(uart_addr1);
+
+    user_unprotected_set_gpio(uart_addr0, 1);
+    user_unprotected_set_gpio(uart_addr1, 0);
+
+    user_unprotected_set_gpio(ipmc_zynq_en, 0);
+
+    restart_delay = zynq_restart_delay;
+    state = DELAY;
+    break;
+  case DELAY:
+    debug_printf("zynq reset DELAY");
+    if ( restart_delay > 0) {
+      restart_delay--;
+    } else {
+      user_unprotected_set_gpio(ipmc_zynq_en, 1);
+      state = ZYNQ_POWER_ON_ACK;
+    }
+    break;
+  case ZYNQ_POWER_ON_ACK:
+    debug_printf("zynq reset POWERON_ACK");
+    if (user_get_gpio(zynq_i2c_on) == 1) {
+      user_unprotected_set_gpio(uart_addr0, addr0);
+      user_unprotected_set_gpio(uart_addr1, addr1);
+
+      zynq_restart = 0;
+      state = ZYNQ_POWER_OFF;
+    }
+    break;
+  }
+  return;
+}
+
+
+// This is a function to coordenate the initialization of the Zynq and
+// the power negotiation with the shelf manager.
+TIMER_CALLBACK(100ms, user_zynq_timercback_100ms)
+{
+  // runs each 500ms only
+  static int cnt = 0;
+  if (++cnt % 5){
     return;
   }
 
-  // counting down for Zynq to awake!
-  if (--resurrect_zynq) {
-    return;
+  unsigned char version;
+  if (user_zynq_read_version(& version)) {
+    // reading error
+    user_unprotected_set_gpio(zynq_i2c_on, 0);
+  } else {
+    // reading success
+    user_unprotected_set_gpio(zynq_i2c_on, 1);
   }
-
-  // Start Zynq power up sequence
-  user_unprotected_set_gpio(ipmc_zynq_en, 1);
-
-  // Make sure UART ADDR [1:0] is "00"
-  user_unprotected_set_gpio(uart_addr1, 0);
-  user_unprotected_set_gpio(uart_addr0, 0);
 
   return;
 }
+
+// This is a function to coordenate the initialization of the Zynq and
+// the power negotiation with the shelf manager.
+TIMER_CALLBACK(1s, user_zynq_restart_timercback_1s)
+{
+  if (zynq_restart == 1) {
+    user_zynq_restart();
+  }
+  return;
+}
+
+

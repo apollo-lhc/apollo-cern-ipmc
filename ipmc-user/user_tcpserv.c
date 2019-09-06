@@ -18,16 +18,12 @@ Version ..... : V0.2 - 2019-07-31
 
 #include <user_zynq.h>
 #include <user_pca9545.h>
-#include <user_tcn75a.h>
+#include <user_tcn75.h>
 #include <user_gpio.h>
 #include <user_i2c.h>
 #include <user_version.h>
 
 #include <user_helpers.h>
-
-#ifndef NULL
-#define NULL ((void *)0)
-#endif
 
 enum {
       INTERNAL_I2C_BUS,
@@ -236,13 +232,13 @@ static const unsigned char str_i2c_bus_management[] =
 static const unsigned char str_i2c_bus_sensor[] =
   "Sensor\n";
 
-static const unsigned char help_zynq_reset[] =
-  "Reset only Zynq.\n"
-  "Usage: zynq_reset [delay]\n"
+static const unsigned char help_zynq_restart[] =
+  "Restart only Zynq.\n"
+  "Usage: zynq_restart [delay]\n"
   "  [delay]: integer, seconds, defaults to 2.\n";
 
-static const unsigned char err_zynq_reset[] =
-  "Zynq reset did not happen.\n";
+static const unsigned char err_zynq_restart[] =
+  "Zynq restart did not happen.\n";
 
 
 /* ================================================================ */
@@ -319,7 +315,7 @@ get_i2c_bus(unsigned char * params,
             int conn_idx);
 
 int
-zynq_reset(unsigned char * params,
+zynq_restart(unsigned char * params,
            unsigned char * reply,
            int conn_idx);
 
@@ -349,7 +345,7 @@ static const cmd_map_t cmd_map[] = {
     CMD_FUNC(set_gpio),
     CMD_FUNC(write_i2c_mux    ),
     CMD_FUNC(version          ),
-    CMD_FUNC(zynq_reset       ),
+    CMD_FUNC(zynq_restart     ),
     CMD_FUNC(help             ),
     ALIAS_FUNC(question_mark_str, help)
 };
@@ -993,7 +989,7 @@ get_gpio(unsigned char * params,
 
     // debug_printf("######## read_gpio_signal 2 (idx found)\n");
 
-    int v = user_get_gpio_state(idx);
+    int v = user_get_gpio(idx);
     
     if (v > 0) {
       return strlcpy(reply, gpio_enabled_str);
@@ -1161,7 +1157,7 @@ read_tcn75a(unsigned char * params,
            param,
            &(cmd_buf[conn_idx].hex));
 
-  ret = user_tcn75a_read((char) id, &temp);
+  ret = user_tcn75_read_reg((unsigned char) id, 0x00, &temp);
   if (ret != 0) {
     return strlcpy(reply, error_str);
   }
@@ -1573,7 +1569,7 @@ get_i2c_bus(unsigned char * params,
 
 
 int
-zynq_reset(unsigned char * params,
+zynq_restart(unsigned char * params,
            unsigned char * reply,
            int conn_idx)
 {
@@ -1585,7 +1581,7 @@ zynq_reset(unsigned char * params,
   if (ret == 0) {
     if (str_eq(param, help_str) == 1
         || str_eq(param, question_mark_str) == 1) {
-      return strlcpy(reply, help_zynq_reset);
+      return strlcpy(reply, help_zynq_restart);
     }
 
     unsigned char tmp; 
@@ -1598,11 +1594,11 @@ zynq_reset(unsigned char * params,
   }
 
   
-  if (user_zynq_reset((char) delay) == 0) { 
+  if (user_zynq_request_restart((char) delay) == 0) { 
     return strlcpy(reply, ok_str);
   }
   
-  return strlcpy(reply, err_zynq_reset);
+  return strlcpy(reply, err_zynq_restart);
 }
 
   
