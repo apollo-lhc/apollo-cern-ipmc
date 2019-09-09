@@ -54,12 +54,9 @@ pin_map[] = {
     , PIN(payload_reset_n   , 0, 1, CFG_PAYLOAD_RESET_SIGNAL  , 1, 1) // 15
     , PIN(shelf_operation   , 1, 1, USER_IO_17                , 1, 1) // 16
     , PIN(zynq_i2c_on       , 1, 1, USER_IO_18                , 0, 1) // 17
-    , PIN(shutdown_req      , 1, 1, USER_IO_19                , 0, 1) // 18
-    // , PIN(red_led           , 1, 0, LED_SIGNAL_RED            , 1, 1) // 19
-    // , PIN(amber_led         , 1, 0, LED_SIGNAL_AMBER          , 1, 1) // 20
-    // , PIN(orange_led        , 1, 0, LED_SIGNAL_ORANGE         , 1, 1) // 21
-    // , PIN(white_led         , 1, 0, LED_SIGNAL_WHITE          , 1, 1) // 22
-    // , PIN(green_led         , 1, 0, LED_SIGNAL_GREEN          , 1, 1) // 23
+    , PIN(debug_0           , 1, 1, USER_IO_19                , 0, 1) // 18
+    , PIN(debug_1           , 1, 1, USER_IO_20                , 0, 1) // 19
+    , PIN(debug_2           , 1, 1, USER_IO_21                , 0, 1) // 20
 };
 
 /* ================================================================ */

@@ -21,7 +21,9 @@ enum {
       , payload_reset_n    // 15
       , shelf_operation    // 16
       , zynq_i2c_on        // 17
-      , shutdown_req       // 18
+      , debug_0            // 18
+      , debug_1            // 19
+      , debug_2            // 20
       // , red_led            // 19
       // , amber_led          // 20
       // , orange_led         // 21

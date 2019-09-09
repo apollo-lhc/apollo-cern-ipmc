@@ -132,6 +132,7 @@ TIMER_CALLBACK(100ms, user_zynq_timercback_100ms)
 // the power negotiation with the shelf manager.
 TIMER_CALLBACK(1s, user_zynq_restart_timercback_1s)
 {
+  debug_printf("zynq_i2c_on: %d\n", user_get_gpio(zynq_i2c_on));
   if (zynq_restart == 1) {
     user_zynq_restart();
   }

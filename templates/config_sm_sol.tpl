@@ -39,10 +39,15 @@
   <PowerManagement>
     
     <PowerONSeq>
-      <!-- =======================
-           GPIO logic are inverted 
-           ======================= -->   
-      
+      <!-- ===========================
+           **GPIO logic** are inverted 
+           =========================== -->   
+
+      <!-- no-shelf operation guard -->
+      <!-- shut power sequence when not for shelf operation -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(USER_IO_17, 2)</step>
+      <step>PSQ_FAIL</step>     
+
       <!-- Make sure UART ADDR 1 downto 0 is "01" -->        
       <step>PSQ_DISABLE_SIGNAL(USER_IO_5)</step> <!-- Set ADDR0 to 1-->
       <step>PSQ_ENABLE_SIGNAL(USER_IO_6)</step>  <!-- Set ADDR1 to 0-->
@@ -55,30 +60,43 @@
 
       <!-- let's wait 1s for power good to be received, fail if not -->
       <step>PSQ_SET_TIMER(0, 1000)</step> <!-- timer 0 -->
-      <step>PSQ_JUMP_IFNOT_TIMEOUT(0, 1)</step>
-      <step>PSQ_FAIL</step>
-      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(USER_IO_13, -2)</step> <!-- eth_sw_pwr_good == 0? -->
-
+      <step>PSQ_JUMP_IFNOT_TIMEOUT(0, 4)</step>
+      <step>PSQ_ENABLE_SIGNAL(USER_IO_3)</step> <!-- power off -->
+      <step>PSQ_DISABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step> <!-- power off -->
+      <step>PSQ_FAIL</step> <!-- fail signaling -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(USER_IO_13, -4)</step> <!-- eth_sw_pwr_good == 0? -->
+      
       <!-- Make sure UART ADDR 1 downto 0 is "00" -->        
       <step>PSQ_ENABLE_SIGNAL(USER_IO_5)</step>  <!-- Set ADDR0 to 0-->
       <step>PSQ_ENABLE_SIGNAL(USER_IO_6)</step>  <!-- Set ADDR1 to 0-->
 
       <!-- let's wait 10s for Zynq to wake up, fail if not -->
       <step>PSQ_SET_TIMER(1, 10000)</step> <!-- timer 1 -->
-      <step>PSQ_JUMP_IFNOT_TIMEOUT(1, 1)</step>
+      <step>PSQ_JUMP_IFNOT_TIMEOUT(1, 4)</step>
+      <step>PSQ_ENABLE_SIGNAL(USER_IO_3)</step>
+      <step>PSQ_DISABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step> <!-- power off -->
       <step>PSQ_FAIL</step>
-      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(USER_IO_14, -2)</step> <!-- init_flatg == 0? -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(USER_IO_18, -4)</step> <!-- zynq_i2c_on? -->
 
       <!-- enable i2c mux -->
+      <!--
       <step>PSQ_DISABLE_SIGNAL(USER_IO_9)</step>
+      -->
 
       <!-- sucess!! -->
       <step>PSQ_END</step>     
     </PowerONSeq>
     
     <PowerOFFSeq>
-      <!-- GPIO logic are inverted -->
-      <step>PSQ_ENABLE_SIGNAL(USER_IO_9)</step> <!-- disable i2c mux -->
+      <!-- ===========================
+           **GPIO logic** are inverted 
+           =========================== -->   
+
+      <!-- disable i2c mux -->
+      <!--
+      <step>PSQ_ENABLE_SIGNAL(USER_IO_9)</step>
+      -->
+      
       <step>PSQ_DISABLE_SIGNAL(USER_IO_5)</step> <!-- Set ADDR0 to 1-->
       <step>PSQ_ENABLE_SIGNAL(USER_IO_6)</step>  <!-- Set ADDR1 to 0-->
       <step>PSQ_ENABLE_SIGNAL(USER_IO_3)</step>  <!-- Shutdow Zynq supplies-->   
@@ -146,7 +164,7 @@
       </Sensor>
     </Sensors>
 
-    <Sensors type="raw" global_define="CFG_SENSOR_TCN75A" function_name="SENSOR_TCN75A" rawType="TCN75A"> 
+    <Sensors type="raw" global_define="CFG_SENSOR_TCN75" function_name="SENSOR_TCN75" rawType="TCN75"> 
 			 
       <Sensor> 
         <Name>U34 Temp</Name> 

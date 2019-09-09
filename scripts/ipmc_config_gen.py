@@ -29,7 +29,13 @@ def fill_template(template_file, ipmc_id):
     
 def main():
 
+    if (len(sys.argv) != 3):
+        print("Usage: {} <SM #> <SDI or SOL>".format(sys.argv[0]))
+        exit(1)
+
     ipmc_id = int(sys.argv[1])
+
+    serial_if = sys.argv[2].lower()
 
     # get scripts directory path
     scripts_dir = os.path.dirname(os.path.realpath(__file__))
@@ -39,7 +45,13 @@ def main():
     if ipmc_id == 0:
         template_file = os.path.join(templates_dir, "config_devkit.tpl")
     else:
-        template_file = os.path.join(templates_dir, "config_sm.tpl")
+        if serial_if == "sdi":
+            template_file = os.path.join(templates_dir, "config_sm_sdi.tpl")
+        elif(serial_if == "sol"):
+            template_file = os.path.join(templates_dir, "config_sm_sol.tpl")
+        else:
+            print("Unknown serial mode")
+            exit(1)
 
     target_file = os.path.join(scripts_dir, "../config.xml")
 
