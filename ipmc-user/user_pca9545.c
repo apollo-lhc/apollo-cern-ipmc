@@ -23,7 +23,7 @@ static const char i2c_debug_str[] =
 
 
 char
-pca9545_write(unsigned char mask)
+user_pca9545_write(unsigned char mask)
 {
   int ret = i2c_io(PCA9545_I2C_ADDR | I2C_START | I2C_STOP, &mask, 1);
   // debug_printf(i2c_debug_str, PCA9545_I2C_ADDR, mask, ret);
@@ -31,7 +31,7 @@ pca9545_write(unsigned char mask)
 }
 
 char
-pca9545_read(unsigned char * mask)
+user_pca9545_read(unsigned char * mask)
 {
 
   char ret = i2c_dev_read(PCA9545_I2C_ADDR,

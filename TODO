@@ -1,0 +1,56 @@
+Legend:
+
+[X]: done
+[-]: very low priority
+[ ]: to be done
+[\]: started
+[=]: cancelled or not possible
+
+To do:
+
+[ ] weird behavior of the command line interface, which is hanging...
+
+    - hard to track because it does not always happen.
+
+[X] temperature sensors not available in shelf manager when I2C mux is blocked. 
+
+[X] initial state for signals
+
+[ ] delay between 12v and zynq enables
+
+    - Not specified
+
+[X] fix line ended command line parser
+
+[\] loop to wait for zynq to boot
+
+    - poll Zynq I2C lines
+
+    - when Zynq up, light up LEDs
+
+[X] ensure IPMC uart signals are GND or high impedance on boot
+
+[=] ensure IPMC XVC signals are GND or high impedance on boot
+
+[X] No rush, but please change
+
+    - <SerialIntf>SDI_INTF</SerialIntf> to <SerialIntf>SDI_SOL</SerialIntf>
+
+    - remove  <RedirectSDItoSOL/>
+
+    * This is only useful for whom is not working on the IPMC directly
+
+[X] create a config template for the devkit -> SM 0
+
+[-] make expert_mode associated to a specific connection (not global)
+
+[X] change signal name: SENSE_RST --> SENSE_RST_B
+
+[X] investigate if debug messages can be sent via TCP/IP from IPMC to
+computer directly, i.e. independent of the received requests. 
+
+    - Yes, it is possible using ipmitool and SOL with SDI redirection
+
+[=] expose other signals of interest in the GPIO API
+
+    - Signals not available for now.

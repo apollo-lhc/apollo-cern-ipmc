@@ -11,10 +11,10 @@ const char msg_i_c_n_2[] =
 
 /* reverse:  reverse string s in place */
 void
-reverse(char s[])
+reverse(unsigned char s[])
 {
   int i, j;
-  char c;
+  unsigned char c;
   
   for (i = 0, j = strlen(s)-1; i<j; i++, j--) {
     c = s[i];
@@ -25,9 +25,9 @@ reverse(char s[])
 
 /* itoa:  convert n to characters in s */
 int
-a_from_i(char s[],
+a_from_i(unsigned char s[],
          int n,
-         char hex)
+         unsigned char hex)
 {
   int i, sign;
   int aux;
@@ -86,8 +86,8 @@ a_from_i(char s[],
 /* itoa:  convert n to characters in s */
 int
 i_from_a(int * n,
-         char s[],
-         char * hex)
+         unsigned char s[],
+         unsigned char * hex)
 {
   int i;
 
@@ -119,10 +119,10 @@ i_from_a(int * n,
 }
 
 // int
-// vec_a_from_vec_i (char * a,
-//                   char * i,
+// vec_a_from_vec_i (unsigned char * a,
+//                   unsigned char * i,
 //                   int len,
-//                   char hex)
+//                   unsigned char hex)
 // {
 //   int ret = 0;
 //   for (int k = 0; k < len; k++) {
@@ -132,10 +132,10 @@ i_from_a(int * n,
 // }
 // 
 // int
-// vec_i_from_vec_a (char * i,
-//                   char * a,
+// vec_i_from_vec_a (unsigned char * i,
+//                   unsigned char * a,
 //                   int len,
-//                   char * hex)
+//                   unsigned char * hex)
 // {
 //   int ret = 0;
 //   for (int k = 0; k < len; k++) {
@@ -146,17 +146,17 @@ i_from_a(int * n,
 
 // freebsd implementation of strlen
 int
-strlen(const char * str)
+strlen(const unsigned char * str)
 {
-    const char *s;
+    const unsigned char *s;
     for (s = str; *s; ++s) {}
     return(s - str);
 }
 
 // compare two strings. returns 1 when equal.
 int
-str_eq (const char *s1,
-        const char *s2)
+str_eq (const unsigned char *s1,
+        const unsigned char *s2)
 {
   const unsigned char *p1 = (const unsigned char *) s1;
   const unsigned char *p2 = (const unsigned char *) s2;
@@ -185,8 +185,8 @@ str_eq (const char *s1,
 
 // copying strings
 int
-strlcpy(char *dest,
-        const char *src)
+strlcpy(unsigned char *dest,
+        const unsigned char *src)
 {
   unsigned i;
   for (i=0; src[i] != '\0'; ++i) {

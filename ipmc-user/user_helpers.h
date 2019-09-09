@@ -2,36 +2,36 @@
 #define USER_HELPERS_H
 
 int
-strlen(const char * str);
+strlen(const unsigned char * str);
 
 int
-str_eq(const char *s1,
-       const char *s2);
+str_eq(const unsigned char *s1,
+       const unsigned char *s2);
 
 int
-a_from_i(char s[],
+a_from_i(unsigned char s[],
          int n,
-         char hex);
+         unsigned char hex);
 
 int
 i_from_a(int * n,
-         char s[],
-         char * hex);
+         unsigned char s[],
+         unsigned char * hex);
 
 int
-strlcpy(char *dest,
-        const char *src);
+strlcpy(unsigned char *dest,
+        const unsigned char *src);
 
 // int
-// vec_a_from_vec_i (char * a,
-//                   char * i,
+// vec_a_from_vec_i (unsigned char * a,
+//                   unsigned char * i,
 //                   int len,
-//                   char hex);
+//                   unsigned char hex);
 // 
 // int
-// vec_i_from_vec_a (char * i,
-//                   char * a,
+// vec_i_from_vec_a (unsigned char * i,
+//                   unsigned char * a,
 //                   int len,
-//                   char hex);
+//                   unsigned char hex);
 
 #endif // USER_HELPERS_H
