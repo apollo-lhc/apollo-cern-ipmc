@@ -32,17 +32,35 @@ static char zynq_restart = 0;
 char
 user_zynq_read_version(unsigned char * version)
 {
+  
+  // -----------------------------------------
+  // temporary for testing
 
- // temporary for testing
- if (user_pca9545_write(0x01) != 0) return -2;
- char ret = i2c_dev_read_reg(TCN75A_U34_I2C_ADDR, 0x00, version, 1);
+  unsigned char prev;  
+  if (user_pca9545_read(&prev) != 0) {
+    return -2;
+  }
+  
+  if (user_pca9545_write(0x01) != 0) {
+    return -2;
+  }
 
- // if (pca9545_write(0x08) != 0) {
- //   // not possible to set I2C mux
- //   return -2;
- // }
- // char ret = i2c_dev_read_reg(ZYNQ_I2C_ADDR, 0x00, version, 1);
- return (ret < I2C_OK) ? (-1) : 0;
+  char ret = i2c_dev_read_reg(TCN75A_U34_I2C_ADDR, 0x00, version, 1);
+
+  if (user_pca9545_write(prev) != 0) {
+    return -4;
+  }
+
+  // test code down to here
+  // -----------------------------------------
+
+  // if (pca9545_write(0x08) != 0) {
+  //   // not possible to set I2C mux
+  //   return -2;
+  // }
+  // char ret = i2c_dev_read_reg(ZYNQ_I2C_ADDR, 0x00, version, 1);
+  
+  return (ret < I2C_OK) ? (-1) : 0;
 }
 
 char
@@ -104,6 +122,19 @@ user_zynq_restart(void)
   }
   return;
 }
+
+
+// char
+// user_zynq_i2c_write(unsigned char mask)
+// {
+//   int ret = i2c_io(PCA9545_I2C_ADDR | I2C_START | I2C_STOP, &mask, 1);
+// 
+//   if (debug) {
+//     debug_printf(i2c_debug_write_str, PCA9545_I2C_ADDR, mask, ret);
+//   }
+//   
+//   return (ret < I2C_OK) ? (-1) : 0;
+// }
 
 
 // This is a function to coordenate the initialization of the Zynq and

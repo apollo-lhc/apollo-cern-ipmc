@@ -18,15 +18,23 @@ Version ..... : V0.1 - 30/05/2019
 /* I2C address of the PCA9545A I2C switch in the I2C sensor bus */
 #define PCA9545_I2C_ADDR   MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, 0x70 << 1) 
 
-static const char i2c_debug_str[] =
-  "+++++ PCA9545 @ 0x%03x, data: 0x%02x, stats: %d.\n";
+static const char i2c_debug_write_str[] =
+  "+++++ write PCA9545 0x%03x, data: 0x%02x, stats: %d.\n";
 
+static const char i2c_debug_read_str[] =
+  "+++++ read PCA9545 0x%03x, data: 0x%02x, stats: %d.\n";
+
+static const char debug = 1;
 
 char
 user_pca9545_write(unsigned char mask)
 {
   int ret = i2c_io(PCA9545_I2C_ADDR | I2C_START | I2C_STOP, &mask, 1);
-  // debug_printf(i2c_debug_str, PCA9545_I2C_ADDR, mask, ret);
+
+  if (debug) {
+    debug_printf(i2c_debug_write_str, PCA9545_I2C_ADDR, mask, ret);
+  }
+  
   return (ret < I2C_OK) ? (-1) : 0;
 }
 
@@ -38,7 +46,11 @@ user_pca9545_read(unsigned char * mask)
                           mask,
                           1);
 
-  *mask = (unsigned char) (*mask + 48); 
-  // debug_printf(i2c_debug_str, PCA9545_I2C_ADDR, mask, ret);
+  if (debug) {
+    debug_printf(i2c_debug_read_str,
+                 PCA9545_I2C_ADDR,
+                 *mask,
+                 ret);
+  }
   return (ret < I2C_OK) ? (-1) : 0;
 }

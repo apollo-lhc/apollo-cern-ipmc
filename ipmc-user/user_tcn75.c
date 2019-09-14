@@ -30,7 +30,6 @@ Version ..... : V0.1 - 30/05/2019
 
 /* ------------------------------------------------------------------ */
 
-
 /* Write the TCN75 configuration register */
 char inline
 user_tcn75_write_conf(unsigned char id
@@ -47,12 +46,20 @@ user_tcn75_write_conf(unsigned char id
   } else {
     return -1;
   }
+
+  unsigned char prev;  
+  if (user_pca9545_read(&prev) != 0) {
+    return -2;
+  }
   
   if (user_pca9545_write(0x01) != 0) {
     return -2;
   }
 
-  return i2c_dev_write_reg(addr, TCN75_CFG_REG, &conf, 1);
+  char ret1 = i2c_dev_write_reg(addr, TCN75_CFG_REG, &conf, 1);
+  char ret2 = user_pca9545_write(prev);
+  
+  return ret1 | ret2;
 }
 
 /* Write a TCN75 temperature register (temp, Tos, or Thyst) */
@@ -71,14 +78,22 @@ user_tcn75_write_reg(unsigned char id
   } else {
     return -1;
   }
+
+
+  unsigned char prev;
+  if (user_pca9545_read(&prev) != 0) {
+    return -2;
+  }
   
   if (user_pca9545_write(0x01) != 0) {
     return -2;
   }
 
   unsigned char data[2] = { temp, 0 };
+  char ret1 = i2c_dev_write_reg(addr, reg, data, 2);
+  char ret2 = user_pca9545_write(prev);
 
-  return i2c_dev_write_reg(addr, reg, data, 2);
+  return ret1|ret2;
 }
 
 /* Read a TCN75 temperature register (temp, Tos, or Thyst) */
@@ -99,15 +114,26 @@ user_tcn75_read_reg(unsigned char id
     return -1;
   }
 
+  unsigned char prev;
+  if (user_pca9545_read(&prev) != 0) {
+    return -2;
+  }
+  
   if (user_pca9545_write(0x01) != 0) {
     return -2;
   }
   
   unsigned char aux[2];
-  if (i2c_dev_read_reg(addr, reg, aux, 2)) {
+  char ret1 = i2c_dev_read_reg(addr, reg, aux, 2);
+  if (ret1) {
     /* the sensor does not respond: set unreal temperature */
     *temp = -99;
-    return -3;
+  }
+  
+  char ret2 = user_pca9545_write(prev);
+
+  if (ret1|ret2) {
+    return ret1|ret2;
   }
 
   *temp = aux[0];

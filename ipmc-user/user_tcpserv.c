@@ -1111,21 +1111,21 @@ write_i2c_mux(unsigned char * params,
               int conn_idx)
 {
   unsigned char param[MAX_PARAM_LEN];
-  get_next_param(param, params);
 
+  if (get_next_param(param, params)) {
+    return strlcpy(reply, err_param);
+  }
 
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
     return strlcpy(reply, i2c_mux_write_help_str);
   }
-
-  char ret = user_pca9545_write((unsigned char) *param);
-
-  if(ret == 0){
-    return strlcpy(reply, ok_str);
+  
+  if(user_pca9545_write((unsigned char) *param)) {
+    return strlcpy(reply, i2c_mux_error_str);
   }
-
-  return strlcpy(reply, i2c_mux_error_str);
+  
+  return strlcpy(reply, ok_str);
 }
 
 
@@ -1135,22 +1135,21 @@ read_i2c_mux(unsigned char * params,
              int conn_idx)
 {
   unsigned char param[MAX_PARAM_LEN];
+
   get_next_param(param, params);
-
-
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
     return strlcpy(reply, i2c_mux_read_help_str);
   }
-
-  char ret = user_pca9545_read(reply);
-
-  if(ret == 0){
-    reply[1] = '\n';
-    return 2;
+  
+  if (user_pca9545_read(reply)) {
+    return strlcpy(reply, i2c_mux_error_str);
   }
 
-  return strlcpy(reply, i2c_mux_error_str);
+  reply[0] += 48;
+  reply[1] = '\n';
+  reply[2] = '\0';
+  return 2;
 }
 
 int
