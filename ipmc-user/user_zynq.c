@@ -18,7 +18,7 @@ Version ..... : V0.1 - 30/05/2019
 // #include <user_power_sequence.h>
 
 /* sensor I2C bus number */
-#define SENSOR_I2C_BUS     2
+#define SENSOR_I2C_BUS         2
 
 // /* I2C address of the ZYNQ I2C switch in the I2C sensor bus */
 // #define ZYNQ_I2C_ADDR   MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, 0x30 << 1) 
@@ -29,12 +29,128 @@ Version ..... : V0.1 - 30/05/2019
 static char zynq_restart_delay = 5;
 static char zynq_restart = 0;
 
+static unsigned char DEBUG = 0;
+
+/* ------------------------------------------------------------------ */
+// helper
+
+static char inline
+zynq_i2c_write_preserve_mux(short int addr
+                            , unsigned char reg
+                            , unsigned int * data
+                            , char len) {
+  unsigned char prev;
+  unsigned char i;
+  char ret1 = 1;
+  char ret2 = 2;
+  char ret3 = 4;
+  char ret4 = 8;
+  unsigned char * p = (unsigned char *) data;
+  char l = len * 4;
+
+  for (i = 0; (i < 5
+               && (ret1 = user_pca9545_read(&prev))); i++) {
+    udelay(20000);
+  }
+  for (i = 0; (i < 5
+               && !ret1
+               && (ret2 = user_pca9545_write(0x08))); i++) {
+    udelay(20000);
+  }
+  if (DEBUG) {
+    unsigned char aux;
+    if (user_pca9545_read(&aux) == 0) {
+      debug_printf("Current mux state: 0x%02x\n", aux);
+    }
+  }
+  for (i = 0; (i < 5
+               && !ret2
+               && (ret3 = i2c_dev_write_reg(addr, reg, p, l))); i++) {
+    udelay(20000);
+  }
+  for (i = 0; (i < 5
+               && !ret1
+               && (ret4 = user_pca9545_write(prev))); i++) {
+    udelay(20000);
+  }
+
+  return ret1 | ret2 | ret3 | ret4;
+}
+
+static char inline
+zynq_i2c_read_preserve_mux(short int addr
+                           , unsigned char reg
+                           , unsigned int * data
+                           , char len) {
+  unsigned char prev;
+  unsigned char i;
+  char ret1 = 1;
+  char ret2 = 2;
+  char ret3 = 4;
+  char ret4 = 8;
+  unsigned char * p = (unsigned char *) data;
+  char l = len * 4;
+
+  for (i = 0; (i < 5
+               && (ret1 = user_pca9545_read(&prev))); i++) {
+    udelay(20000);
+  }
+  for (i = 0; (i < 5
+               && !ret1
+               && (ret2 = user_pca9545_write(0x08))); i++) {
+    udelay(20000);
+  }
+  if (DEBUG) {
+    unsigned char aux;
+    if (user_pca9545_read(&aux) == 0) {
+      debug_printf("Current mux state: 0x%02x\n", aux);
+    }
+  }
+  for (i = 0; (i < 5
+               && !ret2
+               && (ret3 = i2c_dev_read_reg(addr, reg, p, l))); i++) {
+
+    udelay(20000);
+  }
+  for (i = 0; (i < 5
+               && !ret1
+               && (ret4 = user_pca9545_write(prev))); i++) {
+    udelay(20000);
+  }
+
+  return ret1 | ret2 | ret3 | ret4;
+}
+
+/* ------------------------------------------------------------------ */
+
+char
+user_zynq_i2c_write(unsigned char addr
+                    ,unsigned char reg
+                    , unsigned int * data
+                    , char len)
+{
+  short int faddr = MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, addr << 1); 
+  return zynq_i2c_write_preserve_mux(faddr, reg, data, len);
+}
+
+char
+user_zynq_i2c_read(unsigned char addr
+                   ,unsigned char reg
+                   , unsigned int * data
+                   , char len)
+{
+  short int faddr = MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, addr << 1); 
+  return zynq_i2c_read_preserve_mux(faddr, reg, data, len);
+}
+
+
+
 char
 user_zynq_read_version(unsigned char * version)
 {
   
   // -----------------------------------------
-  // temporary for testing
+  // temporary for testing from this point on 
 
   unsigned char prev;  
   if (user_pca9545_read(&prev) != 0) {
@@ -51,7 +167,7 @@ user_zynq_read_version(unsigned char * version)
     return -4;
   }
 
-  // test code down to here
+  // temporary code for testing down to here
   // -----------------------------------------
 
   // if (pca9545_write(0x08) != 0) {
@@ -124,19 +240,6 @@ user_zynq_restart(void)
 }
 
 
-// char
-// user_zynq_i2c_write(unsigned char mask)
-// {
-//   int ret = i2c_io(PCA9545_I2C_ADDR | I2C_START | I2C_STOP, &mask, 1);
-// 
-//   if (debug) {
-//     debug_printf(i2c_debug_write_str, PCA9545_I2C_ADDR, mask, ret);
-//   }
-//   
-//   return (ret < I2C_OK) ? (-1) : 0;
-// }
-
-
 // This is a function to coordenate the initialization of the Zynq and
 // the power negotiation with the shelf manager.
 TIMER_CALLBACK(100ms, user_zynq_timercback_100ms)
@@ -163,7 +266,30 @@ TIMER_CALLBACK(100ms, user_zynq_timercback_100ms)
 // the power negotiation with the shelf manager.
 TIMER_CALLBACK(1s, user_zynq_restart_timercback_1s)
 {
-  debug_printf("zynq_i2c_on: %d\n", user_get_gpio(zynq_i2c_on));
+  static const unsigned char addr = 0x61;
+  static unsigned char reg = 0;
+  static unsigned char reg_prev;
+  static unsigned int data = 0;
+  unsigned int data_prev;
+
+  if (DEBUG) {
+    debug_printf("zynq_i2c_on: %d\n", user_get_gpio(zynq_i2c_on));
+
+    if (user_zynq_i2c_write(addr, reg, &data, 1)) {
+      debug_printf("zynq_i2c_write(0x%02x)(%d)(%d) failed.\n", addr, reg, data);
+    }
+
+    data++;
+    reg_prev = reg;
+    reg = (reg < 9) ? reg + 1 : 0;
+    
+    if (user_zynq_i2c_read(addr, reg_prev, &data_prev, 1)){
+      debug_printf("zynq_i2c_read(0x%02x)(%d) failed.\n", addr, reg_prev);
+    } else {
+      debug_printf("zynq_i2c_read(0x%02x)(%d): %d\n", addr, reg_prev, data_prev);
+    }
+  }
+  
   if (zynq_restart == 1) {
     user_zynq_restart();
   }
