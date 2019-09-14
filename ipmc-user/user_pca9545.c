@@ -24,14 +24,14 @@ static const char i2c_debug_write_str[] =
 static const char i2c_debug_read_str[] =
   "+++++ read PCA9545 0x%03x, data: 0x%02x, stats: %d.\n";
 
-static const char debug = 1;
+static const char DEBUG = 0;
 
 char
 user_pca9545_write(unsigned char mask)
 {
   int ret = i2c_io(PCA9545_I2C_ADDR | I2C_START | I2C_STOP, &mask, 1);
 
-  if (debug) {
+  if (DEBUG) {
     debug_printf(i2c_debug_write_str, PCA9545_I2C_ADDR, mask, ret);
   }
   
@@ -46,7 +46,7 @@ user_pca9545_read(unsigned char * mask)
                           mask,
                           1);
 
-  if (debug) {
+  if (DEBUG) {
     debug_printf(i2c_debug_read_str,
                  PCA9545_I2C_ADDR,
                  *mask,

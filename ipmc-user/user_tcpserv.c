@@ -49,6 +49,8 @@ typedef struct cmd_buf_n {
 
 cmd_buf_t cmd_buf[MAX_USER_TCPSERV_CLIENT];
 
+static const unsigned char DEBUG = 0;
+
 /* ================================================================ */
 
 void
@@ -1110,6 +1112,8 @@ write_i2c_mux(unsigned char * params,
               unsigned char * reply,
               int conn_idx)
 {
+  char ret;
+  int aux;
   unsigned char param[MAX_PARAM_LEN];
 
   if (get_next_param(param, params)) {
@@ -1120,8 +1124,18 @@ write_i2c_mux(unsigned char * params,
       || str_eq(param, question_mark_str) == 1) {
     return strlcpy(reply, i2c_mux_write_help_str);
   }
-  
-  if(user_pca9545_write((unsigned char) *param)) {
+
+  // getting I2C address
+  ret = i_from_a (&aux,
+                  param,
+                  &(cmd_buf[conn_idx].hex));
+  if (ret != 0) {
+    return strlcpy(reply, err_i2c_addr);
+  }
+
+  unsigned char mask = (unsigned char) aux;
+
+  if(user_pca9545_write(mask)) {
     return strlcpy(reply, i2c_mux_error_str);
   }
   
@@ -1141,15 +1155,20 @@ read_i2c_mux(unsigned char * params,
       || str_eq(param, question_mark_str) == 1) {
     return strlcpy(reply, i2c_mux_read_help_str);
   }
-  
-  if (user_pca9545_read(reply)) {
+
+  unsigned char value;
+  if (user_pca9545_read(&value)) {
     return strlcpy(reply, i2c_mux_error_str);
   }
+  
+  if (a_from_i(reply, value, cmd_buf[conn_idx].hex)) {
+    return strlcpy(reply, err_i2c_itoa);
+  }
 
-  reply[0] += 48;
-  reply[1] = '\n';
-  reply[2] = '\0';
-  return 2;
+  int len = strlen(reply);
+  reply[len++] = '\n';
+  reply[len] = '\0';
+  return len;
 }
 
 int
@@ -1295,7 +1314,9 @@ i2c_r(unsigned char * params,
     return strlcpy(reply, help_i2c_read);
   }
 
-  debug_printf("~~~~~~~~ %s\n", param);
+  if (DEBUG) {
+    debug_printf("~~~~~~~~ %s\n", param);
+  }
   
   // getting I2C address
   ret = i_from_a(&aux,
@@ -1451,7 +1472,9 @@ i2c_reg_r(unsigned char * params,
     return strlcpy(reply, help_i2c_reg_read);
   }
 
-  debug_printf("== %s\n", param);
+  if (DEBUG) {
+    debug_printf("== %s\n", param);
+  }
   
   // getting I2C address
   ret = i_from_a(&aux,
@@ -1510,7 +1533,9 @@ i2c_reg_r(unsigned char * params,
       return strlcpy(reply, err_i2c_itoa);
     }
 
-    debug_printf("## %s\n", i2c_data[i]);
+    if (DEBUG) {
+      debug_printf("## %s\n", i2c_data[i]);
+    }
   }
 
   unsigned char * p = reply;
@@ -1521,7 +1546,9 @@ i2c_reg_r(unsigned char * params,
   }
   *(p-1) = '\0';
 
-  debug_printf("## %s\n", reply);
+  if (DEBUG) {
+    debug_printf("## %s\n", reply);
+  }
 
   return strlen(reply);
 }
@@ -1544,7 +1571,9 @@ set_i2c_bus(unsigned char * params,
     return strlcpy(reply, help_set_i2c_bus);
   }
 
-  // debug_printf("== %s\n", param);
+  if (DEBUG) {
+    debug_printf("== %s\n", param);
+  }
 
   if (param[0] == 'm') {
     cmd_buf[conn_idx].i2c_bus = MANAGEMENT_I2C_BUS;
@@ -1572,7 +1601,9 @@ get_i2c_bus(unsigned char * params,
     return strlcpy(reply, help_get_i2c_bus);
   }
 
-  // debug_printf("== %s\n", param);
+  if (DEBUG) {
+    debug_printf("== %s\n", param);
+  }
 
   if (cmd_buf[conn_idx].i2c_bus == 1) {
     return strlcpy(reply, str_i2c_bus_management);
