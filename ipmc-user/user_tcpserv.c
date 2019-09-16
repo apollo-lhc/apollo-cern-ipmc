@@ -52,6 +52,9 @@ cmd_buf_t cmd_buf[MAX_USER_TCPSERV_CLIENT];
 
 static const unsigned char DEBUG = 0;
 
+static unsigned char i2c_bin_data[MAX_I2C_LEN];
+static unsigned char i2c_ascii_data[MAX_I2C_LEN][10];
+
 /* ================================================================ */
 
 void
@@ -1442,7 +1445,6 @@ i2c_reg_w(unsigned char * params,
   unsigned char reg_addr = (char) aux;
 
   // getting the data
-  unsigned char i2c_data[MAX_I2C_LEN];
   int i2c_len = 0;
   while (get_next_param(param, params) == 0) {
     ret = i_from_a(&aux,
@@ -1452,7 +1454,7 @@ i2c_reg_w(unsigned char * params,
       return strlcpy(reply, err_i2c_data);
     }
 
-    i2c_data[i2c_len] = (char) aux;
+    i2c_bin_data[i2c_len] = (char) aux;
     i2c_len++;
   }
 
@@ -1469,7 +1471,7 @@ i2c_reg_w(unsigned char * params,
   // writing to the I2C address
   ret = user_i2c_reg_write(i2c_addr,
                            reg_addr,
-                           i2c_data,
+                           i2c_bin_data,
                            i2c_len,
                            cmd_buf[conn_idx].i2c_bus);
   if(ret != 0){
@@ -1538,10 +1540,9 @@ i2c_reg_r(unsigned char * params,
     }
   }
 
-  unsigned char i2c_raw_data[MAX_I2C_LEN];
   ret = user_i2c_reg_read(i2c_addr,
                           reg_addr,
-                          i2c_raw_data,
+                          i2c_bin_data,
                           i2c_len,
                           cmd_buf[conn_idx].i2c_bus);
   if(ret != 0){
@@ -1551,23 +1552,22 @@ i2c_reg_r(unsigned char * params,
   }
 
   int i;
-  unsigned char i2c_data[MAX_I2C_LEN][6];
   for (i = 0; i < i2c_len; i++) {
-    ret = a_from_i(&(*i2c_data[i]),
-                   i2c_raw_data[i],
+    ret = a_from_i(&(*i2c_ascii_data[i]),
+                   i2c_bin_data[i],
                    cmd_buf[conn_idx].hex);
     if(ret != 0){
       return strlcpy(reply, err_i2c_itoa);
     }
 
     if (DEBUG) {
-      debug_printf("## %s\n", i2c_data[i]);
+      debug_printf("## %s\n", i2c_ascii_data[i]);
     }
   }
 
   unsigned char * p = reply;
   for (i = 0; i < i2c_len; i++) {
-    p += strlcpy(p, i2c_data[i]);
+    p += strlcpy(p, i2c_ascii_data[i]);
     *p = ' ';
     p++;
   }
@@ -1694,7 +1694,7 @@ zynq_i2c_w(unsigned char * params,
 
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
-    return strlcpy(reply, help_zynq_i2c_write);
+    return strlcpy(reply, help_i2c_reg_write);
   }
 
   // getting I2C address
@@ -1720,16 +1720,16 @@ zynq_i2c_w(unsigned char * params,
   unsigned char reg_addr = (char) aux;
 
   // getting the data
-  int i2c_data[MAX_I2C_LEN];
   int i2c_len = 0;
   while (get_next_param(param, params) == 0) {
-    ret = i_from_a(&(i2c_data[i2c_len]),
+    ret = i_from_a(&aux,
                    param,
                    &(cmd_buf[conn_idx].hex));
     if (ret != 0) {
       return strlcpy(reply, err_i2c_data);
     }
 
+    i2c_bin_data[i2c_len] = (char) aux;
     i2c_len++;
   }
 
@@ -1746,7 +1746,7 @@ zynq_i2c_w(unsigned char * params,
   // writing to the I2C address
   ret = user_zynq_i2c_write(i2c_addr,
                             reg_addr,
-                            i2c_data,
+                            i2c_bin_data,
                             i2c_len);
   if(ret != 0){
     return strlcpy(reply, err_i2c_write_transaction);
@@ -1772,7 +1772,7 @@ zynq_i2c_r(unsigned char * params,
   
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
-    return strlcpy(reply, help_zynq_i2c_read);
+    return strlcpy(reply, help_i2c_reg_read);
   }
 
   if (DEBUG) {
@@ -1804,8 +1804,7 @@ zynq_i2c_r(unsigned char * params,
   // getting the length of the reading; default to 1.
   int i2c_len = 1;
   if (get_next_param(param, params) == 0) {
-    // lets fake the hex/dec parsing to not change
-    // answer behavior
+    // lets fake the hex parsing
     unsigned char tmp; 
     ret = i_from_a (&i2c_len,
                     param,
@@ -1815,41 +1814,38 @@ zynq_i2c_r(unsigned char * params,
     }
   }
 
-  int i2c_raw_data[MAX_I2C_LEN];
   ret = user_zynq_i2c_read(i2c_addr,
                            reg_addr,
-                           i2c_raw_data,
+                           i2c_bin_data,
                            i2c_len);
   if(ret != 0){
-    return strlcpy(reply, err_i2c_read_transaction);
+    reply_len = strlen(err_i2c_read_transaction);
+    memcpy(reply, err_i2c_read_transaction, reply_len);
+    return reply_len;
   }
 
   int i;
-  unsigned char i2c_data[MAX_I2C_LEN][10];
   for (i = 0; i < i2c_len; i++) {
-    ret = a_from_i(&(*i2c_data[i]),
-                   i2c_raw_data[i],
+    ret = a_from_i(&(*i2c_ascii_data[i]),
+                   i2c_bin_data[i],
                    cmd_buf[conn_idx].hex);
     if(ret != 0){
       return strlcpy(reply, err_i2c_itoa);
     }
 
-    if (DEBUG) {
-      debug_printf("## %s\n", i2c_data[i]);
-    }
+    debug_printf("## %s\n", i2c_ascii_data[i]);
   }
 
   unsigned char * p = reply;
   for (i = 0; i < i2c_len; i++) {
-    p += strlcpy(p, i2c_data[i]);
+    debug_printf("zynq i2c data vector [%d]: %s\n", i, i2c_ascii_data[i]);
+    p += strlcpy(p, i2c_ascii_data[i]);
     *p = ' ';
     p++;
   }
   *(p-1) = '\0';
 
-  if (DEBUG) {
-    debug_printf("## %s\n", reply);
-  }
+  debug_printf("## %s\n", reply);
 
   return strlen(reply);
 }

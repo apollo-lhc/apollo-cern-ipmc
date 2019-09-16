@@ -37,7 +37,7 @@ static unsigned char DEBUG = 0;
 static char inline
 zynq_i2c_write_preserve_mux(short int addr
                             , unsigned char reg
-                            , int * data
+                            , unsigned char * data
                             , char len) {
   unsigned char prev;
   unsigned char i;
@@ -45,8 +45,6 @@ zynq_i2c_write_preserve_mux(short int addr
   char ret2 = 2;
   char ret3 = 4;
   char ret4 = 8;
-  unsigned char * p = (unsigned char *) data;
-  char l = len * 4;
 
   for (i = 0; (i < 5
                && (ret1 = user_pca9545_read(&prev))); i++) {
@@ -65,7 +63,7 @@ zynq_i2c_write_preserve_mux(short int addr
   }
   for (i = 0; (i < 5
                && !ret2
-               && (ret3 = i2c_dev_write_reg(addr, reg, p, l))); i++) {
+               && (ret3 = i2c_dev_write_reg(addr, reg, data, len))); i++) {
     udelay(20000);
   }
   for (i = 0; (i < 5
@@ -80,7 +78,7 @@ zynq_i2c_write_preserve_mux(short int addr
 static char inline
 zynq_i2c_read_preserve_mux(short int addr
                            , unsigned char reg
-                           , int * data
+                           , unsigned char * data
                            , char len) {
   unsigned char prev;
   unsigned char i;
@@ -88,8 +86,6 @@ zynq_i2c_read_preserve_mux(short int addr
   char ret2 = 2;
   char ret3 = 4;
   char ret4 = 8;
-  unsigned char * p = (unsigned char *) data;
-  char l = len * 4;
 
   for (i = 0; (i < 5
                && (ret1 = user_pca9545_read(&prev))); i++) {
@@ -108,7 +104,7 @@ zynq_i2c_read_preserve_mux(short int addr
   }
   for (i = 0; (i < 5
                && !ret2
-               && (ret3 = i2c_dev_read_reg(addr, reg, p, l))); i++) {
+               && (ret3 = i2c_dev_read_reg(addr, reg, data, len))); i++) {
 
     udelay(20000);
   }
@@ -126,7 +122,7 @@ zynq_i2c_read_preserve_mux(short int addr
 char
 user_zynq_i2c_write(unsigned char addr
                     , unsigned char reg
-                    , int * data
+                    , unsigned char * data
                     , char len)
 {
   short int faddr = MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, addr << 1); 
@@ -136,7 +132,7 @@ user_zynq_i2c_write(unsigned char addr
 char
 user_zynq_i2c_read(unsigned char addr
                    , unsigned char reg
-                   , int * data
+                   , unsigned char * data
                    , char len)
 {
   short int faddr = MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, addr << 1); 
@@ -251,7 +247,7 @@ TIMER_CALLBACK(100ms, user_zynq_timercback_100ms)
     return;
   }
 
-  int v;
+  unsigned char v;
   if (user_zynq_i2c_read(0x61, 0, &v, 1)) {
     // reading error
     user_unprotected_set_gpio(zynq_i2c_on, 0);
@@ -276,8 +272,8 @@ TIMER_CALLBACK(1s, user_zynq_restart_timercback_1s)
     static const unsigned char addr = 0x61;
     static unsigned char reg = 0;
     static unsigned char reg_prev;
-    static int data = 0;
-    int data_prev;
+    static unsigned char data = 0;
+    unsigned char data_prev;
 
     debug_printf("zynq_i2c_on: %d\n", user_get_gpio(zynq_i2c_on));
 
