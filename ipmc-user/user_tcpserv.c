@@ -1694,7 +1694,7 @@ zynq_i2c_w(unsigned char * params,
 
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
-    return strlcpy(reply, help_i2c_reg_write);
+    return strlcpy(reply, help_zynq_i2c_write);
   }
 
   // getting I2C address
@@ -1772,7 +1772,7 @@ zynq_i2c_r(unsigned char * params,
   
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
-    return strlcpy(reply, help_i2c_reg_read);
+    return strlcpy(reply, help_zynq_i2c_read);
   }
 
   if (DEBUG) {

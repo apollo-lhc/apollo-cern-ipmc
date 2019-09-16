@@ -39,6 +39,11 @@ zynq_i2c_write_preserve_mux(short int addr
                             , unsigned char reg
                             , unsigned char * data
                             , char len) {
+
+  if (user_get_gpio(ipmc_zynq_en) == 0) {
+    return -1;
+  }
+
   unsigned char prev;
   unsigned char i;
   char ret1 = 1;
@@ -80,6 +85,11 @@ zynq_i2c_read_preserve_mux(short int addr
                            , unsigned char reg
                            , unsigned char * data
                            , char len) {
+
+  if (user_get_gpio(ipmc_zynq_en) == 0) {
+    return -1;
+  }
+
   unsigned char prev;
   unsigned char i;
   char ret1 = 1;
@@ -235,6 +245,18 @@ user_zynq_restart(void)
   return;
 }
 
+char
+user_zynq_get_temp(unsigned char addr
+                   , unsigned char * v)
+{
+  if (user_zynq_i2c_read(addr, 0, v, 1) == 0
+      && *v != 0) {
+    return 0;
+  } else {
+    return -1;
+  }
+}
+
 
 // This is a function to coordenate the initialization of the Zynq and
 // the power negotiation with the shelf manager.
@@ -247,13 +269,20 @@ TIMER_CALLBACK(100ms, user_zynq_timercback_100ms)
     return;
   }
 
-  unsigned char v;
-  if (user_zynq_i2c_read(0x61, 0, &v, 1)) {
-    // reading error
+  if (user_get_gpio(ipmc_zynq_en) == 0) {
+    // zynq is off, no way zynq i2c is functional...
     user_unprotected_set_gpio(zynq_i2c_on, 0);
-  } else {
-    // reading success
+    return;
+  }
+
+  unsigned char v = 0;
+  if (user_zynq_i2c_read(0x60, 0, &v, 1) == 0
+      && (v & 0x1) == 0x1 ) {
+    // reading success and zynq boot is over
     user_unprotected_set_gpio(zynq_i2c_on, 1);
+  } else {
+    // reading error or zynq boot is not over
+    user_unprotected_set_gpio(zynq_i2c_on, 0);
   }
 
   return;

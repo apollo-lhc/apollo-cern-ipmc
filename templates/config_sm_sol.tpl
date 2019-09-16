@@ -70,13 +70,46 @@
       <step>PSQ_ENABLE_SIGNAL(USER_IO_5)</step>  <!-- Set ADDR0 to 0-->
       <step>PSQ_ENABLE_SIGNAL(USER_IO_6)</step>  <!-- Set ADDR1 to 0-->
 
-      <!-- let's wait 10s for Zynq to wake up, fail if not -->
-      <step>PSQ_SET_TIMER(1, 10000)</step> <!-- timer 1 -->
-      <step>PSQ_JUMP_IFNOT_TIMEOUT(1, 4)</step>
+      <!-- let's wait some sec for Zynq to wake up, fail if not -->
+      <step>PSQ_SET_TIMER(1, 30000)</step> <!-- timer 1 -->
+      <step>PSQ_JUMP_IFNOT_TIMEOUT(1, 22)</step>
+
+      <!-- timeout 1-->
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(IPM_IO_0, 3)</step>
+      <step>PSQ_DISABLE_SIGNAL(IPM_IO_0)</step>
+      <step>PSQ_JUMP(-4)</step>
+
+      <!-- timeout 2 -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(IPM_IO_1, 3)</step>
+      <step>PSQ_DISABLE_SIGNAL(IPM_IO_1)</step>
+      <step>PSQ_JUMP(-3)</step>
+
+      <!-- timeout 3 -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(IPM_IO_2, 3)</step>
+      <step>PSQ_DISABLE_SIGNAL(IPM_IO_2)</step>
+      <step>PSQ_JUMP(-3)</step>
+
+      <!-- timeout 4 -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(IPM_IO_3, 3)</step>
+      <step>PSQ_DISABLE_SIGNAL(IPM_IO_3)</step>
+      <step>PSQ_JUMP(-3)</step>
+
+      <!-- timeout 5 -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(IPM_IO_4, 3)</step>
+      <step>PSQ_DISABLE_SIGNAL(IPM_IO_4)</step>
+      <step>PSQ_JUMP(-3)</step>
+
+      <!-- timeout 6 -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(IPM_IO_5, 3)</step>
+      <step>PSQ_DISABLE_SIGNAL(IPM_IO_5)</step>
+      <step>PSQ_JUMP(-3)</step>
+
+      <!-- failed... turn everything off -->
       <step>PSQ_ENABLE_SIGNAL(USER_IO_3)</step>
       <step>PSQ_DISABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step> <!-- power off -->
       <step>PSQ_FAIL</step>
-      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(USER_IO_18, -4)</step> <!-- zynq_i2c_on? -->
+
+      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(USER_IO_18, -22)</step> <!-- zynq_i2c_on? -->
 
       <!-- enable i2c mux -->
       <!--
@@ -279,7 +312,172 @@
         <MaxReading>80</MaxReading> 
         <MinReading>0</MinReading>     
       </Sensor> 
+
     </Sensors>
-    
+
+    <Sensors type="raw" global_define="CFG_SENSOR_ZYNQ" function_name="SENSOR_ZYNQ" rawType="ZYNQ"> 
+
+      <Sensor> 
+        <!-- Slave 0x61, reg 0 is the CM uC temp in degrees C --> 
+        <Name>CM uC Temp</Name> 
+        
+        <Type>Temperature</Type> 
+        <Units>degrees C</Units> 
+        
+        <NominalReading>25</NominalReading> 
+        <NormalMaximum>50</NormalMaximum> 
+        <NormalMinimum>0</NormalMinimum> 
+        
+        <Point id="0" x="0" y="0" /> 
+        <Point id="1" x="7" y="7" /> 
+        
+        <Thresholds> 
+          <UpperNonRecovery>50</UpperNonRecovery> 
+          <UpperCritical>43</UpperCritical> 
+          <UpperNonCritical>38</UpperNonCritical> 
+          <LowerNonRecovery>0</LowerNonRecovery> 
+          <LowerCritical>0</LowerCritical> 
+          <LowerNonCritical>0</LowerNonCritical> 
+        </Thresholds> 
+        
+        <Params> 
+          <p type="record_id">103</p>  <!-- mandatory --> 
+          <p type="user">0x61</p> <!--unsigned char addr-->
+          <p type="user">UCGH | UNRGH</p> 
+        </Params> 
+        
+        <AssertEvMask>0x0A80</AssertEvMask> 
+        <DeassertEvMask>0x7A80</DeassertEvMask> 
+        <DiscreteRdMask>0x3838</DiscreteRdMask> 
+        <AnalogDataFmt>UNSIGNED</AnalogDataFmt> 
+        <PosHysteresis>0</PosHysteresis> 
+        <NegHysteresis>0</NegHysteresis> 
+        <MaxReading>80</MaxReading> 
+        <MinReading>0</MinReading> 
+        
+      </Sensor>
+      
+      <Sensor> 
+        <!-- slave 0x62 reg 0 is max Firefly temp in degrees C -->
+        <Name>Firefly Temp</Name> 
+        
+        <Type>Temperature</Type> 
+        <Units>degrees C</Units> 
+        
+        <NominalReading>25</NominalReading> 
+        <NormalMaximum>50</NormalMaximum> 
+        <NormalMinimum>0</NormalMinimum> 
+        
+        <Point id="0" x="0" y="0" /> 
+        <Point id="1" x="7" y="7" /> 
+        
+        <Thresholds> 
+          <UpperNonRecovery>50</UpperNonRecovery> 
+          <UpperCritical>43</UpperCritical> 
+          <UpperNonCritical>38</UpperNonCritical> 
+          <LowerNonRecovery>0</LowerNonRecovery> 
+          <LowerCritical>0</LowerCritical> 
+          <LowerNonCritical>0</LowerNonCritical> 
+        </Thresholds> 
+        
+        <Params> 
+          <p type="record_id">104</p>  <!-- mandatory --> 
+          <p type="user">0x62</p> <!--unsigned char addr-->
+          <p type="user">UCGH | UNRGH</p> 
+        </Params> 
+        
+        <AssertEvMask>0x0A80</AssertEvMask> 
+        <DeassertEvMask>0x7A80</DeassertEvMask> 
+        <DiscreteRdMask>0x3838</DiscreteRdMask> 
+        <AnalogDataFmt>UNSIGNED</AnalogDataFmt> 
+        <PosHysteresis>0</PosHysteresis> 
+        <NegHysteresis>0</NegHysteresis> 
+        <MaxReading>80</MaxReading> 
+        <MinReading>0</MinReading> 
+        
+      </Sensor>
+      
+      <Sensor> 
+        <!-- slave 0x63 reg 0 is the max CM FPGA temp in degrees C -->
+        <Name>CM FPGA Temp</Name> 
+        
+        <Type>Temperature</Type> 
+        <Units>degrees C</Units> 
+        
+        <NominalReading>25</NominalReading> 
+        <NormalMaximum>50</NormalMaximum> 
+        <NormalMinimum>0</NormalMinimum> 
+        
+        <Point id="0" x="0" y="0" /> 
+        <Point id="1" x="7" y="7" /> 
+        
+        <Thresholds> 
+          <UpperNonRecovery>50</UpperNonRecovery> 
+          <UpperCritical>43</UpperCritical> 
+          <UpperNonCritical>38</UpperNonCritical> 
+          <LowerNonRecovery>0</LowerNonRecovery> 
+          <LowerCritical>0</LowerCritical> 
+          <LowerNonCritical>0</LowerNonCritical> 
+        </Thresholds> 
+        
+        <Params> 
+          <p type="record_id">105</p>  <!-- mandatory --> 
+          <p type="user">0x63</p> <!--unsigned char addr-->
+          <p type="user">UCGH | UNRGH</p> 
+        </Params> 
+        
+        <AssertEvMask>0x0A80</AssertEvMask> 
+        <DeassertEvMask>0x7A80</DeassertEvMask> 
+        <DiscreteRdMask>0x3838</DiscreteRdMask> 
+        <AnalogDataFmt>UNSIGNED</AnalogDataFmt> 
+        <PosHysteresis>0</PosHysteresis> 
+        <NegHysteresis>0</NegHysteresis> 
+        <MaxReading>80</MaxReading> 
+        <MinReading>0</MinReading> 
+        
+      </Sensor>
+      
+      <Sensor> 
+        <!-- slave 0x64 reg 0 is the max CM regulator temp in degrees C -->
+        <Name>CM regulator Temp</Name> 
+        
+        <Type>Temperature</Type> 
+        <Units>degrees C</Units> 
+        
+        <NominalReading>25</NominalReading> 
+        <NormalMaximum>50</NormalMaximum> 
+        <NormalMinimum>0</NormalMinimum> 
+        
+        <Point id="0" x="0" y="0" /> 
+        <Point id="1" x="7" y="7" /> 
+        
+        <Thresholds> 
+          <UpperNonRecovery>50</UpperNonRecovery> 
+          <UpperCritical>43</UpperCritical> 
+          <UpperNonCritical>38</UpperNonCritical> 
+          <LowerNonRecovery>0</LowerNonRecovery> 
+          <LowerCritical>0</LowerCritical> 
+          <LowerNonCritical>0</LowerNonCritical> 
+        </Thresholds> 
+        
+        <Params> 
+          <p type="record_id">106</p>  <!-- mandatory --> 
+          <p type="user">0x64</p> <!--unsigned char addr-->
+          <p type="user">UCGH | UNRGH</p> 
+        </Params> 
+        
+        <AssertEvMask>0x0A80</AssertEvMask> 
+        <DeassertEvMask>0x7A80</DeassertEvMask> 
+        <DiscreteRdMask>0x3838</DiscreteRdMask> 
+        <AnalogDataFmt>UNSIGNED</AnalogDataFmt> 
+        <PosHysteresis>0</PosHysteresis> 
+        <NegHysteresis>0</NegHysteresis> 
+        <MaxReading>80</MaxReading> 
+        <MinReading>0</MinReading> 
+        
+      </Sensor>
+      
+    </Sensors>
+
   </SensorList>
 </IPMC>
