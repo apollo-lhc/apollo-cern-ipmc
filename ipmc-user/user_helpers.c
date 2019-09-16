@@ -2,12 +2,13 @@
 
 #include <debug.h>
 
-const char msg_i_c_n[] =
+static const char msg_i_c_n[] =
   "~~~~~~~ i: %d; c: %x; n: %d\n";
 
-const char msg_i_c_n_2[] =
+static const char msg_i_c_n_2[] =
   "------- i: %d; c: %x; n: %d\n";
 
+static const unsigned char DEBUG = 0;
 
 /* reverse:  reverse string s in place */
 void
@@ -32,6 +33,12 @@ a_from_i(unsigned char s[],
   int i, sign;
   int aux;
 
+
+  if (DEBUG) {
+    debug_printf("... converting %d to string\n", n);
+  }
+
+
   sign = n; /* record sigh */
   if (n < 0) {
     n = -n;          /* make n positive */
@@ -49,13 +56,17 @@ a_from_i(unsigned char s[],
         s[i++] = aux - 10 + 'A';
       }
       /* then eliminate it */
-      debug_printf(msg_i_c_n_2, i-1, s[i-1], n);
+      if (DEBUG) {
+        debug_printf(msg_i_c_n_2, i-1, s[i-1], n);
+      }
       n /= 16;
     } else {
       /* store next digit */
       s[i++] = n % 10 + '0';
       /* then eliminate it */
-      debug_printf(msg_i_c_n_2, i-1, s[i-1], n);
+      if (DEBUG) {
+        debug_printf(msg_i_c_n_2, i-1, s[i-1], n);
+      }
       n /= 10;
     }
   } while (n > 0);    
@@ -74,7 +85,9 @@ a_from_i(unsigned char s[],
   // closing up
   s[i] = '\0';
 
-  debug_printf("!!!!!!! %s\n", s);
+  if (DEBUG) {
+    debug_printf("!!!!!!! %s\n", s);
+  }
   
   /* string is backwards; let's reverse it */
   reverse(s);
@@ -90,18 +103,32 @@ i_from_a(int * n,
          unsigned char * hex)
 {
   int i;
+  char sign = 0;
 
-  *n = 0; // Initialize result 
+  if (DEBUG) {
+    debug_printf("... converting %s to integer\n", s);
+  }
+
+  *n = 0; // Initialize result
+
+  if (s[0] == '-') {
+    sign = 1;
+    s++;
+  }
 
   if (s[0] == '0' && s[1] == 'x') {
     *hex = 1;
     for (i = 2; s[i] != '\0'; i++) {
       if ('0' <= s[i] && s[i] <= '9') {
         *n = *n * 16 + s[i] - '0';
-        debug_printf(msg_i_c_n, i, s[i], *n);
+        if (DEBUG) {
+          debug_printf(msg_i_c_n, i, s[i], *n);
+        }
       } else if ('a' <= s[i] && s[i] <= 'f') {
         *n = *n * 16 + s[i] - 'a' + 10;
-        debug_printf(msg_i_c_n, i, s[i], *n);
+        if (DEBUG) {
+          debug_printf(msg_i_c_n, i, s[i], *n);
+        }
       }
       else {
         return 1;
@@ -111,38 +138,18 @@ i_from_a(int * n,
     *hex = 0;
     for (i = 0; s[i] != '\0'; i++) {
       *n = *n * 10 + s[i] - '0';
-      debug_printf(msg_i_c_n, i, s[i], *n);
+      if (DEBUG) {
+        debug_printf(msg_i_c_n, i, s[i], *n);
+      }
     }
+  }
+
+  if (sign == 1) {
+    *n *= -1;
   }
 
   return 0;
 }
-
-// int
-// vec_a_from_vec_i (unsigned char * a,
-//                   unsigned char * i,
-//                   int len,
-//                   unsigned char hex)
-// {
-//   int ret = 0;
-//   for (int k = 0; k < len; k++) {
-//     ret = a_from_i(&a[k], i[k], hex);
-//   }
-//   return ret;
-// }
-// 
-// int
-// vec_i_from_vec_a (unsigned char * i,
-//                   unsigned char * a,
-//                   int len,
-//                   unsigned char * hex)
-// {
-//   int ret = 0;
-//   for (int k = 0; k < len; k++) {
-//     ret = i_from_a(&i[k], a[k], hex);
-//   }
-//   return ret;
-// }
 
 // freebsd implementation of strlen
 int

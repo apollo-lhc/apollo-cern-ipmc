@@ -7,10 +7,9 @@ Version ..... : V0.1 - 2019-07-31
 
 #include <user_i2c.h>
 
+// their headers
 #include <hal/i2c.h>
-
 #include <i2c_dev.h>
-
 #include <debug.h>
 
 /* sensor I2C bus number */
@@ -18,6 +17,8 @@ Version ..... : V0.1 - 2019-07-31
 
 static const char i2c_debug_str[] =
   "+++++ I2C @ 0x%03hhx (@ 0x%03hhx), stats: %d.\n";
+
+static const unsigned char DEBUG = 0;
 
 /* Write to I2C slave without registers */
 char
@@ -67,28 +68,35 @@ user_i2c_write(unsigned char i2c_addr,
 /* Write to I2C slave targeting an initial register */
 char
 user_i2c_reg_read(unsigned char i2c_addr,
-             const unsigned char reg_addr,
-             unsigned char * data,
-             const char len,
-             char i2c_bus)
+                  const unsigned char reg_addr,
+                  unsigned char * data,
+                  const char len,
+                  char i2c_bus)
 {
   i2c_addr <<= 1;
   // i2c_addr |= 1;
   short int full_addr = MO_CHANNEL_ADDRESS(i2c_bus, i2c_addr);
+
+  
   char ret = i2c_dev_read_reg(full_addr,
                               reg_addr,
                               data,
                               len);
+
+  if (DEBUG && ret == 0) {
+    debug_printf("i2c dev read reg from 0x%03x\n", full_addr);
+  }
+
   return (ret < I2C_OK) ? (-1) : 0;
 }
 
 /* Read from I2C slave targeting an initial register */
 char
 user_i2c_reg_write(unsigned char i2c_addr,
-              const unsigned char reg_addr,
-              const unsigned char data[],
-              const char len,
-              char i2c_bus)
+                   const unsigned char reg_addr,
+                   const unsigned char data[],
+                   const char len,
+                   char i2c_bus)
 {
   i2c_addr <<= 1;
   short int full_addr = MO_CHANNEL_ADDRESS(i2c_bus, i2c_addr);
@@ -96,6 +104,10 @@ user_i2c_reg_write(unsigned char i2c_addr,
                                reg_addr,
                                (unsigned char *) data,
                                len);
+
+  if (DEBUG && ret == 0) {
+    debug_printf("i2c dev write reg to 0x%03x\n", full_addr);
+  }
 
   return (ret < I2C_OK) ? (-1) : 0;
 }

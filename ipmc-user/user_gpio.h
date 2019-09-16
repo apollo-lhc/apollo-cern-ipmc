@@ -24,11 +24,13 @@ enum {
       , debug_0            // 18
       , debug_1            // 19
       , debug_2            // 20
-      // , red_led            // 19
-      // , amber_led          // 20
-      // , orange_led         // 21
-      // , white_led          // 22
-      // , green_led           // 23
+      , ipm_io_0           // 21
+      , ipm_io_1           // 22
+      , ipm_io_2           // 23
+      , ipm_io_3           // 24
+      , ipm_io_4           // 25
+      , ipm_io_5           // 26
+      , ipm_io_6           // 27
 } sm_signal_t;
 
 
