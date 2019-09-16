@@ -33,6 +33,12 @@ a_from_i(unsigned char s[],
   int i, sign;
   int aux;
 
+
+  if (DEBUG) {
+    debug_printf("... converting %d to string\n", n);
+  }
+
+
   sign = n; /* record sigh */
   if (n < 0) {
     n = -n;          /* make n positive */
@@ -97,8 +103,18 @@ i_from_a(int * n,
          unsigned char * hex)
 {
   int i;
+  char sign = 0;
 
-  *n = 0; // Initialize result 
+  if (DEBUG) {
+    debug_printf("... converting %s to integer\n", s);
+  }
+
+  *n = 0; // Initialize result
+
+  if (s[0] == '-') {
+    sign = 1;
+    s++;
+  }
 
   if (s[0] == '0' && s[1] == 'x') {
     *hex = 1;
@@ -126,6 +142,10 @@ i_from_a(int * n,
         debug_printf(msg_i_c_n, i, s[i], *n);
       }
     }
+  }
+
+  if (sign == 1) {
+    *n *= -1;
   }
 
   return 0;

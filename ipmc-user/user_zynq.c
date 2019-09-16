@@ -37,7 +37,7 @@ static unsigned char DEBUG = 0;
 static char inline
 zynq_i2c_write_preserve_mux(short int addr
                             , unsigned char reg
-                            , unsigned int * data
+                            , int * data
                             , char len) {
   unsigned char prev;
   unsigned char i;
@@ -80,7 +80,7 @@ zynq_i2c_write_preserve_mux(short int addr
 static char inline
 zynq_i2c_read_preserve_mux(short int addr
                            , unsigned char reg
-                           , unsigned int * data
+                           , int * data
                            , char len) {
   unsigned char prev;
   unsigned char i;
@@ -125,8 +125,8 @@ zynq_i2c_read_preserve_mux(short int addr
 
 char
 user_zynq_i2c_write(unsigned char addr
-                    ,unsigned char reg
-                    , unsigned int * data
+                    , unsigned char reg
+                    , int * data
                     , char len)
 {
   short int faddr = MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, addr << 1); 
@@ -135,8 +135,8 @@ user_zynq_i2c_write(unsigned char addr
 
 char
 user_zynq_i2c_read(unsigned char addr
-                   ,unsigned char reg
-                   , unsigned int * data
+                   , unsigned char reg
+                   , int * data
                    , char len)
 {
   short int faddr = MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, addr << 1); 
@@ -244,14 +244,15 @@ user_zynq_restart(void)
 // the power negotiation with the shelf manager.
 TIMER_CALLBACK(100ms, user_zynq_timercback_100ms)
 {
+  
   // runs each 500ms only
   static int cnt = 0;
   if (++cnt % 5){
     return;
   }
 
-  unsigned char version;
-  if (user_zynq_read_version(& version)) {
+  int v;
+  if (user_zynq_i2c_read(0x61, 0, &v, 1)) {
     // reading error
     user_unprotected_set_gpio(zynq_i2c_on, 0);
   } else {
@@ -266,13 +267,18 @@ TIMER_CALLBACK(100ms, user_zynq_timercback_100ms)
 // the power negotiation with the shelf manager.
 TIMER_CALLBACK(1s, user_zynq_restart_timercback_1s)
 {
-  static const unsigned char addr = 0x61;
-  static unsigned char reg = 0;
-  static unsigned char reg_prev;
-  static unsigned int data = 0;
-  unsigned int data_prev;
+  if (zynq_restart == 1) {
+    user_zynq_restart();
+  }
 
   if (DEBUG) {
+
+    static const unsigned char addr = 0x61;
+    static unsigned char reg = 0;
+    static unsigned char reg_prev;
+    static int data = 0;
+    int data_prev;
+
     debug_printf("zynq_i2c_on: %d\n", user_get_gpio(zynq_i2c_on));
 
     if (user_zynq_i2c_write(addr, reg, &data, 1)) {
@@ -290,9 +296,6 @@ TIMER_CALLBACK(1s, user_zynq_restart_timercback_1s)
     }
   }
   
-  if (zynq_restart == 1) {
-    user_zynq_restart();
-  }
   return;
 }
 
