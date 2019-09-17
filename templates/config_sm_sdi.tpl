@@ -62,6 +62,14 @@
 
       <step>PSQ_DISABLE_SIGNAL(USER_IO_19)</step>
 
+      <!-- init counter flags -->
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_0)</step>
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_1)</step>
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_2)</step>
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_3)</step>
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_4)</step>
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_5)</step>
+
       <!-- let's wait 1s for power good to be received, fail if not -->
       <step>PSQ_SET_TIMER(0, 1000)</step> <!-- timer 0 -->
       <step>PSQ_JUMP_IFNOT_TIMEOUT(0, 4)</step>
@@ -109,7 +117,8 @@
       <step>PSQ_DISABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step> <!-- power off -->
       <step>PSQ_FAIL</step>
 
-      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(USER_IO_18, -22)</step> <!-- zynq_i2c_on? -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(CFG_HANDLE_SWITCH_SIGNAL, -3)</step>
+      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(USER_IO_18, -23)</step> <!-- zynq_i2c_on? -->
 
       <!-- enable i2c mux -->
       <!--
@@ -129,13 +138,66 @@
       <!--
       <step>PSQ_ENABLE_SIGNAL(USER_IO_9)</step>
       -->
+
+      <!-- init counter flags -->
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_0)</step>
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_1)</step>
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_2)</step>
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_3)</step>
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_4)</step>
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_5)</step>
+
       
-      <step>PSQ_ENABLE_SIGNAL(USER_IO_3)</step>  <!-- Shutdow Zynq supplies-->   
-      <step>PSQ_DISABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step> <!-- turn off 12V-->     
-      <step>PSQ_ENABLE_SIGNAL(USER_IO_19)</step>
-      <step>PSQ_ENABLE_SIGNAL(USER_IO_20)</step>
-      <step>PSQ_ENABLE_SIGNAL(USER_IO_21)</step>
+      <!-- request CM shutdown -->
+      <step>PSQ_DISABLE_SIGNAL(IPM_IO_10)</step>
+
+      <!-- let's wait some secs for CM to shut down, ignore if timeout -->
+      <step>PSQ_SET_TIMER(1, 30000)</step> <!-- timer 1 -->
+      <step>PSQ_JUMP_IFNOT_TIMEOUT(1, 19)</step>
+
+      <!-- timeout 1-->
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(IPM_IO_0, 3)</step>
+      <step>PSQ_DISABLE_SIGNAL(IPM_IO_0)</step>
+      <step>PSQ_JUMP(-4)</step>
+
+      <!-- timeout 2 -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(IPM_IO_1, 3)</step>
+      <step>PSQ_DISABLE_SIGNAL(IPM_IO_1)</step>
+      <step>PSQ_JUMP(-3)</step>
+
+      <!-- timeout 3 -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(IPM_IO_2, 3)</step>
+      <step>PSQ_DISABLE_SIGNAL(IPM_IO_2)</step>
+      <step>PSQ_JUMP(-3)</step>
+
+      <!-- timeout 4 -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(IPM_IO_3, 3)</step>
+      <step>PSQ_DISABLE_SIGNAL(IPM_IO_3)</step>
+      <step>PSQ_JUMP(-3)</step>
+
+      <!-- timeout 5 -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(IPM_IO_4, 3)</step>
+      <step>PSQ_DISABLE_SIGNAL(IPM_IO_4)</step>
+      <step>PSQ_JUMP(-3)</step>
+
+      <!-- timeout 6 -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(IPM_IO_5, 5)</step>
+      <step>PSQ_DISABLE_SIGNAL(IPM_IO_5)</step>
+      <step>PSQ_JUMP(-3)</step>
+
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(CFG_HANDLE_SWITCH_SIGNAL, 4)</step>
+      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(IPM_IO_11, -20)</step> <!-- cm off? -->
+
+      <!-- Shutdow Zynq supplies-->
+      <step>PSQ_ENABLE_SIGNAL(USER_IO_3)</step>  
+      <!-- turn off 12V-->
+      <step>PSQ_DISABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step> 
+
+      <!-- remove CM shutdown request-->
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_10)</step>
+
       <step>PSQ_END</step>      
+      
     </PowerOFFSeq>
     
   </PowerManagement>

@@ -257,10 +257,13 @@ user_zynq_get_temp(unsigned char addr
   }
 }
 
+// char
+// user_zynq_get_temp(unsigned char
+
 
 // This is a function to coordenate the initialization of the Zynq and
 // the power negotiation with the shelf manager.
-TIMER_CALLBACK(100ms, user_zynq_timercback_100ms)
+TIMER_CALLBACK(100ms, user_zynq_i2c_on_timercback_100ms)
 {
   
   // runs each 500ms only
@@ -287,6 +290,48 @@ TIMER_CALLBACK(100ms, user_zynq_timercback_100ms)
 
   return;
 }
+
+
+// This is a function to coordenate the CM power off
+// during power blade power-off sequence.
+TIMER_CALLBACK(1s, user_zynq_cm_off_timercback_100ms)
+{
+  
+  if (user_get_gpio(ipmc_zynq_en) == 0) {
+    // zynq disabled, request can not be answered
+    // just a guard
+    user_unprotected_set_gpio(cm_off_res, 0);
+    return;
+  }
+
+  unsigned char v = 0x1 << 4;
+  if (user_get_gpio(cm_off_req) == 1) {
+    // there is a request, tells zynq!
+    user_zynq_i2c_write(0x60, 0, &v, 1);
+  } else {
+    // ipmc_zynq_en == 1 and cm_off_req == 0
+    // normal operation
+    // no request, no response needed
+    user_unprotected_set_gpio(cm_off_res, 0);
+    return;
+  }
+  
+  // status of the cm_off_res should change only when reading works
+  if (user_zynq_i2c_read(0x60, 0, &v, 1) == 1) {
+    return;
+  }
+    
+  if ((v & (0x1<<5)) != 0 ) {
+    // reading success and zynq boot is over
+    user_unprotected_set_gpio(cm_off_res, 1);
+  } else {
+    // reading error or cm is not off yet
+    user_unprotected_set_gpio(cm_off_res, 0);
+  }
+
+  return;
+}
+
 
 // This is a function to coordenate the initialization of the Zynq and
 // the power negotiation with the shelf manager.

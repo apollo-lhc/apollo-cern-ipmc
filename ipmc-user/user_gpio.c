@@ -57,13 +57,15 @@ pin_map[] = {
     , PIN(debug_0           , 1, 1, USER_IO_19                , 0, 1) // 18
     , PIN(debug_1           , 1, 1, USER_IO_20                , 0, 1) // 19
     , PIN(debug_2           , 1, 1, USER_IO_21                , 0, 1) // 20
-    , PIN(ipm_io_0          , 1, 1, IPM_IO_0                  , 0, 1) // 20
-    , PIN(ipm_io_1          , 1, 1, IPM_IO_1                  , 0, 1) // 20
-    , PIN(ipm_io_2          , 1, 1, IPM_IO_2                  , 0, 1) // 20
-    , PIN(ipm_io_3          , 1, 1, IPM_IO_3                  , 0, 1) // 20
-    , PIN(ipm_io_4          , 1, 1, IPM_IO_4                  , 0, 1) // 20
-    , PIN(ipm_io_5          , 1, 1, IPM_IO_5                  , 0, 1) // 20
-    , PIN(ipm_io_6          , 1, 1, IPM_IO_6                  , 0, 1) // 20
+    , PIN(ps_delay_0        , 1, 1, IPM_IO_0                  , 0, 1) // 21
+    , PIN(ps_delay_1        , 1, 1, IPM_IO_1                  , 0, 1) // 22
+    , PIN(ps_delay_2        , 1, 1, IPM_IO_2                  , 0, 1) // 23
+    , PIN(ps_delay_3        , 1, 1, IPM_IO_3                  , 0, 1) // 24
+    , PIN(ps_delay_4        , 1, 1, IPM_IO_4                  , 0, 1) // 25
+    , PIN(ps_delay_5        , 1, 1, IPM_IO_5                  , 0, 1) // 26
+    , PIN(ps_delay_6        , 1, 1, IPM_IO_6                  , 0, 1) // 27
+    , PIN(cm_off_req        , 1, 1, IPM_IO_10                 , 0, 1) // 28
+    , PIN(cm_off_res        , 1, 1, IPM_IO_11                 , 0, 1) // 29
 };
 
 /* ================================================================ */

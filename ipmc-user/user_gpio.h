@@ -24,13 +24,15 @@ enum {
       , debug_0            // 18
       , debug_1            // 19
       , debug_2            // 20
-      , ipm_io_0           // 21
-      , ipm_io_1           // 22
-      , ipm_io_2           // 23
-      , ipm_io_3           // 24
-      , ipm_io_4           // 25
-      , ipm_io_5           // 26
-      , ipm_io_6           // 27
+      , ps_delay_0         // 21
+      , ps_delay_1         // 22
+      , ps_delay_2         // 23
+      , ps_delay_3         // 24
+      , ps_delay_4         // 25
+      , ps_delay_5         // 26
+      , ps_delay_6         // 27
+      , cm_off_req         // 28
+      , cm_off_res         // 29
 } sm_signal_t;
 
 
