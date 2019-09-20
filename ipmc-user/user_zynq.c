@@ -306,7 +306,11 @@ TIMER_CALLBACK(1s, user_zynq_cm_off_timercback_100ms)
 
   unsigned char v = 0x1 << 4;
   if (user_get_gpio(cm_off_req) == 1) {
-    // there is a request, tells zynq!
+    // there is a shutdown request, tells zynq!
+    if (user_zynq_i2c_read(0x60, 0, &v, 1) == 1) {
+      return;
+    }
+    v |= 0x1 << 4;
     user_zynq_i2c_write(0x60, 0, &v, 1);
   } else {
     // ipmc_zynq_en == 1 and cm_off_req == 0

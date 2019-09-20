@@ -23,3 +23,6 @@ upgrade:
 
 sol:
 	ipmitool -C 0 -I lanplus -H $(IPMC_IP) -U soluser -P solpassword sol activate
+
+reset:
+	ipmitool -H $(SHM_IP) -P "" -t $(IPMB_ADDR) mc reset cold
