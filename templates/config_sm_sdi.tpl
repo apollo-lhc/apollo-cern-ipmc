@@ -69,7 +69,7 @@
       <!-- turn on 12V (non-inverted) -->       
       <step>PSQ_ENABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step> 
 
-      <!-- Start Zynq power up sequence-->      
+      <!-- Start Zynq power up sequence (inverted) -->      
       <step>PSQ_DISABLE_SIGNAL(USER_IO_3)</step>
 
       <!-- let's wait 1s for power good to be received, fail if not -->
@@ -127,6 +127,7 @@
 
       <!-- sucess!! -->
       <step>PSQ_END</step>     
+
     </PowerONSeq>
     
     <PowerOFFSeq>
