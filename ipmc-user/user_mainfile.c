@@ -18,7 +18,7 @@ Compilation :
 
 #include <user_gpio.h>
 #include <user_version.h>
-// #include <user_zynq.h>
+#include <user_zynq.h>
 
 // let's lock Zynq I2C poll before initialization
 static char init_lock = 1;
@@ -35,19 +35,25 @@ INIT_CALLBACK(usermain_init)
 }
 
 
-// // This is a function to coordenate the initialization of the Zynq and
-// // the power negotiation with the shelf manager.
-// TIMER_CALLBACK(1s, usermain_timercback)
-// {
-//   static int cnt = 0;
-// 
-//   unsigned char version[70];
-// 
-//   if (++cnt % 10 == 0){
-//     user_get_version(version);
-//     debug_printf("Version: %s\n", version);
-//     user_dump_gpios();
-//   }
-//   
-//   return;
-// }
+// This is a function dumps gpio states for debug purposes
+TIMER_CALLBACK(1s, use_debug_timercback)
+{
+  static int cnt = 0;
+
+  if (++cnt % 10){
+    return;
+  }
+
+  unsigned char version[70];
+  unsigned char v;
+
+  user_get_version(version);
+  debug_printf("Version: %s", version);
+  user_dump_gpios();
+
+  if (user_zynq_i2c_read(0x60, 0, &v, 1) == 0) {
+    debug_printf("Zynq 0x60: 0x%02x\n", v);
+  }
+  
+  return;
+}

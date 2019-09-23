@@ -49,6 +49,18 @@
       <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(USER_IO_17, 2)</step>
       <step>PSQ_FAIL</step>     
 
+      <!-- init -->
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_0)</step> <!-- delay -->
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_1)</step> <!-- delay -->
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_2)</step> <!-- delay -->
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_3)</step> <!-- delay -->
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_4)</step> <!-- delay -->
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_5)</step> <!-- delay -->
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_10)</step> <!-- off req -->
+      
+      <!-- debug_0: tracking power up -->
+      <step>PSQ_DISABLE_SIGNAL(USER_IO_19)</step>
+
       <!-- IPMC Uart to mezz2 slot, where I can probe it -->
       <!-- Make sure UART ADDR [1:0] is "11" (inverted) -->        
       <step>PSQ_DISABLE_SIGNAL(USER_IO_5)</step> 
@@ -57,10 +69,8 @@
       <!-- turn on 12V (non-inverted) -->       
       <step>PSQ_ENABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step> 
 
-      <!-- Start Zynq power up sequence-->      
+      <!-- Start Zynq power up sequence (inverted) -->      
       <step>PSQ_DISABLE_SIGNAL(USER_IO_3)</step>
-
-      <step>PSQ_DISABLE_SIGNAL(USER_IO_19)</step>
 
       <!-- let's wait 1s for power good to be received, fail if not -->
       <step>PSQ_SET_TIMER(0, 1000)</step> <!-- timer 0 -->
@@ -71,7 +81,7 @@
       <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(USER_IO_13, -4)</step> <!-- eth_sw_pwr_good == 0? -->
 
       <!-- let's wait some sec for Zynq to wake up, fail if not -->
-      <step>PSQ_SET_TIMER(1, 30000)</step> <!-- timer 1 -->
+      <step>PSQ_SET_TIMER(1, 10000)</step> <!-- timer 1 -->
       <step>PSQ_JUMP_IFNOT_TIMEOUT(1, 22)</step>
 
       <!-- timeout 1-->
@@ -109,15 +119,15 @@
       <step>PSQ_DISABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step> <!-- power off -->
       <step>PSQ_FAIL</step>
 
-      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(USER_IO_18, -22)</step> <!-- zynq_i2c_on? -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(CFG_HANDLE_SWITCH_SIGNAL, -3)</step>
+      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(USER_IO_18, -23)</step> <!-- zynq_i2c_on? -->
 
-      <!-- enable i2c mux -->
-      <!--
-      <step>PSQ_DISABLE_SIGNAL(USER_IO_9)</step>
-      -->
-      
+      <!-- debug_0: tracking power up -->
+      <step>PSQ_ENABLE_SIGNAL(USER_IO_19)</step>
+
       <!-- sucess!! -->
       <step>PSQ_END</step>     
+
     </PowerONSeq>
     
     <PowerOFFSeq>
@@ -125,17 +135,73 @@
            **GPIO logic** are inverted 
            =========================== -->   
 
-      <!-- disable i2c mux -->
-      <!--
-      <step>PSQ_ENABLE_SIGNAL(USER_IO_9)</step>
-      -->
+      <!-- debug_1: tracking power off -->
+      <step>PSQ_DISABLE_SIGNAL(USER_IO_20)</step>
+
+      <!-- init counter flags -->
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_0)</step>
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_1)</step>
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_2)</step>
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_3)</step>
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_4)</step>
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_5)</step>
+
       
-      <step>PSQ_ENABLE_SIGNAL(USER_IO_3)</step>  <!-- Shutdow Zynq supplies-->   
-      <step>PSQ_DISABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step> <!-- turn off 12V-->     
-      <step>PSQ_ENABLE_SIGNAL(USER_IO_19)</step>
+      <!-- request CM shutdown -->
+      <step>PSQ_DISABLE_SIGNAL(IPM_IO_10)</step>
+
+      <!-- let's wait some secs for CM to shut down, ignore if timeout -->
+      <step>PSQ_SET_TIMER(1, 10000)</step> <!-- timer 1 -->
+      <step>PSQ_JUMP_IFNOT_TIMEOUT(1, 19)</step>  <!-- 0 -20 -->
+
+      <!-- timeout 1-->
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(IPM_IO_0, 3)</step> <!-- 1 -19 -->
+      <step>PSQ_DISABLE_SIGNAL(IPM_IO_0)</step> <!-- 2 -18 -->
+      <step>PSQ_JUMP(-4)</step> <!-- 3 -17 -->
+
+      <!-- timeout 2 -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(IPM_IO_1, 3)</step> <!-- 4 -16 -->
+      <step>PSQ_DISABLE_SIGNAL(IPM_IO_1)</step> <!-- 5 -15 -->
+      <step>PSQ_JUMP(-3)</step> <!-- 6 -14 -->
+
+      <!-- timeout 3 -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(IPM_IO_2, 3)</step> <!-- 7 -13 -->
+      <step>PSQ_DISABLE_SIGNAL(IPM_IO_2)</step> <!-- 8 -12 -->
+      <step>PSQ_JUMP(-3)</step> <!-- 9 -11 -->
+
+      <!-- timeout 4 -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(IPM_IO_3, 3)</step> <!-- 10 -10 -->
+      <step>PSQ_DISABLE_SIGNAL(IPM_IO_3)</step> <!-- 11 -9 -->
+      <step>PSQ_JUMP(-3)</step> <!-- 12 -8 -->
+
+      <!-- timeout 5 -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(IPM_IO_4, 3)</step> <!-- 13 -7 -->
+      <step>PSQ_DISABLE_SIGNAL(IPM_IO_4)</step> <!-- 14 -6 -->
+      <step>PSQ_JUMP(-3)</step> <!-- 15 -5 -->
+
+      <!-- timeout 6 -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(IPM_IO_5, 5)</step> <!-- 16 -4 -->
+      <step>PSQ_DISABLE_SIGNAL(IPM_IO_5)</step> <!-- 17 -3 -->
+      <step>PSQ_JUMP(-3)</step> <!-- 18 -2 -->
+
+      <!-- handle changed? --> 
+      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(CFG_HANDLE_SWITCH_SIGNAL, 4)</step> <!-- 19 -1 -->
+      <!-- cm off? -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(IPM_IO_11, -20)</step> <!-- 20 0 -->
+
+      <!-- Shutdow Zynq supplies-->
+      <step>PSQ_ENABLE_SIGNAL(USER_IO_3)</step>  
+      <!-- turn off 12V-->
+      <step>PSQ_DISABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step> 
+
+      <!-- remove CM shutdown request-->
+      <step>PSQ_ENABLE_SIGNAL(IPM_IO_10)</step>
+
+      <!-- debug_1: tracking power off -->
       <step>PSQ_ENABLE_SIGNAL(USER_IO_20)</step>
-      <step>PSQ_ENABLE_SIGNAL(USER_IO_21)</step>
+
       <step>PSQ_END</step>      
+      
     </PowerOFFSeq>
     
   </PowerManagement>
@@ -146,7 +212,7 @@
     <NetMask>255.255.0.0</NetMask>
     <GatewayIP>192.168.20.1</GatewayIP>
     
-    <!-- <EnableDHCP /> -->
+    <EnableDHCP />
     
     <IPAddrList> <!-- Default IP Addresses (used if DHCP is not active) -->
       <IPAddr slot_addr="default">${ip_address}</IPAddr>
@@ -333,9 +399,9 @@
         <Point id="1" x="7" y="7" /> 
         
         <Thresholds> 
-          <UpperNonRecovery>50</UpperNonRecovery> 
-          <UpperCritical>43</UpperCritical> 
-          <UpperNonCritical>38</UpperNonCritical> 
+          <UpperNonRecovery>55</UpperNonRecovery> 
+          <UpperCritical>50</UpperCritical> 
+          <UpperNonCritical>44</UpperNonCritical> 
           <LowerNonRecovery>0</LowerNonRecovery> 
           <LowerCritical>0</LowerCritical> 
           <LowerNonCritical>0</LowerNonCritical> 
@@ -373,9 +439,9 @@
         <Point id="1" x="7" y="7" /> 
         
         <Thresholds> 
-          <UpperNonRecovery>50</UpperNonRecovery> 
-          <UpperCritical>43</UpperCritical> 
-          <UpperNonCritical>38</UpperNonCritical> 
+          <UpperNonRecovery>55</UpperNonRecovery> 
+          <UpperCritical>50</UpperCritical> 
+          <UpperNonCritical>44</UpperNonCritical> 
           <LowerNonRecovery>0</LowerNonRecovery> 
           <LowerCritical>0</LowerCritical> 
           <LowerNonCritical>0</LowerNonCritical> 
@@ -413,9 +479,9 @@
         <Point id="1" x="7" y="7" /> 
         
         <Thresholds> 
-          <UpperNonRecovery>50</UpperNonRecovery> 
-          <UpperCritical>43</UpperCritical> 
-          <UpperNonCritical>38</UpperNonCritical> 
+          <UpperNonRecovery>80</UpperNonRecovery> 
+          <UpperCritical>65</UpperCritical> 
+          <UpperNonCritical>50</UpperNonCritical> 
           <LowerNonRecovery>0</LowerNonRecovery> 
           <LowerCritical>0</LowerCritical> 
           <LowerNonCritical>0</LowerNonCritical> 
@@ -453,9 +519,9 @@
         <Point id="1" x="7" y="7" /> 
         
         <Thresholds> 
-          <UpperNonRecovery>50</UpperNonRecovery> 
-          <UpperCritical>43</UpperCritical> 
-          <UpperNonCritical>38</UpperNonCritical> 
+          <UpperNonRecovery>65</UpperNonRecovery> 
+          <UpperCritical>55</UpperCritical> 
+          <UpperNonCritical>45</UpperNonCritical> 
           <LowerNonRecovery>0</LowerNonRecovery> 
           <LowerCritical>0</LowerCritical> 
           <LowerNonCritical>0</LowerNonCritical> 
