@@ -408,9 +408,9 @@
         <Point id="1" x="7" y="7" /> 
         
         <Thresholds> 
-          <UpperNonRecovery>50</UpperNonRecovery> 
-          <UpperCritical>43</UpperCritical> 
-          <UpperNonCritical>38</UpperNonCritical> 
+          <UpperNonRecovery>55</UpperNonRecovery> 
+          <UpperCritical>50</UpperCritical> 
+          <UpperNonCritical>44</UpperNonCritical> 
           <LowerNonRecovery>0</LowerNonRecovery> 
           <LowerCritical>0</LowerCritical> 
           <LowerNonCritical>0</LowerNonCritical> 
@@ -448,9 +448,9 @@
         <Point id="1" x="7" y="7" /> 
         
         <Thresholds> 
-          <UpperNonRecovery>50</UpperNonRecovery> 
-          <UpperCritical>43</UpperCritical> 
-          <UpperNonCritical>38</UpperNonCritical> 
+          <UpperNonRecovery>55</UpperNonRecovery> 
+          <UpperCritical>50</UpperCritical> 
+          <UpperNonCritical>44</UpperNonCritical> 
           <LowerNonRecovery>0</LowerNonRecovery> 
           <LowerCritical>0</LowerCritical> 
           <LowerNonCritical>0</LowerNonCritical> 
@@ -488,9 +488,9 @@
         <Point id="1" x="7" y="7" /> 
         
         <Thresholds> 
-          <UpperNonRecovery>50</UpperNonRecovery> 
-          <UpperCritical>43</UpperCritical> 
-          <UpperNonCritical>38</UpperNonCritical> 
+          <UpperNonRecovery>80</UpperNonRecovery> 
+          <UpperCritical>65</UpperCritical> 
+          <UpperNonCritical>50</UpperNonCritical> 
           <LowerNonRecovery>0</LowerNonRecovery> 
           <LowerCritical>0</LowerCritical> 
           <LowerNonCritical>0</LowerNonCritical> 
@@ -528,9 +528,9 @@
         <Point id="1" x="7" y="7" /> 
         
         <Thresholds> 
-          <UpperNonRecovery>50</UpperNonRecovery> 
-          <UpperCritical>43</UpperCritical> 
-          <UpperNonCritical>38</UpperNonCritical> 
+          <UpperNonRecovery>65</UpperNonRecovery> 
+          <UpperCritical>55</UpperCritical> 
+          <UpperNonCritical>45</UpperNonCritical> 
           <LowerNonRecovery>0</LowerNonRecovery> 
           <LowerCritical>0</LowerCritical> 
           <LowerNonCritical>0</LowerNonCritical> 
