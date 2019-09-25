@@ -221,7 +221,7 @@
     <NetMask>255.255.0.0</NetMask>
     <GatewayIP>192.168.20.1</GatewayIP>
     
-    <!-- <EnableDHCP /> -->
+    <EnableDHCP /> 
     
     <IPAddrList> <!-- Default IP Addresses (used if DHCP is not active) -->
       <IPAddr slot_addr="default">${ip_address}</IPAddr>
