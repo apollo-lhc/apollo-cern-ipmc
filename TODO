@@ -54,3 +54,12 @@ computer directly, i.e. independent of the received requests.
 [=] expose other signals of interest in the GPIO API
 
     - Signals not available for now.
+
+[ ] Configure LEDs behavior to indicate boot and shutdown period.
+
+[ ] Remove handle watch in the shutdown/power-up processes
+
+[ ] Retrieve serial number and MAC address from flash and provide it to Zynq
+
+
+
