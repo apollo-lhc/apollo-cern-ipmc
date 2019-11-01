@@ -123,8 +123,7 @@
       <step>PSQ_DISABLE_SIGNAL(CFG_PAYLOAD_DCDC_EN_SIGNAL)</step> <!-- power off -->
       <step>PSQ_FAIL</step>
 
-      <step>PSQ_TEST_SIGNAL_JUMP_IFNOT_SET(CFG_HANDLE_SWITCH_SIGNAL, -3)</step>
-      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(USER_IO_18, -23)</step> <!-- zynq_i2c_on? -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(USER_IO_18, -22)</step> <!-- zynq_i2c_on? -->
 
       <!-- debug_0: tracking power up -->
       <step>PSQ_ENABLE_SIGNAL(USER_IO_19)</step>
@@ -188,10 +187,8 @@
       <step>PSQ_DISABLE_SIGNAL(IPM_IO_5)</step> <!-- 17 -3 -->
       <step>PSQ_JUMP(-3)</step> <!-- 18 -2 -->
 
-      <!-- handle changed? --> 
-      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(CFG_HANDLE_SWITCH_SIGNAL, 4)</step> <!-- 19 -1 -->
       <!-- cm off? -->
-      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(IPM_IO_11, -20)</step> <!-- 20 0 -->
+      <step>PSQ_TEST_SIGNAL_JUMP_IF_SET(IPM_IO_11, -19)</step> <!-- 20 0 -->
 
       <!-- Shutdow Zynq supplies-->
       <step>PSQ_ENABLE_SIGNAL(USER_IO_3)</step>  

@@ -27,12 +27,6 @@ static const char debug = 0;
 
 #include <user_helpers.h>
 
-enum {
-      INTERNAL_I2C_BUS,
-      MANAGEMENT_I2C_BUS,
-      SENSOR_I2C_BUS
-};
-
 #define MAX_USER_TCPSERV_CLIENT 10
 #define CMD_LINE_MAX_LEN 50
 #define MAX_PARAM_LEN 20
@@ -1603,7 +1597,7 @@ set_i2c_bus(unsigned char * params,
   }
 
   if (param[0] == 'm') {
-    cmd_buf[conn_idx].i2c_bus = MANAGEMENT_I2C_BUS;
+    cmd_buf[conn_idx].i2c_bus = MNGMNT_I2C_BUS;
     return strlcpy(reply, ok_str);
   }
   

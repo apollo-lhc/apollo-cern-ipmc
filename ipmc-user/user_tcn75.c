@@ -9,24 +9,30 @@ Version ..... : V0.1 - 30/05/2019
 #include <user_tcn75.h>
 
 // their headers
-#include <hal/irq.h>
-#include <hal/i2c.h>
-#include <i2c_dev.h>
+// #include <hal/irq.h>
+// #include <hal/i2c.h>
+// #include <i2c_dev.h>
+#include <hal/time.h>
+#include <debug.h>
 
 // our headers
+#include <user_i2c.h>
 #include <user_pca9545.h>
 
 // #ifndef HAS_MASTERONLY_I2C
 // #error Enable master-only I2C support to use TCN75 sensors.
 // #endif
 
-/* sensor I2C bus number */
-#define SENSOR_I2C_BUS     2
-
 /* I2C address of the TCN75A I2C switch in the I2C sensor bus */
-#define TCN75A_U34_I2C_ADDR MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, 0x90)
-#define TCN75A_U35_I2C_ADDR MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, 0x92) 
-#define TCN75A_U36_I2C_ADDR MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, 0x94) 
+// #define TCN75A_U34_I2C_ADDR MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, 0x90)
+// #define TCN75A_U35_I2C_ADDR MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, 0x92) 
+// #define TCN75A_U36_I2C_ADDR MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, 0x94) 
+
+#define TCN75A_U34_I2C_ADDR (0x90 >> 1)
+#define TCN75A_U35_I2C_ADDR (0x92 >> 1) 
+#define TCN75A_U36_I2C_ADDR (0x94 >> 1) 
+
+#define I2C_TRIAL_DELAY 20000
 
 static const unsigned char DEBUG = 0;
 
@@ -34,7 +40,7 @@ static const unsigned char DEBUG = 0;
 // helper
 
 static char inline
-tcn75_i2c_write_preserve_mux(short int addr
+tcn75_i2c_write_preserve_mux(unsigned char addr
                        , unsigned char reg
                        , unsigned char * data
                        , char len) {
@@ -47,29 +53,31 @@ tcn75_i2c_write_preserve_mux(short int addr
 
   for (i = 0; (i < 5
                && (ret1 = user_pca9545_read(&prev))); i++) {
-    udelay(1000);
+    udelay(I2C_TRIAL_DELAY);
   }
   for (i = 0; (i < 5
                && !ret1
                && (ret2 = user_pca9545_write(0x01))); i++) {
-    udelay(1000);
+    udelay(I2C_TRIAL_DELAY);
   }
   for (i = 0; (i < 5
                && !ret2
-               && (ret3 = i2c_dev_write_reg(addr, reg, data, len))); i++) {
-    udelay(1000);
+               && (ret3 = user_i2c_reg_write(addr, reg,
+                                             data, len,
+                                             SENSOR_I2C_BUS))); i++) {
+    udelay(I2C_TRIAL_DELAY);
   }
   for (i = 0; (i < 5
                && !ret1
                && (ret4 = user_pca9545_write(prev))); i++) {
-    udelay(1000);
+    udelay(I2C_TRIAL_DELAY);
   }
 
   return ret1 | ret2 | ret3 | ret4;
 }
 
 static char inline
-tcn75_i2c_read_preserve_mux(short int addr
+tcn75_i2c_read_preserve_mux(unsigned char addr
                       , unsigned char reg
                       , unsigned char * data
                       , char len) {
@@ -82,22 +90,25 @@ tcn75_i2c_read_preserve_mux(short int addr
 
   for (i = 0; (i < 5
                && (ret1 = user_pca9545_read(&prev))); i++) {
-    udelay(1000);
+    udelay(I2C_TRIAL_DELAY);
   }
   for (i = 0; (i < 5
                && !ret1
                && (ret2 = user_pca9545_write(0x01))); i++) {
-    udelay(1000);
+    udelay(I2C_TRIAL_DELAY);
   }
   for (i = 0; (i < 5
                && !ret2
-               && (ret3 = i2c_dev_read_reg(addr, reg, data, len))); i++) {
-    udelay(1000);
+
+               && (ret3 = user_i2c_reg_read(addr, reg,
+                                            data, len,
+                                            SENSOR_I2C_BUS))); i++) {
+    udelay(I2C_TRIAL_DELAY);
   }
   for (i = 0; (i < 5
                && !ret1
                && (ret4 = user_pca9545_write(prev))); i++) {
-    udelay(1000);
+    udelay(I2C_TRIAL_DELAY);
   }
 
   return ret1 | ret2 | ret3 | ret4;

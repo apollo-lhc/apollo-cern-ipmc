@@ -61,5 +61,5 @@ computer directly, i.e. independent of the received requests.
 
 [ ] Retrieve serial number and MAC address from flash and provide it to Zynq
 
-
+[ ] Write PIM information in Zynq I2C register (slave 0x67) 
 
