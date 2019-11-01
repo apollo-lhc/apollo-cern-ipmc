@@ -26,3 +26,6 @@ sol:
 
 reset:
 	ipmitool -H $(SHM_IP) -P "" -t $(IPMB_ADDR) mc reset cold
+
+copy: 
+	scp hpm1all.img  pcuptracker001:
