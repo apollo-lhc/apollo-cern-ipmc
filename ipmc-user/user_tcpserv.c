@@ -24,6 +24,7 @@ static const char debug = 0;
 #include <user_gpio.h>
 #include <user_i2c.h>
 #include <user_version.h>
+#include <user_uart_forward.h>
 
 #include <user_helpers.h>
 
@@ -345,6 +346,11 @@ zynq_i2c_r(unsigned char * params,
            unsigned char * reply,
            int conn_idx);
 
+int
+uart_forward(unsigned char * params
+             , unsigned char * reply
+             , int conn_idx);
+
 /* ================================================================ */
 
 typedef struct cmd_map_n {
@@ -369,6 +375,7 @@ static const cmd_map_t cmd_map[] = {
     CMD_FUNC(read_i2c_mux     ),
     CMD_FUNC(read_tcn75a      ),
     CMD_FUNC(set_gpio         ),
+    CMD_FUNC(uart_forward     ),
     CMD_FUNC(write_i2c_mux    ),
     CMD_FUNC(version          ),
     CMD_FUNC(zynq_restart     ),
@@ -1845,3 +1852,57 @@ zynq_i2c_r(unsigned char * params,
 }
 
 
+int
+uart_forward(unsigned char * params,
+             unsigned char * reply,
+             int conn_idx)
+{
+  unsigned char param[MAX_PARAM_LEN];
+  if (get_next_param(param, params)) {
+    char f = user_uart_forward_get();
+    if (0 == f) {
+      static unsigned char msg[] = "Zynq\n";
+      return strlcpy(reply, msg);
+    }
+    if (1 == f) {
+      static unsigned char msg[] = "None\n";
+      return strlcpy(reply, msg);
+    }
+    if (2 == f) {
+      static unsigned char msg[] = "Mezzanine 1\n";
+      return strlcpy(reply, msg);
+    }
+    if (3 == f) {
+      static unsigned char msg[] = "Mezzanine 2\n";
+      return strlcpy(reply, msg);
+    }
+  }
+
+  if (str_eq(param, help_str) == 1
+      || str_eq(param, question_mark_str) == 1) {
+    static unsigned char msg[] = 
+      "Usage: uart_forward [dest].\n"
+      "  dest: empty - returns current config;\n"
+      "  dest: z - set forward to Zynq;\n"
+      "  dest: m1 - set forward to Mezzanine 1;\n"
+      "  dest: m2 - set forward to Mezzanine 2;\n"
+      "  dest: none - disable forward.\n";
+    return strlcpy(reply, msg);
+  }
+
+  if (str_eq(param, (unsigned char *) "z") == 1) {
+    user_uart_forward_set(UART_ZYNQ); 
+  } else if (str_eq(param, (unsigned char *) "m1") == 1) {
+    user_uart_forward_set(UART_MEZZ_1);
+  } else if (str_eq(param, (unsigned char *) "m2") == 1) {
+    user_uart_forward_set(UART_MEZZ_2);
+  } else if (str_eq(param, (unsigned char *) "none") == 1) {
+    user_uart_forward_set(UART_NONE);
+  } else {
+    static unsigned char msg[] = 
+      "Error: unknown destination.\n";
+    return strlcpy(reply, msg);
+  }
+  
+  return strlcpy(reply, ok_str);
+}
