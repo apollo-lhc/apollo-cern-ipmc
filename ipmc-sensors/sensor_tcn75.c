@@ -23,8 +23,6 @@
 /* Compile the source only if at least one SENSOR_TCN75 is implemented by the user */
 #ifdef CFG_SENSOR_TCN75
 
-// sensors can disappear 
-#define CFG_SENSOR_TCN75_DYNAMIC
 
 // /* Check that the Sensor_i2c bus is implemented */ 
 // #define HAS_MASTERONLY_I2C
@@ -32,6 +30,7 @@
 // #ifndef HAS_MASTERONLY_I2C 
 // #error Enable master-only I2C support to use TCN75 sensors. 
 // #endif 
+
 
 /* Forward declarations */
 static char
@@ -139,29 +138,21 @@ sensor_tcn75_update_reading(unsigned char num
     return;
   }
   
-  /* Do not update non present sensors */
-  if (sensor->status & STATUS_NOT_PRESENT) {
-    return;
-  }
+  // /* Do not update non present sensors */
+  // if (sensor->status & STATUS_NOT_PRESENT) {
+  //   return;
+  // }
     
-  /* read temperature */
-#ifndef CFG_SENSOR_TCN75_DYNAMIC
-  if (!sensor_tcn75_read_temp(sensor_tcn75_ro[num].id
-                              , TCN75_TEMP_REG
-                              , &reading)) {
-    /* update sensor reading */
-    sensor_threshold_update(&master_sensor_set, snum, reading, flags);
-  }
-#else
   if (user_tcn75_read_reg(sensor_tcn75_ro[num].id
-                             , TCN75_TEMP_REG
-                             , &reading)) {
+                          , TCN75_TEMP_REG
+                          , &reading)) {
     /* the sensor does not respond */
     if (!(sensor->status & STATUS_SENSOR_DISABLE)) {
       log_preamble();
       debug_printf("disabling TCN75 sensor at u%d \n"
                    , sensor_tcn75_ro[num].id);
       sensor->status |= STATUS_SENSOR_DISABLE;
+      sensor->status |= STATUS_SCAN_DISABLE;
     }
   } else {
     if (sensor->status & STATUS_SENSOR_DISABLE) {
@@ -169,11 +160,11 @@ sensor_tcn75_update_reading(unsigned char num
       debug_printf("enabling TCN75 sensor at %d \n"
                    ,sensor_tcn75_ro[num].id);
       sensor->status &= ~STATUS_SENSOR_DISABLE;
+      sensor->status &= ~STATUS_SCAN_DISABLE;
     }
     /* update sensor reading */
-    sensor_threshold_update(&master_sensor_set, snum, reading, flags);
   }
-#endif
+  sensor_threshold_update(&master_sensor_set, snum, reading, flags);
 }
 
 
@@ -432,172 +423,5 @@ sensor_tcn75_fill_reading(sensor_t *sensor
   return sensor_threshold_fill_reading(sensor, msg);
 }
 
-
-/////* ------------------------------------------------------------------ */ 
-/////* This section contains functions specific to the device.			  */ 
-/////* ------------------------------------------------------------------ */ 
-////unsigned char
-////initialize_sensor_tcn75(unsigned char id)
-////{ 
-////    return 0x00; 
-////} 
-//// 
-////char
-////read_sensor_tcn75(unsigned char id, unsigned char * temp)
-////{
-////  char ret = user_tcn75_read(id, temp);
-////  return ret;
-////} 
-////
-/////* ------------------------------------------------------------------ */ 
-/////* This section contains Template sensor methods. 					  */ 
-/////* ------------------------------------------------------------------ */ 
-//// 
-/////* Fill the Get Sensor Reading reply */ 
-////static char
-////sensor_tcn75_fill_rd(sensor_t *sensor, unsigned char *msg)
-////{ 
-////  /* Get instance index using the pointer address */ 
-////  unsigned char i, sval; 
-////  unsigned short snum;
-////  char ret;
-////
-////  i = ((sensor_tcn75_t *) sensor) - sensor_tcn75;  
-////  ret = read_sensor_tcn75(sensor_tcn75_ro[i].id, &sval); 
-////  snum = i + sensor_tcn75_first; 
-////  
-////  /* Update sensor value */
-////  if (ret == 0 ){
-////    sensor_threshold_update(&master_sensor_set, snum, sval, 0);
-////  }
-////  
-////  return sensor_threshold_fill_reading(sensor, msg); 
-////} 
-////
-/////* Sensor initialization. */ 
-////static char
-////sensor_tcn75_init(sensor_t *sensor)
-////{ 
-////  /* Get instance index using the pointer address */ 
-////  unsigned char i = ((sensor_tcn75_t *) sensor) - sensor_tcn75; 
-////  
-////  /* Execute init function */ 
-////  initialize_sensor_tcn75(sensor_tcn75_ro[i].id); 
-//// 
-////  return 0;    
-////} 
-//// 
-/////* ------------------------------------------------------------------ */ 
-/////* This section contains callbacks used to manage the sensor. 		  */ 
-/////* ------------------------------------------------------------------ */ 
-//// 
-/////* 1 second callback */ 
-////TIMER_CALLBACK(1s, sensor_tcn75_1s_callback)
-////{ 
-////  unsigned char flags; 
-////  
-////  /*
-////   * -> Save interrupt state and disable interrupts 
-////   *    Note: that ensure flags variable is not written by 
-////   *          two processes at the same time. 
-////   */ 
-////  save_flags_cli(flags); 
-////  
-////  /* Change flag to schedule and update */ 
-////  sensor_tcn75_global_flags |= TCN75_GLOBAL_UPDATE; 
-////  
-////  /* 
-////   * -> Restore interrupt state and enable interrupts 
-////   *   Note: restore the system 
-////   */ 
-////  restore_flags(flags);
-////
-////  return;
-////} 
-//// 
-/////* Initialization callback */ 
-////INIT_CALLBACK(sensor_tcn75_init_all)
-////{ 
-////    unsigned char flags; 
-//// 
-////    /* 
-////     * -> Save interrupt state and disable interrupts 
-////     *   Note: that ensure flags variable is not written by 
-////     *         two processes at the same time. 
-////     */ 
-////    save_flags_cli(flags); 
-//// 
-////    /* Change flag to schedule and update */ 
-////    sensor_tcn75_global_flags |= TCN75_GLOBAL_INIT; 
-//// 
-////    /* 
-////     * -> Restore interrupt state and enable interrupts 
-////     *   Note: restore the system 
-////     */ 
-////    restore_flags(flags); 
-////} 
-//// 
-/////* Main loop callback */ 
-////MAIN_LOOP_CALLBACK(sensor_tcn75_poll)
-////{ 
-////  
-////  unsigned char i, flags, gflags, pcheck, sval; 
-////  unsigned short snum; 
-//// 
-////  /* Disable interrupts */ 
-////  save_flags_cli(flags); 
-//// 
-////  /* Saved flag state into a local variable */ 
-////  gflags = sensor_tcn75_global_flags; 
-//// 
-////  /* Clear flags */ 
-////  sensor_tcn75_global_flags = 0; 
-//// 
-////  /* Enable interrupts */ 
-////  restore_flags(flags); 
-////
-////  // // disable sensors if mux is disabled.
-////  // if (user_get_gpio(sense_rst_n) == 0) {
-////  //   for (i = 0; i < SENSOR_TCN75_COUNT; i++) {
-////  //     sensor_tcn75[i].sensor.s.status |= STATUS_NOT_PRESENT;
-////  //   }
-////  // } else {
-////  //   for (i = 0; i < SENSOR_TCN75_COUNT; i++) {
-////  //     sensor_tcn75[i].sensor.s.status &= ~STATUS_NOT_PRESENT;
-////  //   }
-////  // }
-////  
-////  if (gflags & TCN75_GLOBAL_INIT) { 
-////
-////    /* initialize all Template sensors */ 
-////    for (i = 0; i < SENSOR_TCN75_COUNT; i++) { 
-////      
-////      /* Check if the sensor is present         */ 
-////      /*    e.g.: can be absent in case of RTM  */ 
-////      pcheck = sensor_tcn75[i].sensor.s.status; 
-////      
-////      if (!(pcheck & STATUS_NOT_PRESENT)) { 
-////        initialize_sensor_tcn75(sensor_tcn75_ro[i].id); 
-////      } 
-////    } 
-////  } 
-//// 
-////  if (gflags & TCN75_GLOBAL_UPDATE) { 
-////    
-////    /* update all sensor readings */ 
-////    for (i = 0; i < SENSOR_TCN75_COUNT; i++) { 
-////      
-////      /* Check if the sensor is present         */ 
-////      /*    e.g.: can be absent in case of RTM  */ 
-////      pcheck = sensor_tcn75[i].sensor.s.status; 
-////      snum = sensor_tcn75_first + i; 
-////      if (!(pcheck & STATUS_NOT_PRESENT)) { 
-////        WDT_RESET; 
-////        sval = read_sensor_tcn75(sensor_tcn75_ro[i].id); 
-////        sensor_threshold_update(&master_sensor_set, snum, sval, flags); 
-////      } 
-////    } 
-////  } 
-////} 
  
 #endif /* CFG_SENSOR_TCN75 */ 

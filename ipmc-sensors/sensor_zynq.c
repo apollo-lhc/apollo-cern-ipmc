@@ -99,19 +99,12 @@ sensor_zynq_update_reading(unsigned char num
     return;
   }
   
-  /* Do not update non present sensors */
-  if (sensor->status & STATUS_NOT_PRESENT) {
-    return;
-  }
+  // /* Do not update non present sensors */
+  // if (sensor->status & STATUS_NOT_PRESENT) {
+  //   return;
+  // }
     
   /* read temperature */
-#ifndef CFG_SENSOR_ZYNQ_DYNAMIC
-  if (!user_zynq_get_temp(sensor_zynq_ro[num].addr
-                          , &reading)) {
-    /* update sensor reading */
-    sensor_threshold_update(&master_sensor_set, snum, reading, flags);
-  }
-#else
   if (user_zynq_get_temp(sensor_zynq_ro[num].addr
                          , &reading)) {
     /* the sensor does not respond */
@@ -120,6 +113,7 @@ sensor_zynq_update_reading(unsigned char num
       debug_printf("disabling ZYNQ sensor at 0x%02x \n"
                    , sensor_zynq_ro[num].addr);
       sensor->status |= STATUS_SENSOR_DISABLE;
+      sensor->status |= STATUS_SCAN_DISABLE;
     }
   } else {
     if (sensor->status & STATUS_SENSOR_DISABLE) {
@@ -127,11 +121,11 @@ sensor_zynq_update_reading(unsigned char num
       debug_printf("enabling ZYNQ sensor at 0x%02x \n"
                    ,sensor_zynq_ro[num].addr);
       sensor->status &= ~STATUS_SENSOR_DISABLE;
+      sensor->status &= ~STATUS_SCAN_DISABLE;
     }
     /* update sensor reading */
-    sensor_threshold_update(&master_sensor_set, snum, reading, flags);
   }
-#endif
+  sensor_threshold_update(&master_sensor_set, snum, reading, flags);
 }
 
 
