@@ -17,6 +17,7 @@ Version ..... : V0.1 - 30/05/2019
 #include <user_i2c.h>
 #include <user_gpio.h>
 #include <user_pca9545.h>
+#include <user_eeprom.h>
 // #include <user_power_sequence.h>
 
 
@@ -24,10 +25,10 @@ Version ..... : V0.1 - 30/05/2019
 // #define ZYNQ_I2C_ADDR   MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, 0x30 << 1) 
 
 
-static char zynq_restart_delay = 5;
-static char zynq_restart = 0;
-
-static unsigned char DEBUG = 0;
+static uint8_t zynq_restart_delay = 5;
+static uint8_t zynq_restart = 0;
+static uint8_t eeprom2zynq = 0;
+static uint8_t DEBUG = 0;
 
 /* ------------------------------------------------------------------ */
 // helper
@@ -226,6 +227,42 @@ user_zynq_get_temp(unsigned char addr
 // char
 // user_zynq_get_temp(unsigned char
 
+char
+user_zynq_i2c_write_from_eeprom(void)
+{
+  uint8_t mac_addr[6];
+  char ret;
+
+  ret = user_eeprom_get_mac_addr(0, mac_addr);
+  if (ret != 0) {
+    return -1;
+  }
+  user_zynq_i2c_write(0x60, 16, mac_addr, 6);
+
+  ret = user_eeprom_get_mac_addr(1, mac_addr);
+  if (ret != 0) {
+    return -2;
+  }
+  user_zynq_i2c_write(0x60, 24, mac_addr, 6);
+
+  uint8_t sn;
+  ret = user_eeprom_get_serial_number(&sn);
+  if (ret != 0) {
+    return -3;
+  }
+  user_zynq_i2c_write(0x60, 2, &sn, 1);
+
+  uint8_t rn;
+  ret = user_eeprom_get_revision_number(&rn);
+  if (ret != 0) {
+    return -4;
+  }
+  user_zynq_i2c_write(0x60, 3, &rn, 1);
+
+  eeprom2zynq = 1;
+  return 0;
+}
+
 
 // This is a function to coordenate the initialization of the Zynq and
 // the power negotiation with the shelf manager.
@@ -237,18 +274,22 @@ TIMER_CALLBACK(100ms, user_zynq_i2c_on_timercback_100ms)
   if (++cnt % 5){
     return;
   }
-
+  
   if (user_get_gpio(ipmc_zynq_en) == 0) {
     // zynq is off, no way zynq i2c is functional...
     user_unprotected_set_gpio(zynq_i2c_on, 0);
+    eeprom2zynq = 0;
     return;
   }
-
+  
   unsigned char v = 0;
   if (user_zynq_i2c_read(0x60, 0, &v, 1) == 0
       && (v & 0x1) == 0x1 ) {
     // reading success and zynq boot is over
     user_unprotected_set_gpio(zynq_i2c_on, 1);
+    if (eeprom2zynq == 0) {
+      user_zynq_i2c_write_from_eeprom();
+    }
   } else {
     // reading error or zynq boot is not over
     user_unprotected_set_gpio(zynq_i2c_on, 0);

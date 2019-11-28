@@ -40,7 +40,7 @@ user_i2c_read(unsigned char i2c_addr,
          i2c_bus_t i2c_bus)
 {
   i2c_addr <<= 1;
-  i2c_addr |= 1;
+
   short int full_addr = MO_CHANNEL_ADDRESS(i2c_bus, i2c_addr);
   
   int ret = i2c_dev_read(full_addr, data, len);

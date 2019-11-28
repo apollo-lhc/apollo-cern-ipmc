@@ -2,9 +2,6 @@
 #define USER_HELPERS_H
 
 int
-strlen(const unsigned char * str);
-
-int
 str_eq(const unsigned char *s1,
        const unsigned char *s2);
 
@@ -19,19 +16,13 @@ i_from_a(int * n,
          unsigned char * hex);
 
 int
-strlcpy(unsigned char *dest,
+strcpyl(unsigned char *dest,
         const unsigned char *src);
 
-// int
-// vec_a_from_vec_i (unsigned char * a,
-//                   unsigned char * i,
-//                   int len,
-//                   unsigned char hex);
-// 
-// int
-// vec_i_from_vec_a (unsigned char * i,
-//                   unsigned char * a,
-//                   int len,
-//                   unsigned char hex);
+int
+strlenu(const unsigned char * str);
+
+void
+memcpy_(void *dest, const void *src, int n);
 
 #endif // USER_HELPERS_H

@@ -63,15 +63,6 @@ user_unprotected_set_gpio(sm_signal_t sm_signal, int level);
 int
 user_get_gpio(sm_signal_t sm_signal);
 
-int
-user_enable_expert_mode(void);
-
-int
-user_disable_expert_mode(void);
-
-int
-user_is_expert_mode_on(void);
-
 void
 user_dump_gpios(void);
 

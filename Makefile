@@ -19,7 +19,7 @@ activate:
 	ipmitool -H $(SHM_IP) -P "" -t $(IPMB_ADDR) hpm activate
 
 upgrade: 
-	ipmitool -H $(SHM_IP) -P "" -t $(IPMB_ADDR) hpm upgrade hpm1all.img force
+	ipmitool -H $(SHM_IP) -P "" -t $(IPMB_ADDR) hpm upgrade hpm1all.img force activate
 
 sol:
 	ipmitool -C 0 -I lanplus -H $(IPMC_IP) -U soluser -P solpassword sol activate
@@ -27,5 +27,8 @@ sol:
 reset:
 	ipmitool -H $(SHM_IP) -P "" -t $(IPMB_ADDR) mc reset cold
 
-copy: 
+copy_pcptracker:
 	scp hpm1all.img  pcuptracker001:
+
+copy_lxplus:
+	scp hpm1all.img  lxplus.cern.ch:

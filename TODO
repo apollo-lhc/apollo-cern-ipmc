@@ -10,13 +10,7 @@ To do:
 
 [ ] Configure LEDs behavior to indicate boot and shutdown period.
 
-[ ] Retrieve serial number and MAC address from flash and provide it to Zynq
-
 [ ] Write PIM information in Zynq I2C register (slave 0x67) 
-
-[ ] Command to change uart configuration
-
-[ ] Separate signals from general help
 
 [ ] Setting the MAC address to a value from the IPMC EEPROM without
 custom compiling the code for each address
@@ -36,6 +30,14 @@ sometimes...
     - Not specified
 
 ---- done v
+
+[X] Retrieve serial number and MAC address from flash and provide it to Zynq
+
+[X] Separate signals from general help
+
+[X] Command to read/write eeprom
+
+[X] Command to change uart configuration
 
 [X] Why sensors are not reported as NR when they are not available?
 

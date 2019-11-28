@@ -1,14 +1,6 @@
 #ifndef GENERIC_I2C_H
 #define GENERIC_I2C_H
 
-/* 
- * For simple i2c devices that don't use the restart signal:
- * i2c_r i2c_addr
- * i2c_w i2c_addr data
- * For ones that require multiple bytes/restart for register access:
- * i2c_r i2c_addr reg_addr
- * i2c_w i2c_addr reg_addr data
- */
 
 /* sensor I2C bus number */
 typedef enum

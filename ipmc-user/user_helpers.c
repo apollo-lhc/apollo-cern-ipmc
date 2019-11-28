@@ -2,22 +2,17 @@
 
 #include <debug.h>
 
-static const char msg_i_c_n[] =
-  "~~~~~~~ i: %d; c: %x; n: %d\n";
-
-static const char msg_i_c_n_2[] =
-  "------- i: %d; c: %x; n: %d\n";
 
 static const unsigned char DEBUG = 0;
 
 /* reverse:  reverse string s in place */
 void
-reverse(unsigned char s[])
+reverse(unsigned char * s)
 {
   int i, j;
   unsigned char c;
   
-  for (i = 0, j = strlen(s)-1; i<j; i++, j--) {
+  for (i = 0, j = strlenu(s)-1; i<j; i++, j--) {
     c = s[i];
     s[i] = s[j];
     s[j] = c;
@@ -56,17 +51,11 @@ a_from_i(unsigned char s[],
         s[i++] = aux - 10 + 'A';
       }
       /* then eliminate it */
-      if (DEBUG) {
-        debug_printf(msg_i_c_n_2, i-1, s[i-1], n);
-      }
       n /= 16;
     } else {
       /* store next digit */
       s[i++] = n % 10 + '0';
       /* then eliminate it */
-      if (DEBUG) {
-        debug_printf(msg_i_c_n_2, i-1, s[i-1], n);
-      }
       n /= 10;
     }
   } while (n > 0);    
@@ -121,14 +110,8 @@ i_from_a(int * n,
     for (i = 2; s[i] != '\0'; i++) {
       if ('0' <= s[i] && s[i] <= '9') {
         *n = *n * 16 + s[i] - '0';
-        if (DEBUG) {
-          debug_printf(msg_i_c_n, i, s[i], *n);
-        }
       } else if ('a' <= s[i] && s[i] <= 'f') {
         *n = *n * 16 + s[i] - 'a' + 10;
-        if (DEBUG) {
-          debug_printf(msg_i_c_n, i, s[i], *n);
-        }
       }
       else {
         return 1;
@@ -138,9 +121,6 @@ i_from_a(int * n,
     *hex = 0;
     for (i = 0; s[i] != '\0'; i++) {
       *n = *n * 10 + s[i] - '0';
-      if (DEBUG) {
-        debug_printf(msg_i_c_n, i, s[i], *n);
-      }
     }
   }
 
@@ -151,9 +131,9 @@ i_from_a(int * n,
   return 0;
 }
 
-// freebsd implementation of strlen
+// freebsd implementation of strlen but with unsigned input
 int
-strlen(const unsigned char * str)
+strlenu(const unsigned char * str)
 {
     const unsigned char *s;
     for (s = str; *s; ++s) {}
@@ -192,7 +172,7 @@ str_eq (const unsigned char *s1,
 
 // copying strings
 int
-strlcpy(unsigned char *dest,
+strcpyl(unsigned char *dest,
         const unsigned char *src)
 {
   unsigned i;
@@ -202,3 +182,17 @@ strlcpy(unsigned char *dest,
   dest[i]= '\0';
   return i;
 }
+
+
+void
+memcpy_(void *dest, const void *src, int n) 
+{ 
+   // Typecast src and dest addresses to (char *) 
+   const char *csrc = (const char *)src; 
+   char *cdest = (char *)dest; 
+   int i;
+   // Copy contents of src[] to dest[] 
+   for (i = 0; i < n; i++) { 
+       cdest[i] = csrc[i];
+   }
+} 

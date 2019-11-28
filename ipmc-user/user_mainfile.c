@@ -1,14 +1,9 @@
 /***********************************************************************
-
-Nom ......... : user_mainfile.c
-Role ........ : Example of user function definition
-Auteur ...... : Julian Mendez <julian.mendez@cern.ch>
-Version ..... : V1.0 - 25/10/2017
-
-Compilation :
-	- Add the file into the FILES list located in ipmc-user/nr-mkfrag
-
+File              : user_mainfile.c
+Author            : Thiago Costa de Paiva
+Modification date : 20191128
 ***********************************************************************/
+
 #include <defs.h>
 #include <cfgint.h>
 #include <app.h>
@@ -19,6 +14,7 @@ Compilation :
 #include <user_gpio.h>
 #include <user_version.h>
 #include <user_zynq.h>
+#include <user_eeprom.h>
 
 // let's lock Zynq I2C poll before initialization
 static char init_lock = 1;
@@ -31,7 +27,10 @@ INIT_CALLBACK(usermain_init)
   user_gpio_init();
 
   // unlock Zynq I2C poll
-  init_lock = 0; 
+  init_lock = 0;
+
+  // init external eeprom
+  user_eeprom_init();
 }
 
 
@@ -44,7 +43,7 @@ TIMER_CALLBACK(1s, use_debug_timercback)
     return;
   }
 
-  unsigned char version[70];
+  static unsigned char version[80];
   unsigned char v;
 
   user_get_version(version);
