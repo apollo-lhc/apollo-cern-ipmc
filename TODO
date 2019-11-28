@@ -18,6 +18,15 @@ custom compiling the code for each address
 [ ] Making the active IPMC MAC and IP addresses available (perhaps by
 writing to zynq I2C)
 
+[ ] Change approach for I2C Mux: use variable to road "current user
+channel" for user operations, instead of reading last state.
+
+[ ] Rearrange command names per area (i2c_bus_set instead of
+set_i2c_bus). Important to keep previous names as aliases.
+
+[ ] Change how raw I2C handling is done (convert parameters directly
+instead of using a 2-D vector).
+
 [-] weird behavior of the command line interface, which is hanging up
 sometimes...
 
