@@ -10,19 +10,22 @@ To do:
 
 [ ] Configure LEDs behavior to indicate boot and shutdown period.
 
-[ ] Retrieve serial number and MAC address from flash and provide it to Zynq
-
 [ ] Write PIM information in Zynq I2C register (slave 0x67) 
-
-[ ] Command to change uart configuration
-
-[ ] Separate signals from general help
 
 [ ] Setting the MAC address to a value from the IPMC EEPROM without
 custom compiling the code for each address
 
 [ ] Making the active IPMC MAC and IP addresses available (perhaps by
 writing to zynq I2C)
+
+[ ] Change approach for I2C Mux: use variable to road "current user
+channel" for user operations, instead of reading last state.
+
+[ ] Rearrange command names per area (i2c_bus_set instead of
+set_i2c_bus). Important to keep previous names as aliases.
+
+[ ] Change how raw I2C handling is done (convert parameters directly
+instead of using a 2-D vector).
 
 [-] weird behavior of the command line interface, which is hanging up
 sometimes...
@@ -36,6 +39,14 @@ sometimes...
     - Not specified
 
 ---- done v
+
+[X] Retrieve serial number and MAC address from flash and provide it to Zynq
+
+[X] Separate signals from general help
+
+[X] Command to read/write eeprom
+
+[X] Command to change uart configuration
 
 [X] Why sensors are not reported as NR when they are not available?
 

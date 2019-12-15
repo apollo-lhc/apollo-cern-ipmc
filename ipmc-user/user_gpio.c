@@ -17,6 +17,7 @@ Version ..... : V0.1 - 18/05/2019
 #include <app/master/fru_led.h>
 
 // our headers
+#include <user_expert.h>
 #include <user_helpers.h>
 
 #define NAME(Variable) (#Variable)
@@ -69,8 +70,6 @@ pin_map[] = {
 };
 
 /* ================================================================ */
-
-static int expert_mode = 0;
 
 static const int N_PINS = sizeof(pin_map) / sizeof(pin_map[0]);
 
@@ -132,11 +131,13 @@ user_unprotected_set_gpio(sm_signal_t sm_signal, int level)
 int
 user_set_gpio(sm_signal_t sm_signal, int level)
 {
-  if (pin_map[sm_signal].expert == 1 && expert_mode == 0) {
+  if (pin_map[sm_signal].expert == 1
+      && user_expert_mode_is_on() == 0) {
     return -1;
   }
 
-  if (pin_map[sm_signal].output == 0 && expert_mode == 0) {
+  if (pin_map[sm_signal].output == 0
+      && user_expert_mode_is_on() == 0) {
     // pin is input
     return -2;
   }
@@ -166,26 +167,6 @@ user_is_expert_constrained(sm_signal_t sm_signal)
   return pin_map[sm_signal].expert;
 }
 
-int
-user_enable_expert_mode(void){
-  expert_mode = 1;
-  return 0;
-}
-
-int
-user_disable_expert_mode(void)
-{
-  expert_mode = 0;
-  return 0;
-}
-
-
-int
-user_is_expert_mode_on(void)
-{
-  return expert_mode;
-}
-
 pin_map_t
 user_get_gpio_signal(sm_signal_t sm_signal)
 {
@@ -209,11 +190,10 @@ user_dump_gpios(void)
 {
   int i;
   for (i = 0; i < N_PINS; i++) {
-    debug_printf("%s = %d\n",
+    debug_printf("\n%s = %d",
                  pin_map[i].sm_name,
                  user_get_gpio(i));
   }
-  debug_printf("---------\n");
 }
 
 

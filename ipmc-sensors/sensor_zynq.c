@@ -124,8 +124,8 @@ sensor_zynq_update_reading(unsigned char num
       sensor->status &= ~STATUS_SCAN_DISABLE;
     }
     /* update sensor reading */
+    sensor_threshold_update(&master_sensor_set, snum, reading, flags);
   }
-  sensor_threshold_update(&master_sensor_set, snum, reading, flags);
 }
 
 
