@@ -4,7 +4,7 @@ REVISION := $(shell svn info --show-item revision)
 BRANCH := $(shell basename $$(pwd))
 DATE := $(shell date)
 VAR := 'static const unsigned char version_str[] ='
-VAL := '   "$(REVISION) $(BRANCH) $(DATE)\\n";'
+VAL := '   "$(REVISION) $(BRANCH) $(DATE)";'
 
 include env
 
@@ -27,8 +27,11 @@ sol:
 reset:
 	ipmitool -H $(SHM_IP) -P "" -t $(IPMB_ADDR) mc reset cold
 
-copy_pcptracker:
+cp_pcptracker:
 	scp hpm1all.img  pcuptracker001:
 
-copy_lxplus:
+cp_lxplus:
 	scp hpm1all.img  lxplus.cern.ch:
+
+cp_axion:
+	scp hpm1all.img  axion.bu.edu:

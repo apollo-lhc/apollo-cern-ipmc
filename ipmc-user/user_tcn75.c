@@ -34,85 +34,10 @@ Version ..... : V0.1 - 30/05/2019
 
 #define I2C_TRIAL_DELAY 20000
 
-static const unsigned char DEBUG = 0;
+// static const unsigned char DEBUG = 0;
 
 /* ------------------------------------------------------------------ */
 // helper
-
-static char inline
-tcn75_i2c_write_preserve_mux(unsigned char addr
-                       , unsigned char reg
-                       , unsigned char * data
-                       , char len) {
-  unsigned char prev;
-  unsigned char i;
-  char ret1 = 1;
-  char ret2 = 2;
-  char ret3 = 4;
-  char ret4 = 8;
-
-  for (i = 0; (i < 5
-               && (ret1 = user_pca9545_read(&prev))); i++) {
-    udelay(I2C_TRIAL_DELAY);
-  }
-  for (i = 0; (i < 5
-               && !ret1
-               && (ret2 = user_pca9545_write(0x01))); i++) {
-    udelay(I2C_TRIAL_DELAY);
-  }
-  for (i = 0; (i < 5
-               && !ret2
-               && (ret3 = user_i2c_reg_write(addr, reg,
-                                             data, len,
-                                             SENSOR_I2C_BUS))); i++) {
-    udelay(I2C_TRIAL_DELAY);
-  }
-  for (i = 0; (i < 5
-               && !ret1
-               && (ret4 = user_pca9545_write(prev))); i++) {
-    udelay(I2C_TRIAL_DELAY);
-  }
-
-  return ret1 | ret2 | ret3 | ret4;
-}
-
-static char inline
-tcn75_i2c_read_preserve_mux(unsigned char addr
-                      , unsigned char reg
-                      , unsigned char * data
-                      , char len) {
-  unsigned char prev;
-  unsigned char i;
-  char ret1 = 1;
-  char ret2 = 2;
-  char ret3 = 4;
-  char ret4 = 8;
-
-  for (i = 0; (i < 5
-               && (ret1 = user_pca9545_read(&prev))); i++) {
-    udelay(I2C_TRIAL_DELAY);
-  }
-  for (i = 0; (i < 5
-               && !ret1
-               && (ret2 = user_pca9545_write(0x01))); i++) {
-    udelay(I2C_TRIAL_DELAY);
-  }
-  for (i = 0; (i < 5
-               && !ret2
-
-               && (ret3 = user_i2c_reg_read(addr, reg,
-                                            data, len,
-                                            SENSOR_I2C_BUS))); i++) {
-    udelay(I2C_TRIAL_DELAY);
-  }
-  for (i = 0; (i < 5
-               && !ret1
-               && (ret4 = user_pca9545_write(prev))); i++) {
-    udelay(I2C_TRIAL_DELAY);
-  }
-
-  return ret1 | ret2 | ret3 | ret4;
-}
 
 static char inline
 get_tcn_addr(char id
@@ -132,6 +57,55 @@ get_tcn_addr(char id
   return -1;
 }
 
+
+static char inline
+tcn75_i2c_write(unsigned char addr
+                , unsigned char reg
+                , unsigned char * data
+                , char len) {
+  unsigned char i;
+  char ret2 = 2;
+  char ret3 = 4;
+
+  for (i = 0; (i < 5
+               && (ret2 = user_pca9545_write(0x01))); i++) {
+    udelay(I2C_TRIAL_DELAY);
+  }
+  for (i = 0; (i < 5
+               && !ret2
+               && (ret3 = user_i2c_reg_write(addr, reg,
+                                             data, len,
+                                             SENSOR_I2C_BUS))); i++) {
+    udelay(I2C_TRIAL_DELAY);
+  }
+
+  return ret2 | ret3;
+}
+
+static char inline
+tcn75_i2c_read(unsigned char addr
+               , unsigned char reg
+               , unsigned char * data
+               , char len) {
+  unsigned char i;
+  char ret2 = 2;
+  char ret3 = 4;
+
+  for (i = 0; (i < 5
+               && (ret2 = user_pca9545_write(0x01))); i++) {
+    udelay(I2C_TRIAL_DELAY);
+  }
+  for (i = 0; (i < 5
+               && !ret2
+               && (ret3 = user_i2c_reg_read(addr, reg,
+                                            data, len,
+                                            SENSOR_I2C_BUS))); i++) {
+    udelay(I2C_TRIAL_DELAY);
+  }
+
+  return ret2 | ret3;
+}
+
 /* ------------------------------------------------------------------ */
 
 /* Write the TCN75 configuration register */
@@ -143,7 +117,7 @@ user_tcn75_write_conf(unsigned char id
   if (get_tcn_addr(id, &addr)) {
     return -1;
   }
-  return tcn75_i2c_write_preserve_mux(addr, TCN75_CFG_REG, &conf, 1);
+  return tcn75_i2c_write(addr, TCN75_CFG_REG, &conf, 1);
 }
 
 /* Write a TCN75 temperature register (temp, Tos, or Thyst) */
@@ -158,7 +132,7 @@ user_tcn75_write_reg(unsigned char id
   }
 
   unsigned char data[2] = { temp, 0 };
-  return tcn75_i2c_write_preserve_mux(addr, reg, data, 2);
+  return tcn75_i2c_write(addr, reg, data, 2);
 }
 
 /* Read a TCN75 temperature register (temp, Tos, or Thyst) */
@@ -168,21 +142,25 @@ user_tcn75_read_reg(unsigned char id
                     , unsigned char *temp)
 {
 
+  static unsigned char previous_temp;
+
   short int addr;
   if (get_tcn_addr(id, &addr)) {
     return -1;
   }
   
   unsigned char aux[2];
-  if (tcn75_i2c_read_preserve_mux(addr, reg, aux, 2)) {
+  if (tcn75_i2c_read(addr, reg, aux, 2)) {
     /* the sensor does not respond: set unreal temperature */
-    *temp = -99;
+    *temp = previous_temp;
     return -1;
   }
   
-  *temp = aux[0];
-  if (DEBUG) {
-    debug_printf("tcn75 @%03x, temp = %02x\n", addr, aux[0]);
-  }
+  previous_temp = *temp = aux[0];
+  // if (DEBUG) {
+  //   debug_printf("tcn75 @%03x, temp = %02x\n", addr, aux[0]);
+  // }
   return 0;
 }
+
+

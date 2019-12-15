@@ -6,30 +6,34 @@
 
 #include <cmd_defs.h>
 
+#define NAME(Variable) ((unsigned char *) #Variable)
 
 int
 uart_forward(unsigned char * params,
              unsigned char * reply,
-             int conn_idx)
+             const int conn_idx)
 {
-  unsigned char param[MAX_PARAM_LEN];
+  static unsigned char param[MAX_PARAM_LEN];
+  static unsigned char z[] = "Zynq";
+  static unsigned char none[] = "None";
+  static unsigned char m1[] = "Mezzanine 1";
+  static unsigned char m2[] = "Mezzanine 2";
+  static unsigned char err_set[] = 
+    "Error: unknown destination.";
+
   if (get_next_param(param, params, ' ')) {
     char f = user_uart_forward_get();
     if (0 == f) {
-      static unsigned char msg[] = "Zynq";
-      return strcpyl(reply, msg);
+      return strcpyl(reply, z);
     }
     if (1 == f) {
-      static unsigned char msg[] = "None";
-      return strcpyl(reply, msg);
+      return strcpyl(reply, none);
     }
     if (2 == f) {
-      static unsigned char msg[] = "Mezzanine 1";
-      return strcpyl(reply, msg);
+      return strcpyl(reply, m1);
     }
     if (3 == f) {
-      static unsigned char msg[] = "Mezzanine 2";
-      return strcpyl(reply, msg);
+      return strcpyl(reply, m2);
     }
   }
 
@@ -45,18 +49,16 @@ uart_forward(unsigned char * params,
     return strcpyl(reply, msg);
   }
 
-  if (str_eq(param, (unsigned char *) "z") == 1) {
+  if (str_eq(param, (unsigned char *) NAME(z)) == 1) {
     user_uart_forward_set(UART_ZYNQ); 
-  } else if (str_eq(param, (unsigned char *) "m1") == 1) {
+  } else if (str_eq(param, NAME(m1)) == 1) {
     user_uart_forward_set(UART_MEZZ_1);
-  } else if (str_eq(param, (unsigned char *) "m2") == 1) {
+  } else if (str_eq(param, NAME(m2)) == 1) {
     user_uart_forward_set(UART_MEZZ_2);
-  } else if (str_eq(param, (unsigned char *) "none") == 1) {
+  } else if (str_eq(param, none) == 1) {
     user_uart_forward_set(UART_NONE);
   } else {
-    static unsigned char msg[] = 
-      "Error: unknown destination.";
-    return strcpyl(reply, msg);
+    return strcpyl(reply, err_set);
   }
   
   return strcpyl(reply, ok_str);

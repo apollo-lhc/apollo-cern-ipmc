@@ -190,11 +190,10 @@ user_dump_gpios(void)
 {
   int i;
   for (i = 0; i < N_PINS; i++) {
-    debug_printf("%s = %d\n",
+    debug_printf("\n%s = %d",
                  pin_map[i].sm_name,
                  user_get_gpio(i));
   }
-  debug_printf("---------\n");
 }
 
 

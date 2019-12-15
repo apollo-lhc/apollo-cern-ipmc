@@ -12,8 +12,6 @@
 static unsigned char i2c_bin_data[MAX_I2C_LEN];
 static unsigned char i2c_ascii_data[MAX_I2C_LEN][10];
 
-static unsigned char DEBUG = 0;
-
 static const unsigned char help_zynq_restart[] =
   "Restart only Zynq.\n"
   "Usage: zynq_restart [delay]\n"
@@ -38,10 +36,10 @@ static const unsigned char help_zynq_i2c_read[] =
 
 int
 zynq_restart(unsigned char * params,
-           unsigned char * reply,
-           int conn_idx)
+             unsigned char * reply,
+             const int conn_idx)
 {
-  unsigned char param[MAX_PARAM_LEN];
+  static unsigned char param[MAX_PARAM_LEN];
   int delay = 2;
 
   char ret = get_next_param(param, params, ' ');
@@ -52,7 +50,7 @@ zynq_restart(unsigned char * params,
       return strcpyl(reply, help_zynq_restart);
     }
 
-    unsigned char tmp; 
+    unsigned int tmp; 
     ret = i_from_a (&delay,
                     param,
                     &tmp);
@@ -73,12 +71,12 @@ zynq_restart(unsigned char * params,
 int
 zynq_i2c_w(unsigned char * params,
            unsigned char * reply,
-           int conn_idx)
+           const int conn_idx)
 {
   char ret;
   int aux;
   
-  unsigned char param[MAX_PARAM_LEN];
+  static unsigned char param[MAX_PARAM_LEN];
   ret = get_next_param(param, params, ' ');
   if (ret != 0) {
     return strcpyl(reply, err_param);
@@ -96,7 +94,7 @@ zynq_i2c_w(unsigned char * params,
   if (ret != 0) {
     return strcpyl(reply, err_i2c_addr);
   }
-  char i2c_addr = (char) aux;
+  unsigned char i2c_addr = (unsigned char) aux;
 
   // getting register address
   ret = get_next_param(param, params, ' ');
@@ -109,7 +107,7 @@ zynq_i2c_w(unsigned char * params,
   if (ret != 0) {
     return strcpyl(reply, err_i2c_reg_addr);
   }
-  unsigned char reg_addr = (char) aux;
+  unsigned char reg_addr = (unsigned char) aux;
 
   // getting the data
   int i2c_len = 0;
@@ -150,13 +148,13 @@ zynq_i2c_w(unsigned char * params,
 int
 zynq_i2c_r(unsigned char * params,
            unsigned char * reply,
-           int conn_idx)
+           const int conn_idx)
 {
   int reply_len = 0;
   char ret;
   int aux;  
   
-  unsigned char param[MAX_PARAM_LEN];
+  static unsigned char param[MAX_PARAM_LEN];
   ret = get_next_param(param, params, ' ');
   if (ret != 0) {
     return strcpyl(reply, err_param);
@@ -167,9 +165,9 @@ zynq_i2c_r(unsigned char * params,
     return strcpyl(reply, help_zynq_i2c_read);
   }
 
-  if (DEBUG) {
-    debug_printf("== %s\n", param);
-  }
+  // if (DEBUG) {
+  //   debug_printf("== %s\n", param);
+  // }
   
   // getting I2C address
   ret = i_from_a(&aux,
@@ -191,13 +189,13 @@ zynq_i2c_r(unsigned char * params,
   if (ret != 0) {
     return strcpyl(reply, err_i2c_reg_addr);
   }
-  unsigned char reg_addr = (char) aux;
+  unsigned char reg_addr = (unsigned char) aux;
 
   // getting the length of the reading; default to 1.
   int i2c_len = 1;
   if (get_next_param(param, params, ' ') == 0) {
     // lets fake the hex parsing
-    unsigned char tmp; 
+    unsigned int tmp; 
     ret = i_from_a (&i2c_len,
                     param,
                     &tmp);
@@ -225,19 +223,19 @@ zynq_i2c_r(unsigned char * params,
       return strcpyl(reply, err_ia);
     }
 
-    debug_printf("## %s\n", i2c_ascii_data[i]);
+    // debug_printf("## %s\n", i2c_ascii_data[i]);
   }
 
   unsigned char * p = reply;
   for (i = 0; i < i2c_len; i++) {
-    debug_printf("zynq i2c data vector [%d]: %s\n", i, i2c_ascii_data[i]);
+    // debug_printf("zynq i2c data vector [%d]: %s\n", i, i2c_ascii_data[i]);
     p += strcpyl(p, i2c_ascii_data[i]);
     *p = ' ';
     p++;
   }
   *(p-1) = '\0';
 
-  debug_printf("## %s\n", reply);
+  // debug_printf("## %s\n", reply);
 
   return strlenu(reply);
 }

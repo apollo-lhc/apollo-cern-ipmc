@@ -4,11 +4,11 @@
 int
 write_i2c_mux(unsigned char * params,
               unsigned char * reply,
-              int conn_idx);
+              const int conn_idx);
 
 int
 read_i2c_mux(unsigned char * params,
              unsigned char * reply,
-             int conn_idx);
+             const int conn_idx);
 
 #endif // CMD_PCA9545_H

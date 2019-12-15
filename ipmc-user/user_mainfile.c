@@ -43,15 +43,17 @@ TIMER_CALLBACK(1s, use_debug_timercback)
     return;
   }
 
-  static unsigned char version[80];
-  unsigned char v;
+  debug_printf("\n--------- %d", cnt);
 
+  static unsigned char version[100];
   user_get_version(version);
-  debug_printf("Version: %s", version);
+  debug_printf("\nVersion: %s", version);
+  
   user_dump_gpios();
-
+  
+  uint8_t v;
   if (user_zynq_i2c_read(0x60, 0, &v, 1) == 0) {
-    debug_printf("Zynq 0x60: 0x%02x\n", v);
+    debug_printf("\nZynq 0x60: 0x%02x", v);
   }
   
   return;

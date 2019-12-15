@@ -21,23 +21,22 @@ Version ..... : V0.1 - 30/05/2019
 // #define PCA9545_I2C_ADDR   MO_CHANNEL_ADDRESS(SENSOR_I2C_BUS, 0x70 << 1) 
 #define PCA9545_I2C_ADDR   0x70 
 
-static const char i2c_debug_write_str[] =
-  "+++++ write PCA9545 0x%03x, data: 0x%02x, stats: %d.\n";
+// static const char i2c_debug_write_str[] =
+//   "+++++ write PCA9545 0x%03x, data: 0x%02x, stats: %d.\n";
+// 
+// static const char i2c_debug_read_str[] =
+//   "+++++ read PCA9545 0x%03x, data: 0x%02x, stats: %d.\n";
 
-static const char i2c_debug_read_str[] =
-  "+++++ read PCA9545 0x%03x, data: 0x%02x, stats: %d.\n";
-
-static const char DEBUG = 0;
+// static const char DEBUG = 0;
 
 char
 user_pca9545_write(unsigned char mask)
 {
-  // char ret = i2c_io(PCA9545_I2C_ADDR | I2C_START | I2C_STOP, &mask, 1);
   char ret = user_i2c_write(PCA9545_I2C_ADDR, &mask, 1, SENSOR_I2C_BUS);
   
-  if (DEBUG) {
-    debug_printf(i2c_debug_write_str, PCA9545_I2C_ADDR, mask, ret);
-  }
+  // if (DEBUG) {
+  //   debug_printf(i2c_debug_write_str, PCA9545_I2C_ADDR, mask, ret);
+  // }
   
   return ret;
 }
@@ -46,15 +45,14 @@ char
 user_pca9545_read(unsigned char * mask)
 {
 
-  // char ret = i2c_dev_read(PCA9545_I2C_ADDR, mask, 1);
   char ret = user_i2c_read(PCA9545_I2C_ADDR, mask, 1, SENSOR_I2C_BUS);
   
-  if (DEBUG) {
-    debug_printf(i2c_debug_read_str,
-                 PCA9545_I2C_ADDR,
-                 *mask,
-                 ret);
-  }
+  // if (DEBUG) {
+  //   debug_printf(i2c_debug_read_str,
+  //                PCA9545_I2C_ADDR,
+  //                *mask,
+  //                ret);
+  // }
   return ret;
 }
 

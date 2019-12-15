@@ -4,6 +4,6 @@
 int
 uart_forward(unsigned char * params
              , unsigned char * reply
-             , int conn_idx);
+             , const int conn_idx);
 
 #endif // CMD_UART_H

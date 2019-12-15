@@ -1,10 +1,10 @@
 #ifndef CMD_H
 #define CMD_H
 
-#define MAX_PARAM_LEN 20
-#define MAX_USER_TCPSERV_CLIENT 10
-#define CMD_LINE_MAX_LEN 50
-#define MAX_I2C_LEN 6
+#define MAX_PARAM_LEN (20)
+#define MAX_USER_TCPSERV_CLIENT (10)
+#define CMD_LINE_MAX_LEN (4*16)
+#define MAX_I2C_LEN (16)
 
 
 extern const unsigned char error_str[];

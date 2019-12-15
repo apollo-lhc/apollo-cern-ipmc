@@ -6,11 +6,11 @@
 int
 set_gpio(unsigned char * params,
          unsigned char * reply,
-         int conn_idx);
+         const int conn_idx);
 
 int
 get_gpio(unsigned char * params,
          unsigned char * reply,
-         int conn_idx);
+         const int conn_idx);
 
 #endif // CMD_GPIO_H

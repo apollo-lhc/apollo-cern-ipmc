@@ -22,9 +22,9 @@ static const unsigned char expert_off_str[] =
 int
 expert_mode(unsigned char * params,
             unsigned char * reply,
-            int conn_idx)
+            const int conn_idx)
 {
-  unsigned char param[MAX_PARAM_LEN];
+  static unsigned char param[MAX_PARAM_LEN];
   get_next_param(param, params, ' ');
 
 
@@ -33,8 +33,8 @@ expert_mode(unsigned char * params,
     return strcpyl(reply, expert_help_str);
   }
 
-  
-  if (str_eq(param, (unsigned char *) "on") == 1){
+  static unsigned char on[] = "on";
+  if (str_eq(param, on) == 1){
     user_expert_mode_enable();
     return 0;
   }

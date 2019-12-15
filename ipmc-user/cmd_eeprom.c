@@ -5,10 +5,12 @@
 #include <user_cmd.h>
 #include <user_helpers.h>
 
+#include <debug.h>
+
 int
 eeprom_wren(unsigned char * params,
-              unsigned char * reply,
-              int conn_idx)
+            unsigned char * reply,
+            const int conn_idx)
 {
   char ret;
 
@@ -20,9 +22,11 @@ eeprom_wren(unsigned char * params,
     "  1 or on: enable EEPROM writing capabilities";
 
   static const unsigned char wr_enabled[] = "1";
+  static const unsigned char wr_enable_on[] = "on";
   static const unsigned char wr_disabled[] = "0";
+  static const unsigned char wr_enable_off[] = "off";
 
-  unsigned char param[MAX_PARAM_LEN];
+  static unsigned char param[MAX_PARAM_LEN];
   ret = get_next_param(param, params, ' ');
 
   if (ret != 0) {
@@ -40,14 +44,14 @@ eeprom_wren(unsigned char * params,
     return strcpyl(reply, eeprom_wren_help);
   }
   
-  if (str_eq(param, (unsigned char *) "1") == 1
-      || str_eq(param, (unsigned char *) "on") == 1) {
+  if (str_eq(param, wr_enabled) == 1
+      || str_eq(param, wr_enable_on) == 1) {
     user_eeprom_write_enable();
     return strcpyl(reply, ok_str);
   }
 
-  if (str_eq(param, (unsigned char *) "0") == 1
-      || str_eq(param, (unsigned char *)"off") == 1) {
+  if (str_eq(param, wr_disabled) == 1
+      || str_eq(param, wr_enable_off) == 1) {
     user_eeprom_write_disable();
     return strcpyl(reply, ok_str);
   }
@@ -58,9 +62,9 @@ eeprom_wren(unsigned char * params,
 int
 eeprom_save(unsigned char * params,
             unsigned char * reply,
-            int conn_idx)
+            const int conn_idx)
 {
-  unsigned char param[MAX_PARAM_LEN];
+  static unsigned char param[MAX_PARAM_LEN];
   char ret;
   
   static const unsigned char help[] =
@@ -93,9 +97,9 @@ eeprom_save(unsigned char * params,
 int
 eeprom_read(unsigned char * params,
             unsigned char * reply,
-            int conn_idx)
+            const int conn_idx)
 {
-  unsigned char param[MAX_PARAM_LEN];
+  static unsigned char param[MAX_PARAM_LEN];
 
   static const unsigned char help[] =
     "Usage: eeprom_read";
@@ -125,14 +129,14 @@ eeprom_read(unsigned char * params,
 int
 eeprom_get_version(unsigned char * params,
                    unsigned char * reply,
-                   int conn_idx)
+                   const int conn_idx)
 {
   char ret;
 
   static const unsigned char get_version_help[] =
     "Usage: eeprom_get_version";
 
-  unsigned char param[MAX_PARAM_LEN];
+  static unsigned char param[MAX_PARAM_LEN];
   
   ret = get_next_param(param, params, ' ');
   if (ret == 0) {
@@ -144,6 +148,7 @@ eeprom_get_version(unsigned char * params,
 
   uint8_t v;
   user_eeprom_get_version(&v);
+  // debug_printf("\n:::::::::: %d", v);
   
   ret = a_from_i (param
                   , (int) v
@@ -158,13 +163,13 @@ eeprom_get_version(unsigned char * params,
 int
 eeprom_set_version(unsigned char * params,
                    unsigned char * reply,
-                   int conn_idx)
+                   const int conn_idx)
 {
   static const unsigned char set_version_help[] =
     "Usage: eeprom_set_version <version>\n"
     " --> Saving to EEPROM is required.";
 
-  unsigned char param[MAX_PARAM_LEN];
+  static unsigned char param[MAX_PARAM_LEN];
   char ret;
   int aux;
 
@@ -184,15 +189,17 @@ eeprom_set_version(unsigned char * params,
   if (ret != 0) {
     return strcpyl(reply, err_ia);
   }
-  char version = (char) aux;
-  user_eeprom_set_serial_number(version);
+  uint8_t version = (uint8_t) aux;
+
+  // debug_printf("\n::::::::: %d", version);
+  user_eeprom_set_version(version);
   return strcpyl(reply, ok_str);
 }
 
 int
 eeprom_set_sn(unsigned char * params,
               unsigned char * reply,
-              int conn_idx)
+              const int conn_idx)
 {
   static const unsigned char set_sn_help[] =
     "Usage: eeprom_set_sn <serial_number>\n"
@@ -201,7 +208,7 @@ eeprom_set_sn(unsigned char * params,
   static const unsigned char set_sn_err[] =
     "Serial number could not be parsed.";
 
-  unsigned char param[MAX_PARAM_LEN];
+  static unsigned char param[MAX_PARAM_LEN];
   char ret;
   int aux;
   
@@ -236,7 +243,7 @@ eeprom_set_sn(unsigned char * params,
 int
 eeprom_get_sn(unsigned char * params,
               unsigned char * reply,
-              int conn_idx)
+              const int conn_idx)
 {
   char ret;
 
@@ -247,7 +254,7 @@ eeprom_get_sn(unsigned char * params,
   static const unsigned char get_sn_err[] =
     "Serial number could not be parsed.";
 
-  unsigned char param[MAX_PARAM_LEN];
+  static unsigned char param[MAX_PARAM_LEN];
   
   ret = get_next_param(param, params, ' ');
   if (ret == 0) {
@@ -277,7 +284,7 @@ eeprom_get_sn(unsigned char * params,
 int
 eeprom_set_rn(unsigned char * params,
               unsigned char * reply,
-              int conn_idx)
+              const int conn_idx)
 {
   static const unsigned char set_rn_help[] =
     "Configure revision number.\n"
@@ -287,7 +294,7 @@ eeprom_set_rn(unsigned char * params,
   static const unsigned char set_rn_err[] =
     "Revision number could not be parsed.";
 
-  unsigned char param[MAX_PARAM_LEN];
+  static unsigned char param[MAX_PARAM_LEN];
   char ret;
   int aux;
   
@@ -322,7 +329,7 @@ eeprom_set_rn(unsigned char * params,
 int
 eeprom_get_rn(unsigned char * params,
               unsigned char * reply,
-              int conn_idx)
+              const int conn_idx)
 {
   char ret;
 
@@ -333,7 +340,7 @@ eeprom_get_rn(unsigned char * params,
   static const unsigned char get_rn_err[] =
     "Revision number could not be parsed.";
 
-  unsigned char param[MAX_PARAM_LEN];
+  static unsigned char param[MAX_PARAM_LEN];
   
   ret = get_next_param(param, params, ' ');
   if (ret == 0) {
@@ -364,7 +371,7 @@ eeprom_get_rn(unsigned char * params,
 int
 eeprom_set_mac_addr(unsigned char * params,
                     unsigned char * reply,
-                    int conn_idx)
+                    const int conn_idx)
 {
   static const unsigned char set_mac_addr_help[] =
     "Configure MAC addresses."
@@ -379,11 +386,10 @@ eeprom_set_mac_addr(unsigned char * params,
   static const unsigned char set_mac_addr_err[] =
     "MAC address could not be parsed.";
   
-  unsigned char param[MAX_PARAM_LEN];
+  static unsigned char param[MAX_PARAM_LEN];
   char ret;
   int aux;
-  
-  
+    
   ret = get_next_param(param, params, ' ');
   if (ret != 0) {
     return strcpyl(reply, err_param);
@@ -394,7 +400,7 @@ eeprom_set_mac_addr(unsigned char * params,
     return strcpyl(reply, set_mac_addr_help);
   }
 
-  uint8_t fake;
+  unsigned int fake;
   ret = i_from_a (&aux, param, &fake);
   if (ret != 0) {
     return strcpyl(reply, err_ia);
@@ -405,7 +411,7 @@ eeprom_set_mac_addr(unsigned char * params,
   }
   uint8_t eth = (uint8_t) aux;
   
-  uint8_t mac_addr[6];
+  static uint8_t mac_addr[6];
   uint8_t i;
   for (i = 0; i < 6; i++) {
     
@@ -436,7 +442,7 @@ eeprom_set_mac_addr(unsigned char * params,
 int
 eeprom_get_mac_addr(unsigned char * params,
                     unsigned char * reply,
-                    int conn_idx)
+                    const int conn_idx)
 {
   static const unsigned char get_mac_addr_help[] =
     "Retrieves a MAC address."
@@ -449,7 +455,7 @@ eeprom_get_mac_addr(unsigned char * params,
   static const unsigned char get_mac_addr_err[] =
     "MAC address could not be parsed.";
   
-  unsigned char param[MAX_PARAM_LEN];
+  static unsigned char param[MAX_PARAM_LEN];
   char ret;
   int aux;
   
@@ -463,7 +469,7 @@ eeprom_get_mac_addr(unsigned char * params,
     return strcpyl(reply, get_mac_addr_help);
   }
 
-  uint8_t fake;
+  unsigned int fake;
   ret = i_from_a (&aux, param, &fake);
   if (ret != 0) {
     return strcpyl(reply, err_ia);
@@ -474,7 +480,7 @@ eeprom_get_mac_addr(unsigned char * params,
   }
   uint8_t eth = (uint8_t) aux;
   
-  uint8_t mac_addr[6];
+  static uint8_t mac_addr[6];
   ret = user_eeprom_get_mac_addr(eth, mac_addr);
   if (ret == -1) {
       return strcpyl(reply, get_mac_addr_err);

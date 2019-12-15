@@ -3,35 +3,35 @@
 
 #include <user_i2c.h>
 
-int
+inline int
 i2c_w(unsigned char * params,
       unsigned char * reply,
-      int conn_idx);
+      const int conn_idx);
 
-int
+inline int
 i2c_r(unsigned char * params,
       unsigned char * reply,
-      int conn_idx);
+      const int conn_idx);
 
-int
+inline int
 i2c_reg_w(unsigned char * params,
           unsigned char * reply,
-          int conn_idx);
+          const int conn_idx);
 
-int
+inline int
 i2c_reg_r(unsigned char * params,
           unsigned char * reply,
-          int conn_idx);
+          const int conn_idx);
 
-int
+inline int
 set_i2c_bus(unsigned char * params,
             unsigned char * reply,
-            int conn_idx);
+            const int conn_idx);
 
-int
+inline int
 get_i2c_bus(unsigned char * params,
             unsigned char * reply,
-            int conn_idx);
+            const int conn_idx);
 
 
 #endif // CMD_I2C_H

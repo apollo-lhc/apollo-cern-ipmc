@@ -12,16 +12,16 @@ static const unsigned char version_help_str[] =
 int
 version(unsigned char * params,
         unsigned char * reply,
-        int conn_idx)
+        const int conn_idx)
 {
-  unsigned char param[20];
+  static unsigned char param[20];
   get_next_param(param, params, ' ');
 
   if (str_eq(param, help_str) == 1
       || str_eq(param, question_mark_str) == 1) {
     return strcpyl(reply, version_help_str);
   }
-
+  
   return user_get_version(reply);
 }
 

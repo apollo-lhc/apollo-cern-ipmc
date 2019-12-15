@@ -18,19 +18,12 @@ Version ..... : V0.2 - 2019-07-31
 
 #include <user_i2c.h>
 #include <user_expert.h>
-// #include <user_zynq.h>
-// #include <user_pca9545.h>
-// #include <user_tcn75.h>
-// #include <user_gpio.h>
-// #include <user_version.h>
-// #include <user_uart.h>
-
 
 #include <user_helpers.h>
 
 #include <user_cmd.h>
 
-static const unsigned char DEBUG = 0;
+static const unsigned char DEBUG = 1;
 
 /* ================================================================ */
 
@@ -139,16 +132,18 @@ user_tcpserv_connect_handler(const ip_addr_t from,
       user_tcpserv_clients[i].to_port = from_port;
 
       /* If not, save the client info */
-      memcpy_(user_tcpserv_clients[i].to, from, sizeof(from));
+      memcpy(user_tcpserv_clients[i].to, from, sizeof(from));
       
       user_tcpserv_clients[i].opened = 1;
       cmd_buf[i].data[0] = '\0';
       cmd_buf[i].len = 0;
       cmd_buf[i].expert = 0;
       cmd_buf[i].hex = 0;
-      cmd_buf[i].eol[0] = '\n';
-      cmd_buf[i].eol[1] = '\0';
-      cmd_buf[i].i2c_bus = SENSOR_I2C_BUS;
+      // cmd_buf[i].eol[0] = '\n';
+      // cmd_buf[i].eol[1] = '\0';
+      //       cmd_buf[i].i2c_bus = SENSOR_I2C_BUS;
+      cmd_buf[i].i2c_bus = 2;
+      cmd_buf[i].i2c_mux_mask = 0;
 
       // didn't work, leaving it out for now.
       //
@@ -244,10 +239,11 @@ user_tcpserv_data_handler(const ip_addr_t to,
   int i;
   int conn_idx = -1;
 
-
-  if (DEBUG) {
-    debug_printf("<_> ======= 1\n");
-  }
+  // no faults
+  
+  // if (DEBUG) {
+  //   debug_printf("<_> ======= 1\n");
+  // }
 
   for(i = 0; i < MAX_USER_TCPSERV_CLIENT; i++){
 		
@@ -262,24 +258,38 @@ user_tcpserv_data_handler(const ip_addr_t to,
   }
 
   if (conn_idx == -1){
-    return -1;
-  }
-
-  if (DEBUG) {
-    debug_printf("<_> ======= 2\n");
-  }
-  
-  // append received data to associated buffer
-  // check for overflow
-  if (append_to_cmd_buffer(conn_idx, data, len) != 0){
+    *replyLen = 0;
     return 0;
   }
 
-  unsigned char cmd_line[CMD_LINE_MAX_LEN];
+  // if (DEBUG) {
+  //   debug_printf("<_> ======= 2\n");
+  // }
 
-  if (DEBUG) {
-    debug_printf("<_> ======= 3\n");
+
+  // unsigned char msg[] = "\nDown to here!";
+  // *replyLen = strcpyl(reply, msg);
+  // debug_printf("\n>>>>>>>>> reply: %s|%d", reply, *replyLen);
+  // return 0;
+
+
+  // append received data to associated buffer
+  // check for overflow
+  if (append_to_cmd_buffer(conn_idx, data, len) != 0){
+    // debug_printf("\n>>>>>>>>> OVERFLOW");
+    static unsigned char err_overflow[] =
+      "\nERROR: input buffer overflow\n:: ";
+    *replyLen = strcpyl(reply, err_overflow);
+    return 0;
   }
+
+  // no faults
+
+  static unsigned char cmd_line[CMD_LINE_MAX_LEN];
+
+  // if (DEBUG) {
+  //   debug_printf("<_> ======= 3\n");
+  // }
   
   // look for termination
   // copy from buffer to cmd line;
@@ -287,10 +297,13 @@ user_tcpserv_data_handler(const ip_addr_t to,
   // shift remaining of the buffer to the start
   // returns the len of the command found, or -1 otherwise
   int cmd_len = chomp_cmd(cmd_line, conn_idx);
+
+  // segfaults # after 75k requests...
+  // it seems clean again...
   
-  if (DEBUG) {
-    debug_printf("<_> ======= 4\n");
-  }
+  // if (DEBUG) {
+  //   debug_printf("<_> ======= 4\n");
+  // }
 
   if (cmd_len < 0) {
     *replyLen = 0;
@@ -298,31 +311,44 @@ user_tcpserv_data_handler(const ip_addr_t to,
   }
   
   
-  if (DEBUG) {
-    debug_printf("<_> ======= cmd line: %s|\n", cmd_line);
-  }
+  // if (DEBUG) {
+  //   debug_printf("<_> ======= cmd line: %s|\n", cmd_line);
+  // }
     
-
   remove_extra_spaces(cmd_line);
-  if (DEBUG) {
-    debug_printf("<_> >>>>>> no extra spaces: %s|\n", cmd_line);
-  }
+  // if (DEBUG) {
+  //   debug_printf("<_> >>>>>> no extra spaces: %s|\n", cmd_line);
+  // }
 
   lowercase(cmd_line);
-  if (DEBUG) {
-    debug_printf("<_> >>>>>> all lowercase: %s|\n", cmd_line);
-  }
+  // if (DEBUG) {
+  //   debug_printf("<_> >>>>>> all lowercase: %s|\n", cmd_line);
+  // }
 
-  unsigned char cmd[MAX_PARAM_LEN];
+  // segfaults (takes a lot of time, 170k requests, around 2h)
+  // seems clean after 200k now
+  
+  static unsigned char cmd[MAX_PARAM_LEN];
   get_next_param(cmd, cmd_line, ' ');
-  if (DEBUG) {
-    debug_printf("<_> >>>>>> cmd: %s|\n", cmd);
-  }
+  // if (DEBUG) {
+  //   debug_printf("<_> >>>>>> cmd: %s|\n", cmd);
+  // }
 
+  // segfaults! #
+  // seems fine as well. 
+  
+  // debug_printf("\n<><><><> sizeof(cmd): %d %d", sizeof(cmd), strlenu(cmd));
   int cmd_idx = get_cmd_index(cmd);
-  if (DEBUG) {
-    debug_printf("<_> >>>>>> cmd_idx: %d\n", cmd_idx);
-  }
+  // if (DEBUG) {
+  //   debug_printf("<_> >>>>>> cmd_idx: %d\n", cmd_idx);
+  // }
+
+  // not needed static unsigned char msg[] = "\nDown to here!";
+  // not needed *replyLen = strcpyl(reply, msg);
+  // not needed // debug_printf("\n>>>>>>>>> reply: %s|%d", reply, *replyLen);
+  // not needed return 0;
+  // segfaults! #
+  // looking good =)
   
   // if a command was found, execute it.
   if (cmd_idx >= 0) { 
@@ -339,16 +365,17 @@ user_tcpserv_data_handler(const ip_addr_t to,
     // debug_printf("_+_+_+_ *replyLen: %d; len(reply): %d\n", *replyLen, strlenu(reply));
   }
 
-  replyLen += strcpyl(&reply[*replyLen]
-                      , user_expert_mode_get_state_msg());
-  reply[*replyLen] = '\0';
+  *replyLen += strcpyl(&reply[*replyLen]
+                       // , (unsigned char *) "\nfake_expert_mode");
+                       , user_expert_mode_get_state_msg());
   
   *replyLen += strcpyl(&reply[*replyLen], prompt_str);
-  reply[*replyLen] = '\0';
   
   // debug_printf("----- final reply len: %d\n", *replyLen);
 
   // debug_printf("<_> user_tcpserv response: ");
+
+  // debug_printf("============== ");
   // debug_printf((char *) reply);
 
   /* Return the function successfully */

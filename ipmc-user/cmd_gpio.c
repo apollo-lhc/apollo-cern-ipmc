@@ -10,7 +10,7 @@ static const unsigned char signal_not_found_str[] =
 int
 set_gpio(unsigned char * params,
          unsigned char * reply,
-         int conn_idx)
+         const int conn_idx)
 {
   // debug_printf("<_> ======= write_gpio_signal\n");
 
@@ -22,7 +22,7 @@ set_gpio(unsigned char * params,
   static const unsigned char set_gpio_error_str[] =
     "Signal cannot be written.";
 
-  unsigned char param[MAX_PARAM_LEN];
+  static unsigned char param[MAX_PARAM_LEN];
   get_next_param(param, params, ' ');
 
   
@@ -54,7 +54,7 @@ set_gpio(unsigned char * params,
 int
 get_gpio(unsigned char * params,
          unsigned char * reply,
-         int conn_idx)
+         const int conn_idx)
 {
 
   static const unsigned char get_gpio_help_str[] =
@@ -67,7 +67,7 @@ get_gpio(unsigned char * params,
 
   // debug_printf("<_> ======= read_gpio_signal\n");
 
-  unsigned char param[MAX_PARAM_LEN];
+  static unsigned char param[MAX_PARAM_LEN];
   get_next_param(param, params, ' ');
 
   // debug_printf("<_> ======= ");

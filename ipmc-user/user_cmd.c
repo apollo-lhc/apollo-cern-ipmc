@@ -1,6 +1,7 @@
 #include <user_cmd.h>
 
 #include <net/ip.h>
+#include <debug.h>
 
 #include <user_helpers.h>
 
@@ -23,12 +24,12 @@ cmd_buf_t cmd_buf[MAX_USER_TCPSERV_CLIENT];
 int
 help(unsigned char * params,
      unsigned char * reply,
-     int conn_idx);
+     const int conn_idx);
 
 int
 signals (unsigned char * params,
          unsigned char * reply,
-         int conn_idx);
+         const int conn_idx);
 
 const cmd_map_t cmd_map[] = {
     CMD_FUNC(expert_mode        ),
@@ -172,6 +173,9 @@ get_cmd_index(const unsigned char * cmd)
 {
   int i = 0;
   for (i = 0; i < N_COMMANDS; i++) {
+    // debug_printf("\n<><><><> sizeof(cmd_map[%d].cmd): %d %d"
+    //              , i, sizeof(cmd_map[i].cmd)
+    //              , strlenu(cmd_map[i].cmd));
     if (str_eq(cmd_map[i].cmd, cmd) == 1) {
       return i;
     }
@@ -220,30 +224,31 @@ get_next_param(unsigned char * param,
 // append received data to associated buffer
 // check for overflow
 int
-append_to_cmd_buffer(int conn_idx,
+append_to_cmd_buffer(const int conn_idx,
                      const unsigned char * data,
                      unsigned short len)
 {
 
-  // debug_printf("<_> ++++ append starting\n");
+  // debug_printf("\nxxxxxxxxxxx");
 
-  unsigned char tmp[50];
-  memcpy_(tmp, data, len);
+  static unsigned char tmp[CMD_LINE_MAX_LEN];
+  memcpy(tmp, data, len);
   tmp[len] = '\0';
-  
-  // debug_printf("<_> ++++ len: %d\n", len);
-  // debug_printf("<_> ++++ data: %s\n", tmp);
-
-  int l = cmd_buf[conn_idx].len; 
+  // debug_printf("\nxxxxxxxxxxx data: %s [%d]", tmp, len);
+    
+  int l = cmd_buf[conn_idx].len;
   if (l + len >= CMD_LINE_MAX_LEN) {
+    cmd_buf[conn_idx].len = 0; 
+    cmd_buf[conn_idx].data[0] = '\0'; 
     return -1;
   }
 
-  memcpy_(&(cmd_buf[conn_idx].data[l]), data, len);
-  cmd_buf[conn_idx].len += len;
-  cmd_buf[conn_idx].data[cmd_buf[conn_idx].len] = '\0';
-
-  // debug_printf("<_> ++++ buf: %s\n", cmd_buf[conn_idx].data);
+  cmd_buf[conn_idx].len += strcpyl(&(cmd_buf[conn_idx].data[l]), tmp);  
+  
+  // debug_printf("\nuuuuuuuuuuuuu cmd_buf[%d].data: %s [%d]"
+  //              , conn_idx
+  //              , cmd_buf[conn_idx].data
+  //              , cmd_buf[conn_idx].len);
   
   return 0;
 }
@@ -256,60 +261,84 @@ append_to_cmd_buffer(int conn_idx,
 // returns the len of the command found, or -1 otherwise
 int
 chomp_cmd(unsigned char * cmd_line,
-              int conn_idx)
+          const int conn_idx)
 {
-  int i;
+  int i, l;
 
   // debug_printf("<_> ~~~~ chomp starting\n");
   // debug_printf("<_> ~~~~ cmd_idx: %d\n", conn_idx);
   // debug_printf("<_> ~~~~ cmd_len: %d\n", cmd_buf[conn_idx].len);
 
   for (i = 0; i < cmd_buf[conn_idx].len; i++) {
-
-    // debug_printf("<_> ~~~~ cmd_buff[i]: %c\n", cmd_buf[conn_idx].data[i]);
-
+    
     if (cmd_buf[conn_idx].data[i] == '\n'
         || cmd_buf[conn_idx].data[i] == '\r'){
-
-      // copy command to be processed
-      memcpy_(cmd_line, cmd_buf[conn_idx].data, i);
-      cmd_line[i] = '\0';
-      memcpy_(cmd_buf[conn_idx].spare, cmd_buf[conn_idx].data, i);
-      cmd_buf[conn_idx].spare[i] = '\0';
-  
-      // debug_printf("<_> ~~~~ terminated: %s\n", cmd_line);
-      
-
-      //remove terminator(s)
-      unsigned char * p = &(cmd_buf[conn_idx].data[i]);
-      while (*p == '\r' || *p == '\n') {
-        p++;
-        cmd_buf[conn_idx].len--;
-      }
-
-      // shift data to beginning of buffer
-      unsigned char * q = cmd_buf[conn_idx].data;
-      cmd_buf[conn_idx].len -= i;
-      int k;
-      for (k = 0; k < cmd_buf[conn_idx].len; k++){
-        *q = *p;
-        p++;
-        q++;
-      };
-
-      // return len of the command
-      return i;
+      break;
     }
   }
 
-  // no terminator found -> no command
-  return -1;
+  // no terminator?
+  if (i == cmd_buf[conn_idx].len) {
+    return -1;
+  }
+
+  // debug_printf("<_> ~~~~ cmd_buff[i]: %c\n", cmd_buf[conn_idx].data[i]);
+  
+  
+  // copy command to be processed
+  memcpy(cmd_line, cmd_buf[conn_idx].data, i);
+  cmd_line[i] = '\0';
+  memcpy(cmd_buf[conn_idx].spare, cmd_buf[conn_idx].data, i);
+  cmd_buf[conn_idx].spare[i] = '\0';
+  
+  // debug_printf("<_> ~~~~ terminated: %s\n", cmd_line);
+      
+
+  //remove terminator(s)
+  l = i; // save length for later
+  while (cmd_buf[conn_idx].data[i] == '\r'
+         || cmd_buf[conn_idx].data[i] == '\n') {
+    i++;
+  }
+  cmd_buf[conn_idx].len -= i;
+
+  memcpy(cmd_buf[conn_idx].data
+         , &(cmd_buf[conn_idx].data[i])
+         , cmd_buf[conn_idx].len);
+  
+  return l;
+  
+  // unsigned char * p = &(cmd_buf[conn_idx].data[i]);
+  // while (*p == '\r' || *p == '\n') {
+  //   p++;
+  //   cmd_buf[conn_idx].len--;
+  // }
+  // 
+  // cmd_buf[conn_idx].len = m
+  // 
+  //   // shift data to beginning of buffer
+  //   unsigned char * q = cmd_buf[conn_idx].data;
+  // cmd_buf[conn_idx].len -= i;
+  // int k;
+  // for (k = 0; k < cmd_buf[conn_idx].len; k++){
+  //   *q = *p;
+  //   p++;
+  //   q++;
+  // };
+  // 
+  // // return len of the command
+  // return i;
+  //   }
+  // }
+
+  // // no terminator found -> no command
+  // return -1;
 }
 
 int
-help (unsigned char * params,
-      unsigned char * reply,
-      int conn_idx)
+help (unsigned char * params
+      , unsigned char * reply
+      , const int conn_idx)
 {
   // debug_printf("..... help 0\n");
 
@@ -322,7 +351,6 @@ help (unsigned char * params,
   // int len;
 
   int i;
-  int map_len;
 
   // debug_printf("..... help 1\n");
 
@@ -330,27 +358,24 @@ help (unsigned char * params,
 
   // debug_printf("..... help 2\n");
 
-  map_len = sizeof(cmd_map) / sizeof(cmd_map[0]);
-  for (i = 0; i < map_len; i++) {
+  for (i = 0; i < N_COMMANDS; i++) {
     r += strcpyl(r, (unsigned char *) "\n  ");
     r += strcpyl(r, cmd_map[i].cmd);
   }
 
   // debug_printf("..... help 5\n");
 
-  r += strcpyl(r, help_footer_str);
-  *r = '\0';
+  strcpyl(r, help_footer_str);
 
   // debug_printf("..... help 6\n");
 
-  return strlenu(reply);
-  
+  return strlenu(reply);  
 }
 
 int
-signals (unsigned char * params,
-         unsigned char * reply,
-         int conn_idx)
+signals (unsigned char * params
+         , unsigned char * reply
+         , const int conn_idx)
 {
   // debug_printf("..... help 0\n");
 
@@ -371,7 +396,6 @@ signals (unsigned char * params,
       r += strcpyl(r, expert_label_str);
     }
   }
-  *r = '\0';
 
   // debug_printf("..... help 6\n");
 
@@ -381,7 +405,7 @@ signals (unsigned char * params,
 
 
 unsigned char *
-get_cmd_spare(int conn_idx)
+get_cmd_spare(const int conn_idx)
 {
   return cmd_buf[conn_idx].spare;
 }

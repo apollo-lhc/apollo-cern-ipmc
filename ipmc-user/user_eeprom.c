@@ -6,6 +6,8 @@
 
 #include <user_helpers.h>
 
+#include <debug.h>
+
 #define MEM_ADDR 0x50
 #define ID_PAGE 0x58
 
@@ -34,6 +36,7 @@ char
 user_eeprom_set_version(uint8_t v)
 {
   eeprom.version = v;
+  // debug_printf("\n:::::::::: %d - %d", eeprom.version, v);
   return 0;
 }
 
@@ -41,6 +44,7 @@ char
 user_eeprom_get_version(uint8_t * v)
 {
   *v = eeprom.version;
+  // debug_printf("\n:::::::::: %d - %d", eeprom.version, *v);
   return 0;
 }
 
@@ -77,11 +81,11 @@ user_eeprom_write(void)
     return -2;
   }
   
-  uint8_t buffer[2+sizeof(eeprom)];
+  static uint8_t buffer[2+sizeof(eeprom)];
 
   buffer[0] = 0x00;
   buffer[1] = 0x00;
-  memcpy_(&buffer[2], (uint8_t *) &eeprom, sizeof(eeprom));
+  memcpy(&buffer[2], (uint8_t *) &eeprom, sizeof(eeprom));
 
   user_i2c_write(MEM_ADDR, buffer, sizeof(buffer), MNGMNT_I2C_BUS);
 

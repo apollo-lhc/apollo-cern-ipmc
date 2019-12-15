@@ -28,7 +28,7 @@ Version ..... : V0.1 - 30/05/2019
 static uint8_t zynq_restart_delay = 5;
 static uint8_t zynq_restart = 0;
 static uint8_t eeprom2zynq = 0;
-static uint8_t DEBUG = 0;
+// static uint8_t DEBUG = 0;
 
 /* ------------------------------------------------------------------ */
 // helper
@@ -45,28 +45,20 @@ user_zynq_i2c_write(unsigned char addr
     return -1;
   }
 
-  unsigned char prev;
   unsigned char i;
-  char ret1 = 1;
   char ret2 = 2;
   char ret3 = 4;
-  char ret4 = 8;
 
   for (i = 0; (i < 5
-               && (ret1 = user_pca9545_read(&prev))); i++) {
-    udelay(20000);
-  }
-  for (i = 0; (i < 5
-               && !ret1
                && (ret2 = user_pca9545_write(0x08))); i++) {
     udelay(20000);
   }
-  if (DEBUG) {
-    unsigned char aux;
-    if (user_pca9545_read(&aux) == 0) {
-      debug_printf("Current mux state: 0x%02x\n", aux);
-    }
-  }
+  // if (DEBUG) {
+  //   unsigned char aux;
+  //   if (user_pca9545_read(&aux) == 0) {
+  //     debug_printf("Current mux state: 0x%02x\n", aux);
+  //   }
+  // }
   for (i = 0; (i < 5
                && !ret2
                && (ret3 = user_i2c_reg_write(addr, reg,
@@ -74,13 +66,8 @@ user_zynq_i2c_write(unsigned char addr
                                              SENSOR_I2C_BUS))); i++) {
     udelay(20000);
   }
-  for (i = 0; (i < 5
-               && !ret1
-               && (ret4 = user_pca9545_write(prev))); i++) {
-    udelay(20000);
-  }
 
-  return ret1 | ret2 | ret3 | ret4;
+  return ret2 | ret3;
 }
 
 
@@ -95,28 +82,20 @@ user_zynq_i2c_read(unsigned char addr
     return -1;
   }
 
-  unsigned char prev;
   unsigned char i;
-  char ret1 = 1;
   char ret2 = 2;
   char ret3 = 4;
-  char ret4 = 8;
 
   for (i = 0; (i < 5
-               && (ret1 = user_pca9545_read(&prev))); i++) {
-    udelay(20000);
-  }
-  for (i = 0; (i < 5
-               && !ret1
                && (ret2 = user_pca9545_write(0x08))); i++) {
     udelay(20000);
   }
-  if (DEBUG) {
-    unsigned char aux;
-    if (user_pca9545_read(&aux) == 0) {
-      debug_printf("Current mux state: 0x%02x\n", aux);
-    }
-  }
+  // if (DEBUG) {
+  //   unsigned char aux;
+  //   if (user_pca9545_read(&aux) == 0) {
+  //     debug_printf("Current mux state: 0x%02x\n", aux);
+  //   }
+  // }
   for (i = 0; (i < 5
                && !ret2
                && (ret3 = user_i2c_reg_read(addr, reg,
@@ -124,13 +103,8 @@ user_zynq_i2c_read(unsigned char addr
                                             SENSOR_I2C_BUS))); i++) {
     udelay(20000);
   }
-  for (i = 0; (i < 5
-               && !ret1
-               && (ret4 = user_pca9545_write(prev))); i++) {
-    udelay(20000);
-  }
 
-  return ret1 | ret2 | ret3 | ret4;
+  return ret2 | ret3;
 }
 
 /* ------------------------------------------------------------------ */
@@ -176,7 +150,7 @@ user_zynq_restart(void)
   
   switch (state) {
   case ZYNQ_POWER_OFF:
-    debug_printf("ZYNQ_POWER_OFF");
+    // debug_printf("ZYNQ_POWER_OFF");
 
     addr0 = user_get_gpio(uart_addr0);
     addr1 = user_get_gpio(uart_addr1);
@@ -190,7 +164,7 @@ user_zynq_restart(void)
     state = DELAY;
     break;
   case DELAY:
-    debug_printf("zynq reset DELAY");
+    // debug_printf("zynq reset DELAY");
     if ( restart_delay > 0) {
       restart_delay--;
     } else {
@@ -199,7 +173,7 @@ user_zynq_restart(void)
     }
     break;
   case ZYNQ_POWER_ON_ACK:
-    debug_printf("zynq reset POWERON_ACK");
+    // debug_printf("zynq reset POWERON_ACK");
     if (user_get_gpio(zynq_i2c_on) == 1) {
       user_unprotected_set_gpio(uart_addr0, addr0);
       user_unprotected_set_gpio(uart_addr1, addr1);
@@ -230,7 +204,7 @@ user_zynq_get_temp(unsigned char addr
 char
 user_zynq_i2c_write_from_eeprom(void)
 {
-  uint8_t mac_addr[6];
+  static uint8_t mac_addr[6];
   char ret;
 
   ret = user_eeprom_get_mac_addr(0, mac_addr);
@@ -352,30 +326,30 @@ TIMER_CALLBACK(1s, user_zynq_restart_timercback_1s)
     user_zynq_restart();
   }
 
-  if (DEBUG) {
-
-    static const unsigned char addr = 0x61;
-    static unsigned char reg = 0;
-    static unsigned char reg_prev;
-    static unsigned char data = 0;
-    unsigned char data_prev;
-
-    debug_printf("zynq_i2c_on: %d\n", user_get_gpio(zynq_i2c_on));
-
-    if (user_zynq_i2c_write(addr, reg, &data, 1)) {
-      debug_printf("zynq_i2c_write(0x%02x)(%d)(%d) failed.\n", addr, reg, data);
-    }
-
-    data++;
-    reg_prev = reg;
-    reg = (reg < 9) ? reg + 1 : 0;
-    
-    if (user_zynq_i2c_read(addr, reg_prev, &data_prev, 1)){
-      debug_printf("zynq_i2c_read(0x%02x)(%d) failed.\n", addr, reg_prev);
-    } else {
-      debug_printf("zynq_i2c_read(0x%02x)(%d): %d\n", addr, reg_prev, data_prev);
-    }
-  }
+  // if (DEBUG) {
+  // 
+  //   static const unsigned char addr = 0x61;
+  //   static unsigned char reg = 0;
+  //   static unsigned char reg_prev;
+  //   static unsigned char data = 0;
+  //   unsigned char data_prev;
+  // 
+  //   debug_printf("zynq_i2c_on: %d\n", user_get_gpio(zynq_i2c_on));
+  // 
+  //   if (user_zynq_i2c_write(addr, reg, &data, 1)) {
+  //     debug_printf("zynq_i2c_write(0x%02x)(%d)(%d) failed.\n", addr, reg, data);
+  //   }
+  // 
+  //   data++;
+  //   reg_prev = reg;
+  //   reg = (reg < 9) ? reg + 1 : 0;
+  //   
+  //   if (user_zynq_i2c_read(addr, reg_prev, &data_prev, 1)){
+  //     debug_printf("zynq_i2c_read(0x%02x)(%d) failed.\n", addr, reg_prev);
+  //   } else {
+  //     debug_printf("zynq_i2c_read(0x%02x)(%d): %d\n", addr, reg_prev, data_prev);
+  //   }
+  // }
   
   return;
 }

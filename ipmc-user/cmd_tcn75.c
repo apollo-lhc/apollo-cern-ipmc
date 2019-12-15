@@ -15,11 +15,10 @@ static const unsigned char tcn75a_help_str[] =
 int
 read_tcn75a(unsigned char * params,
             unsigned char * reply,
-            int conn_idx)
+            const int conn_idx)
 {
-  int reply_len = 0;
   char ret;
-  unsigned char param[MAX_PARAM_LEN];
+  static unsigned char param[MAX_PARAM_LEN];
 
   get_next_param(param, params, ' ');
 
@@ -46,9 +45,6 @@ read_tcn75a(unsigned char * params,
     return strcpyl(reply, err_ia);
   }
 
-  reply_len = strlenu(reply);
-  reply[reply_len++]='\n';
-  reply[reply_len]='\0';    
-  return reply_len;
+  return strlenu(reply);
 }
 

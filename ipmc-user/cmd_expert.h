@@ -9,6 +9,6 @@ static const unsigned char expert_label_str[] = " (E)";
 int
 expert_mode(unsigned char * params,
             unsigned char * reply,
-            int conn_idx);
+            const int conn_idx);
 
 #endif // CMD_EXPERT_H
