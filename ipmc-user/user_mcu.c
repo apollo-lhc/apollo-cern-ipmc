@@ -40,17 +40,18 @@ user_uc_i2c_write(unsigned char addr
   char ret3 = 4;
 
   // configure mux
-  for (i = 0; (i < 5
-               && (ret2 = user_pca9545_write(0x02))); i++) {
+  for (i = 0;
+       (i < 5 && (ret2 = user_pca9545_write(0x02)));
+       i++) {
     udelay(20000);
   }
 
   // write data to uC
-  for (i = 0; (i < 5
-               && !ret2
-               && (ret3 = user_i2c_reg_write(addr, reg,
-                                             data, len,
-                                             SENSOR_I2C_BUS))); i++) {
+  for (i = 0;
+       (i < 5
+        && !ret2
+        && (ret3 = user_i2c_reg_write(addr, reg, data, len, SENSOR_I2C_BUS)));
+       i++) {
     udelay(20000);
   }
 
@@ -70,17 +71,19 @@ user_uc_i2c_read(unsigned char addr
   char ret3 = 4;
 
   // configure mux
-  for (i = 0; (i < 5
-               && (ret2 = user_pca9545_write(0x02))); i++) {
+  for (i = 0;
+       (i < 5
+        && (ret2 = user_pca9545_write(0x02)));
+       i++) {
     udelay(20000);
   }
 
   // read data from uC
-  for (i = 0; (i < 5
-               && !ret2
-               && (ret3 = user_i2c_reg_read(addr, reg,
-                                            data, len,
-                                            SENSOR_I2C_BUS))); i++) {
+  for (i = 0;
+       (i < 5
+        && !ret2
+        && (ret3 = user_i2c_reg_read(addr, reg, data, len, SENSOR_I2C_BUS)));
+       i++) {
     udelay(20000);
   }
 

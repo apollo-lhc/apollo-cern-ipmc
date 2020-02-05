@@ -105,21 +105,24 @@ sensor_uc_update_reading(unsigned char num
   // }
     
   /* read temperature */
-  if (user_uc_get_temp(sensor_uc_ro[num].addr
-                         , &reading)) {
+  if (user_uc_get_temp(sensor_uc_ro[num].i2c_addr,
+                       sensor_uc_ro[num].reg_addr
+                       , &reading)) {
     /* the sensor does not respond */
     if (!(sensor->status & STATUS_SENSOR_DISABLE)) {
       log_preamble();
-      debug_printf("disabling UC sensor at 0x%02x \n"
-                   , sensor_uc_ro[num].addr);
+      debug_printf("disabling MCU sensor at (0x%02x, 0x%02x) \n"
+                   , sensor_uc_ro[num].i2c_addr
+                   , sensor_uc_ro[num].reg_addr);
       sensor->status |= STATUS_SENSOR_DISABLE;
       sensor->status |= STATUS_SCAN_DISABLE;
     }
   } else {
     if (sensor->status & STATUS_SENSOR_DISABLE) {
       log_preamble();
-      debug_printf("enabling UC sensor at 0x%02x \n"
-                   ,sensor_uc_ro[num].addr);
+      debug_printf("enabling UC sensor at (0x%02x, 0x%02x) \n"
+                   ,sensor_uc_ro[num].i2c_addr
+                   ,sensor_uc_ro[num].reg_addr);
       sensor->status &= ~STATUS_SENSOR_DISABLE;
       sensor->status &= ~STATUS_SCAN_DISABLE;
     }

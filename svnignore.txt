@@ -6,5 +6,6 @@ hpm1fw.img
 hpm1iap.img
 compile.py
 config.xml
+config.yml
 env
 tmp
