@@ -388,8 +388,8 @@
     <Sensors type="raw" global_define="CFG_SENSOR_ZYNQ" function_name="SENSOR_ZYNQ" rawType="ZYNQ"> 
 
       <Sensor> 
-        <!-- Slave 0x61, reg 0 is the CM uC temp in degrees C --> 
-        <Name>CM uC Temp</Name> 
+        <!-- Slave 0x61, reg 0 is the CM MCU temp in degrees C --> 
+        <Name>CM MCU Temp</Name> 
         
         <Type>Temperature</Type> 
         <Units>degrees C</Units> 
@@ -549,7 +549,7 @@
       
     </Sensors>
 
-    <Sensors type="raw" global_define="CFG_SENSOR_UC" function_name="SENSOR_UC" rawType="UC"> 
+    <Sensors type="raw" global_define="CFG_SENSOR_MCU" function_name="SENSOR_MCU" rawType="MCU"> 
 
       <Sensor> 
         <!-- 0x10    CM_MCU_TEMP     uint8, LSB is 1C -->

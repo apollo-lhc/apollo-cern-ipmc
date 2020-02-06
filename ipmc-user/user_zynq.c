@@ -45,29 +45,11 @@ user_zynq_i2c_write(unsigned char addr
     return -1;
   }
 
-  unsigned char i;
-  char ret2 = 2;
-  char ret3 = 4;
-
-  for (i = 0; (i < 5
-               && (ret2 = user_pca9545_write(0x08))); i++) {
-    udelay(20000);
+  if ( user_pca9545_write(0x08) == 0 ) {
+    return user_i2c_reg_write(addr, reg, data, len,
+                              SENSOR_I2C_BUS);
   }
-  // if (DEBUG) {
-  //   unsigned char aux;
-  //   if (user_pca9545_read(&aux) == 0) {
-  //     debug_printf("Current mux state: 0x%02x\n", aux);
-  //   }
-  // }
-  for (i = 0; (i < 5
-               && !ret2
-               && (ret3 = user_i2c_reg_write(addr, reg,
-                                             data, len,
-                                             SENSOR_I2C_BUS))); i++) {
-    udelay(20000);
-  }
-
-  return ret2 | ret3;
+  return -1;
 }
 
 
@@ -82,29 +64,11 @@ user_zynq_i2c_read(unsigned char addr
     return -1;
   }
 
-  unsigned char i;
-  char ret2 = 2;
-  char ret3 = 4;
-
-  for (i = 0; (i < 5
-               && (ret2 = user_pca9545_write(0x08))); i++) {
-    udelay(20000);
+  if ( user_pca9545_write(0x08) == 0 ) {
+    return user_i2c_reg_read(addr, reg, data, len,
+                             SENSOR_I2C_BUS);
   }
-  // if (DEBUG) {
-  //   unsigned char aux;
-  //   if (user_pca9545_read(&aux) == 0) {
-  //     debug_printf("Current mux state: 0x%02x\n", aux);
-  //   }
-  // }
-  for (i = 0; (i < 5
-               && !ret2
-               && (ret3 = user_i2c_reg_read(addr, reg,
-                                            data, len,
-                                            SENSOR_I2C_BUS))); i++) {
-    udelay(20000);
-  }
-
-  return ret2 | ret3;
+  return -1;
 }
 
 /* ------------------------------------------------------------------ */

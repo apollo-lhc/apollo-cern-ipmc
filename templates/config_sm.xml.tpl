@@ -549,5 +549,214 @@
       
     </Sensors>
 
+    <Sensors type="raw" global_define="CFG_SENSOR_MCU" function_name="SENSOR_MCU" rawType="MCU"> 
+
+      <Sensor> 
+        <!-- 0x10    CM_MCU_TEMP     uint8, LSB is 1C -->
+        <Name>CM MCU Temp</Name> 
+        
+        <Type>Temperature</Type> 
+        <Units>degrees C</Units> 
+        
+        <NominalReading>25</NominalReading> 
+        <NormalMaximum>50</NormalMaximum> 
+        <NormalMinimum>0</NormalMinimum> 
+        
+        <Point id="0" x="0" y="0" /> 
+        <Point id="1" x="7" y="7" /> 
+        
+        <Thresholds> 
+          <UpperNonRecovery>55</UpperNonRecovery> 
+          <UpperCritical>50</UpperCritical> 
+          <UpperNonCritical>44</UpperNonCritical> 
+          <LowerNonRecovery>0</LowerNonRecovery> 
+          <LowerCritical>0</LowerCritical> 
+          <LowerNonCritical>0</LowerNonCritical> 
+        </Thresholds> 
+        
+        <Params> 
+          <p type="record_id"></p>  <!-- mandatory --> 
+          <p type="user">0x40</p> <!--unsigned char addr-->
+          <p type="user">0x10</p> <!--unsigned char addr-->
+          <p type="user">UCGH | UNRGH</p> 
+        </Params> 
+        
+        <AssertEvMask>0x0A80</AssertEvMask> 
+        <DeassertEvMask>0x7A80</DeassertEvMask> 
+        <DiscreteRdMask>0x3838</DiscreteRdMask> 
+        <AnalogDataFmt>UNSIGNED</AnalogDataFmt> 
+        <PosHysteresis>0</PosHysteresis> 
+        <NegHysteresis>0</NegHysteresis> 
+        <MaxReading>80</MaxReading> 
+        <MinReading>0</MinReading> 
+        
+      </Sensor>
+    
+      <Sensor> 
+        <!-- 0x12    CM_FPGA_VU_TEMP uint8, LSB is 1C -->
+        <Name>CM FPGA VU TEMP</Name> 
+        
+        <Type>Temperature</Type> 
+        <Units>degrees C</Units> 
+        
+        <NominalReading>25</NominalReading> 
+        <NormalMaximum>50</NormalMaximum> 
+        <NormalMinimum>0</NormalMinimum> 
+        
+        <Point id="0" x="0" y="0" /> 
+        <Point id="1" x="7" y="7" /> 
+        
+        <Thresholds> 
+          <UpperNonRecovery>80</UpperNonRecovery> 
+          <UpperCritical>65</UpperCritical> 
+          <UpperNonCritical>50</UpperNonCritical> 
+          <LowerNonRecovery>0</LowerNonRecovery> 
+          <LowerCritical>0</LowerCritical> 
+          <LowerNonCritical>0</LowerNonCritical> 
+        </Thresholds> 
+        
+        <Params> 
+          <p type="record_id"></p>  <!-- mandatory --> 
+          <p type="user">0x40</p> <!--unsigned char addr-->
+          <p type="user">0x12</p> <!--unsigned char addr-->
+          <p type="user">UCGH | UNRGH</p> 
+        </Params> 
+        
+        <AssertEvMask>0x0A80</AssertEvMask> 
+        <DeassertEvMask>0x7A80</DeassertEvMask> 
+        <DiscreteRdMask>0x3838</DiscreteRdMask> 
+        <AnalogDataFmt>UNSIGNED</AnalogDataFmt> 
+        <PosHysteresis>0</PosHysteresis> 
+        <NegHysteresis>0</NegHysteresis> 
+        <MaxReading>80</MaxReading> 
+        <MinReading>0</MinReading> 
+        
+      </Sensor>
+      
+      <Sensor> 
+        <!-- 0x14    CM_FPGA_KU_TEMP uint8, LSB is 1C -->
+        <Name>CM FPGA KU TEMP</Name> 
+        
+        <Type>Temperature</Type> 
+        <Units>degrees C</Units> 
+        
+        <NominalReading>25</NominalReading> 
+        <NormalMaximum>50</NormalMaximum> 
+        <NormalMinimum>0</NormalMinimum> 
+        
+        <Point id="0" x="0" y="0" /> 
+        <Point id="1" x="7" y="7" /> 
+        
+        <Thresholds> 
+          <UpperNonRecovery>80</UpperNonRecovery> 
+          <UpperCritical>65</UpperCritical> 
+          <UpperNonCritical>50</UpperNonCritical> 
+          <LowerNonRecovery>0</LowerNonRecovery> 
+          <LowerCritical>0</LowerCritical> 
+          <LowerNonCritical>0</LowerNonCritical> 
+        </Thresholds> 
+        
+        <Params> 
+          <p type="record_id"></p>  <!-- mandatory --> 
+          <p type="user">0x40</p> <!--unsigned char addr-->
+          <p type="user">0x14</p> <!--unsigned char addr-->
+          <p type="user">UCGH | UNRGH</p> 
+        </Params> 
+        
+        <AssertEvMask>0x0A80</AssertEvMask> 
+        <DeassertEvMask>0x7A80</DeassertEvMask> 
+        <DiscreteRdMask>0x3838</DiscreteRdMask> 
+        <AnalogDataFmt>UNSIGNED</AnalogDataFmt> 
+        <PosHysteresis>0</PosHysteresis> 
+        <NegHysteresis>0</NegHysteresis> 
+        <MaxReading>80</MaxReading> 
+        <MinReading>0</MinReading> 
+        
+      </Sensor>
+
+      <Sensor> 
+        <!-- 0x16    CM_FF_TEMP      uint8, LSB is 1C -->
+        <Name>CM FF TEMP</Name> 
+        
+        <Type>Temperature</Type> 
+        <Units>degrees C</Units> 
+        
+        <NominalReading>25</NominalReading> 
+        <NormalMaximum>+126</NormalMaximum> 
+        <NormalMinimum>-126</NormalMinimum> 
+        
+        <Point id="0" x="0" y="0" /> 
+        <Point id="1" x="7" y="7" /> 
+        
+        <Thresholds> 
+          <UpperNonRecovery>55</UpperNonRecovery> 
+          <UpperCritical>50</UpperCritical> 
+          <UpperNonCritical>44</UpperNonCritical> 
+          <LowerNonRecovery>0</LowerNonRecovery> 
+          <LowerCritical>0</LowerCritical> 
+          <LowerNonCritical>0</LowerNonCritical> 
+        </Thresholds> 
+
+        <Params> 
+          <p type="record_id"></p>  <!-- mandatory --> 
+          <p type="user">0x40</p> <!--unsigned char addr-->
+          <p type="user">0x16</p> <!--unsigned char addr-->
+          <p type="user">UCGH | UNRGH</p> 
+        </Params> 
+        
+        <AssertEvMask>0x0A80</AssertEvMask> 
+        <DeassertEvMask>0x7A80</DeassertEvMask> 
+        <DiscreteRdMask>0x3838</DiscreteRdMask> 
+        <AnalogDataFmt>2S_COMPL</AnalogDataFmt> 
+        <PosHysteresis>0</PosHysteresis> 
+        <NegHysteresis>0</NegHysteresis> 
+        <MaxReading>80</MaxReading> 
+        <MinReading>0</MinReading> 
+        
+      </Sensor>
+
+      <Sensor> 
+        <!-- 0x18    CM_REG_TEMP     uint8, LSB is 1C -->
+        <Name>CM REG TEMP</Name> 
+        
+        <Type>Temperature</Type> 
+        <Units>degrees C</Units> 
+        
+        <NominalReading>25</NominalReading> 
+        <NormalMaximum>50</NormalMaximum> 
+        <NormalMinimum>0</NormalMinimum> 
+        
+        <Point id="0" x="0" y="0" /> 
+        <Point id="1" x="7" y="7" /> 
+        
+        <Thresholds> 
+          <UpperNonRecovery>65</UpperNonRecovery> 
+          <UpperCritical>55</UpperCritical> 
+          <UpperNonCritical>45</UpperNonCritical> 
+          <LowerNonRecovery>0</LowerNonRecovery> 
+          <LowerCritical>0</LowerCritical> 
+          <LowerNonCritical>0</LowerNonCritical> 
+        </Thresholds> 
+        
+        <Params> 
+          <p type="record_id"></p>  <!-- mandatory --> 
+          <p type="user">0x40</p> <!--unsigned char addr-->
+          <p type="user">0x18</p> <!--unsigned char addr-->
+          <p type="user">UCGH | UNRGH</p> 
+        </Params> 
+        
+        <AssertEvMask>0x0A80</AssertEvMask> 
+        <DeassertEvMask>0x7A80</DeassertEvMask> 
+        <DiscreteRdMask>0x3838</DiscreteRdMask> 
+        <AnalogDataFmt>UNSIGNED</AnalogDataFmt> 
+        <PosHysteresis>0</PosHysteresis> 
+        <NegHysteresis>0</NegHysteresis> 
+        <MaxReading>80</MaxReading> 
+        <MinReading>0</MinReading> 
+        
+      </Sensor>
+      
+    </Sensors>
+
   </SensorList>
 </IPMC>

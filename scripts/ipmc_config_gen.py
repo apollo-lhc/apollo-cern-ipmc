@@ -12,7 +12,7 @@ sys.path.insert(0, base_dir)
 
 def main():
 
-    with open('conf.yml') as f:
+    with open('config.yml') as f:
         # use safe_load instead load
         conf = yaml.safe_load(f)
     conf =  {k.lower(): v for k, v in conf.items()}
@@ -30,11 +30,11 @@ def main():
     params["minor"] = revision % 100
 
     serial_conf = []
-    if conf["sol"] is True:
-        serial_conf += ["<SerialIntf>SOL_INTF</SerialIntf>"]
-    elif conf["sol"] is False:
+    if conf["sdi"] is True:
         serial_conf += ["<SerialIntf>SDI_INTF</SerialIntf>"]
         serial_conf += ["<RedirectSDItoSOL/>"]
+    elif conf["sdi"] is False:
+        serial_conf += ["<SerialIntf>SOL_INTF</SerialIntf>"]
     else:
         print("Unknown serial mode.")
         exit(1)
