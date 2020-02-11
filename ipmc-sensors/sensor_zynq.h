@@ -21,10 +21,10 @@ typedef struct {
 extern sensor_methods_t PROGMEM sensor_zynq_methods;
 
 /* Auxiliary macro for defining TCN sensor info */
-#define SENSOR_ZYNQ(s, addr_p, alert)      \
-    {					         \
-      SA(sensor_zynq_methods, s, alert),       \
-      .addr= (addr_p)                                \
-    }
+#define SENSOR_ZYNQ(s, addr_p, alert)                \
+{                                                    \
+  SA(sensor_zynq_methods, s, alert),                 \
+    .addr= (addr_p)                                  \
+}
      
 #endif /* SENSOR_ZYNQ_H */

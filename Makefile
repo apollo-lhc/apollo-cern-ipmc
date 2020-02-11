@@ -13,6 +13,8 @@ compile:
 	@echo $(VAR) > ipmc-user/user_version_def.h
 	@echo $(VAL) >> ipmc-user/user_version_def.h
 	echo "Current repository: $(REVISION) $(BRANCH) $(DATE)"
+	$(RM) *.img
+	python scripts/ipmc_config_gen.py
 	python ./compile.py
 
 activate:

@@ -1,72 +1,115 @@
 import sys
 import os
 from string import Template
+import subprocess
+import stat
+import yaml
 
-ip_addr_map = {}
-ip_addr_map[0] = "192.168.1.34"
-ip_addr_map[2] = "192.168.1.67"
-ip_addr_map[3] = "192.168.20.72"
-ip_addr_map[5] = "192.168.20.56"
-ip_addr_map[6] = "192.168.20.57"
-ip_addr_map[7] = "192.168.20.69"
-ip_addr_map[8] = "192.168.20.60"
-ip_addr_map[9] = "192.168.20.62"
-ip_addr_map[10] = "192.168.20.63"
+# get scripts directory path
+scripts_dir = os.path.dirname(os.path.realpath(__file__))
+base_dir = os.path.join(scripts_dir, "../")
+sys.path.insert(0, base_dir)
 
-mac_addr_map = {}
-mac_addr_map[0] = "0A:0A:0A:0A:0A:CC"
-mac_addr_map[2] = "00:50:51:FF:00:02"
-mac_addr_map[3] = "00:50:51:FF:00:03"
-mac_addr_map[5] = "00:50:51:FF:00:05"
-mac_addr_map[6] = "00:50:51:FF:00:06"
-mac_addr_map[7] = "00:50:51:FF:00:07"
-mac_addr_map[8] = "00:50:51:FF:00:08"
-mac_addr_map[9] = "00:50:51:FF:00:09"
-mac_addr_map[10] = "00:50:51:FF:00:10"
-
-def fill_template(template_file, ipmc_id):
-
-    params = {}
-    try:
-        params['ip_address'] = ip_addr_map[ipmc_id] 
-        params['mac_address'] = mac_addr_map[ipmc_id]
-    except:
-        print("Wrong Service Module ID")
-        exit(1)
-        
-    template = Template(open(template_file, 'r').read())
-    return template.substitute(params)
-    
 def main():
 
-    if (len(sys.argv) != 3):
-        print("Usage: {} <SM #> <SDI or SOL>".format(sys.argv[0]))
+    with open('config.yml') as f:
+        # use safe_load instead load
+        conf = yaml.safe_load(f)
+    conf =  {k.lower(): v for k, v in conf.items()}
+
+    with open(conf['network_file']) as f:
+        network = yaml.safe_load(f)
+    network =  {k.lower(): v for k, v in network.items()}
+
+    params = {}
+
+    svn_cmd = 'svn info --show-item revision'.split()
+    revision = int(subprocess.check_output(svn_cmd).strip())
+
+    params["major"] = revision // 100
+    params["minor"] = revision % 100
+
+    serial_conf = []
+    if conf["sdi"] is True:
+        serial_conf += ["<SerialIntf>SDI_INTF</SerialIntf>"]
+        serial_conf += ["<RedirectSDItoSOL/>"]
+    elif conf["sdi"] is False:
+        serial_conf += ["<SerialIntf>SOL_INTF</SerialIntf>"]
+    else:
+        print("Unknown serial mode.")
         exit(1)
+    params["serial"] = "\n    ".join(serial_conf)
 
-    ipmc_id = int(sys.argv[1])
+    params["uart_target"] = conf["uart"]
+    uart_conf = [] ## Inverted GPIO logic...
+    if conf["uart"] == "zynq": # ADDR1=0, ADDR0=0
+        uart_conf += ["<step>PSQ_ENABLE_SIGNAL(USER_IO_6)</step>"]
+        uart_conf += ["<step>PSQ_ENABLE_SIGNAL(USER_IO_5)</step>"]
+    elif conf["uart"] == "void":  # ADDR1=0, ADDR0=1
+        uart_conf += ["<step>PSQ_ENABLE_SIGNAL(USER_IO_6)</step>"]
+        uart_conf += ["<step>PSQ_DISABLE_SIGNAL(USER_IO_5)</step>"]
+    elif conf["uart"] == "m1":  # ADDR1=1, ADDR0=0
+        uart_conf += ["<step>PSQ_DISABLE_SIGNAL(USER_IO_6)</step>"]
+        uart_conf += ["<step>PSQ_ENABLE_SIGNAL(USER_IO_5)</step>"]
+    elif conf["uart"] == "m2": # ADDR1=1, ADDR0=1
+        uart_conf += ["<step>PSQ_DISABLE_SIGNAL(USER_IO_6)</step>"]
+        uart_conf += ["<step>PSQ_DISABLE_SIGNAL(USER_IO_5)</step>"]
+    else:
+        print("Unknown UART target.")
+        exit(1)
+    params["uart"] = "\n      ".join(uart_conf)
 
-    serial_if = sys.argv[2].lower()
 
-    # get scripts directory path
-    scripts_dir = os.path.dirname(os.path.realpath(__file__))
+    params["gateway"] = network["gateway"]
+    params["netmask"] = network["netmask"]
+
+    dhcp_conf = []
+    if conf["dhcp"] is True:
+        dhcp_conf += ["<EnableDHCP />"]
+    elif conf["dhcp"] is False:
+        dhcp_conf += ["<!-- <EnableDHCP /> -->"]
+    else:
+        print("Unknown DHCP mode.")
+        exit(1)
+    params["dhcp"] = "".join(dhcp_conf)
+    
+        
+    slot_ip_addresses = network.get("slot_ip_addr", {})
+    params["slot_01_ip_addr"] = slot_ip_addresses.get( 1, "192.168.1.11")
+    params["slot_02_ip_addr"] = slot_ip_addresses.get( 2, "192.168.1.12")
+    params["slot_03_ip_addr"] = slot_ip_addresses.get( 3, "192.168.1.13")
+    params["slot_04_ip_addr"] = slot_ip_addresses.get( 4, "192.168.1.14")
+    params["slot_05_ip_addr"] = slot_ip_addresses.get( 5, "192.168.1.15")
+    params["slot_06_ip_addr"] = slot_ip_addresses.get( 6, "192.168.1.16")
+    params["slot_07_ip_addr"] = slot_ip_addresses.get( 7, "192.168.1.17")
+    params["slot_08_ip_addr"] = slot_ip_addresses.get( 8, "192.168.1.18")
+    params["slot_09_ip_addr"] = slot_ip_addresses.get( 9, "192.168.1.19")
+    params["slot_10_ip_addr"] = slot_ip_addresses.get(10, "192.168.1.20")
+    params["slot_11_ip_addr"] = slot_ip_addresses.get(11, "192.168.1.21")
+    params["slot_12_ip_addr"] = slot_ip_addresses.get(12, "192.168.1.22")
+    params["slot_13_ip_addr"] = slot_ip_addresses.get(13, "192.168.1.23")
+    params["slot_14_ip_addr"] = slot_ip_addresses.get(14, "192.168.1.24")
+
+    sm_id = conf["sm_id"]
+    params["pn"] = "SM%05d" %(sm_id)
+    params["sn"] = "%07d" %(sm_id)
+    params["ip_addr"] = network["sm"][sm_id]["ip_addr"]
+    params["mac_addr"] = network["sm"][sm_id]["mac_addr"]
 
     # find the proper template file to construct the config.xml
-    templates_dir = os.path.join(scripts_dir, "../templates")
-    if ipmc_id == 0:
-        template_file = os.path.join(templates_dir, "config_devkit.tpl")
+    templates_dir = os.path.join(base_dir, "templates")
+    if conf["sm_id"] == 0:
+        template_file = os.path.join(templates_dir, "config_devkit.xml.tpl")
     else:
-        if serial_if == "sdi":
-            template_file = os.path.join(templates_dir, "config_sm_sdi.tpl")
-        elif(serial_if == "sol"):
-            template_file = os.path.join(templates_dir, "config_sm_sol.tpl")
-        else:
-            print("Unknown serial mode")
-            exit(1)
+        template_file = os.path.join(templates_dir, "config_sm.xml.tpl")
 
     target_file = os.path.join(scripts_dir, "../config.xml")
-
+    os.chmod(target_file, stat.S_IWRITE )
     with open(target_file, 'w') as f:
-        f.write(fill_template(template_file, ipmc_id))
+        template = Template(open(template_file, 'r').read())
+        f.write(template.substitute(params))
+
+    os.chmod(target_file, stat.S_IREAD)
 
 if __name__ == "__main__":
     main()

@@ -63,23 +63,11 @@ tcn75_i2c_write(unsigned char addr
                 , unsigned char reg
                 , unsigned char * data
                 , char len) {
-  unsigned char i;
-  char ret2 = 2;
-  char ret3 = 4;
-
-  for (i = 0; (i < 5
-               && (ret2 = user_pca9545_write(0x01))); i++) {
-    udelay(I2C_TRIAL_DELAY);
+  if ( user_pca9545_write(0x01) ) {
+    return user_i2c_reg_write(addr, reg, data, len,
+                              SENSOR_I2C_BUS);
   }
-  for (i = 0; (i < 5
-               && !ret2
-               && (ret3 = user_i2c_reg_write(addr, reg,
-                                             data, len,
-                                             SENSOR_I2C_BUS))); i++) {
-    udelay(I2C_TRIAL_DELAY);
-  }
-
-  return ret2 | ret3;
+  return -1;
 }
 
 static char inline
@@ -87,23 +75,11 @@ tcn75_i2c_read(unsigned char addr
                , unsigned char reg
                , unsigned char * data
                , char len) {
-  unsigned char i;
-  char ret2 = 2;
-  char ret3 = 4;
-
-  for (i = 0; (i < 5
-               && (ret2 = user_pca9545_write(0x01))); i++) {
-    udelay(I2C_TRIAL_DELAY);
+  if ( user_pca9545_write(0x01) == 0 ) {
+    return user_i2c_reg_read(addr, reg, data, len,
+                             SENSOR_I2C_BUS);
   }
-  for (i = 0; (i < 5
-               && !ret2
-               && (ret3 = user_i2c_reg_read(addr, reg,
-                                            data, len,
-                                            SENSOR_I2C_BUS))); i++) {
-    udelay(I2C_TRIAL_DELAY);
-  }
-
-  return ret2 | ret3;
+  return -1;
 }
 
 /* ------------------------------------------------------------------ */

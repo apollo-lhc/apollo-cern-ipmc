@@ -49,6 +49,7 @@ user_i2c_read(const unsigned char i2c_addr,
   // }
   
   char ret = 0;
+
   ret = i2c_dev_read(full_addr, data, len);
 
   // if (DEBUG) {
@@ -58,7 +59,8 @@ user_i2c_read(const unsigned char i2c_addr,
   //     debug_printf("+++++ data[%d]: %x\n", i, data[i]);
   //   }
   // }
-  
+
+
   if (i2c_bus == 2) {
     if (ret == 0 ) {
       user_i2c_sensor_reset_watchdog_counter();
@@ -152,6 +154,7 @@ user_i2c_reg_write(const unsigned char i2c_addr,
   short int full_addr = MO_CHANNEL_ADDRESS(i2c_bus, i2c_addr << 1);
 
   char ret = 0;
+
   ret = i2c_dev_write_reg(full_addr,
                           reg_addr,
                           (unsigned char *) data,
@@ -191,11 +194,13 @@ TIMER_CALLBACK(100ms, i2c_sensor_watchdog_timercback)
 {
   if (user_get_gpio(sense_rst_n) == 0){
     user_set_gpio(sense_rst_n, 1);
+    debug_printf("\n ... i2c_watchdog_reset_deactivated");
     return;
   }
   
   if (watchdog_counter == 0) {
     user_set_gpio(sense_rst_n, 0);
+    debug_printf("\n ... i2c_watchdog_reset_activated");
     return;
   }
 }
