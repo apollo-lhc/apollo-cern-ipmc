@@ -12,6 +12,8 @@ Version ..... : V0.1 - 30/05/2019
 // #include <i2c_dev.h>
 #include <hal/time.h>
 #include <debug.h>
+#include <net/ip.h>
+#include <net/eth.h>
 
 // our headers
 #include <user_i2c.h>
@@ -198,6 +200,20 @@ user_zynq_i2c_write_from_eeprom(void)
   user_zynq_i2c_write(0x60, 3, &rn, 1);
 
   eeprom2zynq = 1;
+  return 0;
+}
+
+TIMER_CALLBACK(1s, zynq_i2c_update_ipmc_info_timercback_1s)
+{
+  static ip_addr_t ip_addr;
+  static mac_addr_t mac_addr;
+
+  eth_get_mac(0, mac_addr);
+  user_zynq_i2c_write(0x67, 0, mac_addr, sizeof(mac_addr_t));
+
+  ip_get_ip(0, ip_addr);
+  user_zynq_i2c_write(0x67, 8, ip_addr, sizeof(ip_addr_t));
+
   return 0;
 }
 
