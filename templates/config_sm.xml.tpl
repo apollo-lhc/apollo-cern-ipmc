@@ -210,10 +210,12 @@
   </PowerManagement>
   
   <LANConfig>
-    
+
     <MACAddr>${mac_addr}</MACAddr>
     <NetMask>${netmask}</NetMask>
     <GatewayIP>${gateway}</GatewayIP>
+
+    ${flashed_mac_addr}
 
     ${dhcp}
     
