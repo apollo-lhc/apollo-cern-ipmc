@@ -96,6 +96,13 @@ def main():
     params["ip_addr"] = network["sm"][sm_id]["ip_addr"]
     params["mac_addr"] = network["sm"][sm_id]["mac_addr"]
 
+    flashed_mac_addr = []
+    if all(x == '00' for x in network["sm"][sm_id]["mac_addr"].split(":")):
+        flashed_mac_addr += ["<UseFlashedMAC />"]
+    else:
+        flashed_mac_addr += ["<!-- <UseFlashedMAC /> -->"]        
+    params["flashed_mac_addr"] = "".join(flashed_mac_addr)
+
     # find the proper template file to construct the config.xml
     templates_dir = os.path.join(base_dir, "templates")
     if conf["sm_id"] == 0:
