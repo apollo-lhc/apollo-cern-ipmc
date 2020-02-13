@@ -14,6 +14,7 @@ Version ..... : V0.1 - 30/05/2019
 #include <debug.h>
 #include <net/ip.h>
 #include <net/eth.h>
+#include <app/master/app.h>
 
 // our headers
 #include <user_i2c.h>
@@ -168,11 +169,12 @@ user_zynq_get_temp(unsigned char addr
 // user_zynq_get_temp(unsigned char
 
 char
-user_zynq_i2c_write_from_eeprom(void)
+user_zynq_i2c_write_on_boot(void)
 {
   static uint8_t mac_addr[6];
   char ret;
 
+  // data from eeprom
   ret = user_eeprom_get_mac_addr(0, mac_addr);
   if (ret != 0) {
     return -1;
@@ -199,6 +201,9 @@ user_zynq_i2c_write_from_eeprom(void)
   }
   user_zynq_i2c_write(0x60, 3, &rn, 1);
 
+  // local info
+  user_zynq_i2c_write(0x60, 4, &app_hardware_address, 1);
+  
   eeprom2zynq = 1;
   return 0;
 }
@@ -214,6 +219,9 @@ TIMER_CALLBACK(1s, zynq_i2c_update_ipmc_info_timercback_1s)
   ip_get_ip(0, ip_addr);
   user_zynq_i2c_write(0x67, 8, ip_addr, sizeof(ip_addr_t));
 
+  ip_get_ip(0, ip_addr);
+  user_zynq_i2c_write(0x67, 8, ip_addr, sizeof(ip_addr_t));
+  
   return 0;
 }
 
@@ -242,7 +250,7 @@ TIMER_CALLBACK(100ms, user_zynq_i2c_on_timercback_100ms)
     // reading success and zynq boot is over
     user_unprotected_set_gpio(zynq_i2c_on, 1);
     if (eeprom2zynq == 0) {
-      user_zynq_i2c_write_from_eeprom();
+      user_zynq_i2c_write_on_boot();
     }
   } else {
     // reading error or zynq boot is not over
