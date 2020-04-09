@@ -111,7 +111,8 @@ def main():
         template_file = os.path.join(templates_dir, "config_sm.xml.tpl")
 
     target_file = os.path.join(scripts_dir, "../config.xml")
-    os.chmod(target_file, stat.S_IWRITE )
+    if os.path.exists(target_file):
+        os.chmod(target_file, stat.S_IWRITE )
     with open(target_file, 'w') as f:
         template = Template(open(template_file, 'r').read())
         f.write(template.substitute(params))

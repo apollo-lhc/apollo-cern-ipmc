@@ -6,7 +6,7 @@ DATE := $(shell date)
 VAR := 'static const unsigned char version_str[] ='
 VAL := '   "$(REVISION) $(BRANCH) $(DATE)";'
 
-include env
+#include env
 
 .ONESHELL:
 compile: 
@@ -37,3 +37,8 @@ cp_lxplus:
 
 cp_axion:
 	scp hpm1all.img  axion.bu.edu:
+
+clean:
+	@rm -rf hpm*.img >& /dev/null
+	@rm -rf config.xml >& /dev/null
+	@rm -rf nvm.ihx >& /dev/null

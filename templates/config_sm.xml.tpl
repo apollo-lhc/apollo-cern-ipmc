@@ -272,7 +272,7 @@
     <Sensors type="raw" global_define="CFG_SENSOR_TCN75" function_name="SENSOR_TCN75" rawType="TCN75"> 
 			 
       <Sensor> 
-        <Name>U34 Temp</Name> 
+        <Name>SM Top Temp</Name> 
         
         <Type>Temperature</Type> 
         <Units>degrees C</Units> 
@@ -311,7 +311,7 @@
       </Sensor> 
       
       <Sensor> 
-        <Name>U35 Temp</Name> 
+        <Name>SM Bottom Temp</Name> 
         
         <Type>Temperature</Type> 
         <Units>degrees C</Units> 
@@ -348,7 +348,7 @@
         <MinReading>0</MinReading> 
       </Sensor> 
       <Sensor> 
-        <Name>U36 Temp</Name> 
+        <Name>SM Center Temp</Name> 
         
         <Type>Temperature</Type> 
         <Units>degrees C</Units> 
@@ -391,7 +391,7 @@
 
       <Sensor> 
         <!-- Slave 0x61, reg 0 is the CM uC temp in degrees C --> 
-        <Name>CM uC Temp</Name> 
+        <Name>ZP CM MCU Temp</Name> 
         
         <Type>Temperature</Type> 
         <Units>degrees C</Units> 
@@ -428,50 +428,10 @@
         <MinReading>0</MinReading> 
         
       </Sensor>
-      
-      <Sensor> 
-        <!-- slave 0x62 reg 0 is max Firefly temp in degrees C -->
-        <Name>Firefly Temp</Name> 
-        
-        <Type>Temperature</Type> 
-        <Units>degrees C</Units> 
-        
-        <NominalReading>25</NominalReading> 
-        <NormalMaximum>50</NormalMaximum> 
-        <NormalMinimum>0</NormalMinimum> 
-        
-        <Point id="0" x="0" y="0" /> 
-        <Point id="1" x="7" y="7" /> 
-        
-        <Thresholds> 
-          <UpperNonRecovery>55</UpperNonRecovery> 
-          <UpperCritical>50</UpperCritical> 
-          <UpperNonCritical>44</UpperNonCritical> 
-          <LowerNonRecovery>0</LowerNonRecovery> 
-          <LowerCritical>0</LowerCritical> 
-          <LowerNonCritical>0</LowerNonCritical> 
-        </Thresholds> 
-        
-        <Params> 
-          <p type="record_id"></p>  <!-- mandatory --> 
-          <p type="user">0x62</p> <!--unsigned char addr-->
-          <p type="user">UCGH | UNRGH</p> 
-        </Params> 
-        
-        <AssertEvMask>0x0A80</AssertEvMask> 
-        <DeassertEvMask>0x7A80</DeassertEvMask> 
-        <DiscreteRdMask>0x3838</DiscreteRdMask> 
-        <AnalogDataFmt>UNSIGNED</AnalogDataFmt> 
-        <PosHysteresis>0</PosHysteresis> 
-        <NegHysteresis>0</NegHysteresis> 
-        <MaxReading>80</MaxReading> 
-        <MinReading>0</MinReading> 
-        
-      </Sensor>
-      
+
       <Sensor> 
         <!-- slave 0x63 reg 0 is the max CM FPGA temp in degrees C -->
-        <Name>CM FPGA Temp</Name> 
+        <Name>ZP CM FPGA Temp</Name> 
         
         <Type>Temperature</Type> 
         <Units>degrees C</Units> 
@@ -508,10 +468,51 @@
         <MinReading>0</MinReading> 
         
       </Sensor>
+
       
       <Sensor> 
+        <!-- slave 0x62 reg 0 is max Firefly temp in degrees C -->
+        <Name>ZP CM FF Temp</Name> 
+        
+        <Type>Temperature</Type> 
+        <Units>degrees C</Units> 
+        
+        <NominalReading>25</NominalReading> 
+        <NormalMaximum>50</NormalMaximum> 
+        <NormalMinimum>0</NormalMinimum> 
+        
+        <Point id="0" x="0" y="0" /> 
+        <Point id="1" x="7" y="7" /> 
+        
+        <Thresholds> 
+          <UpperNonRecovery>55</UpperNonRecovery> 
+          <UpperCritical>50</UpperCritical> 
+          <UpperNonCritical>44</UpperNonCritical> 
+          <LowerNonRecovery>0</LowerNonRecovery> 
+          <LowerCritical>0</LowerCritical> 
+          <LowerNonCritical>0</LowerNonCritical> 
+        </Thresholds> 
+        
+        <Params> 
+          <p type="record_id"></p>  <!-- mandatory --> 
+          <p type="user">0x62</p> <!--unsigned char addr-->
+          <p type="user">UCGH | UNRGH</p> 
+        </Params> 
+        
+        <AssertEvMask>0x0A80</AssertEvMask> 
+        <DeassertEvMask>0x7A80</DeassertEvMask> 
+        <DiscreteRdMask>0x3838</DiscreteRdMask> 
+        <AnalogDataFmt>UNSIGNED</AnalogDataFmt> 
+        <PosHysteresis>0</PosHysteresis> 
+        <NegHysteresis>0</NegHysteresis> 
+        <MaxReading>80</MaxReading> 
+        <MinReading>0</MinReading> 
+        
+      </Sensor>
+            
+      <Sensor> 
         <!-- slave 0x64 reg 0 is the max CM regulator temp in degrees C -->
-        <Name>CM regulator Temp</Name> 
+        <Name>ZP CM Reg Temp</Name> 
         
         <Type>Temperature</Type> 
         <Units>degrees C</Units> 
@@ -596,7 +597,7 @@
     
       <Sensor> 
         <!-- 0x12    CM_FPGA_VU_TEMP uint8, LSB is 1C -->
-        <Name>CM FPGA VU TEMP</Name> 
+        <Name>CM FPGA VU Temp</Name> 
         
         <Type>Temperature</Type> 
         <Units>degrees C</Units> 
@@ -637,7 +638,7 @@
       
       <Sensor> 
         <!-- 0x14    CM_FPGA_KU_TEMP uint8, LSB is 1C -->
-        <Name>CM FPGA KU TEMP</Name> 
+        <Name>CM FPGA KU Temp</Name> 
         
         <Type>Temperature</Type> 
         <Units>degrees C</Units> 
@@ -678,7 +679,7 @@
 
       <Sensor> 
         <!-- 0x16    CM_FF_TEMP      uint8, LSB is 1C -->
-        <Name>CM FF TEMP</Name> 
+        <Name>CM Max FF Temp</Name> 
         
         <Type>Temperature</Type> 
         <Units>degrees C</Units> 
@@ -719,7 +720,7 @@
 
       <Sensor> 
         <!-- 0x18    CM_REG_TEMP     uint8, LSB is 1C -->
-        <Name>CM REG TEMP</Name> 
+        <Name>CM Max Reg Temp</Name> 
         
         <Type>Temperature</Type> 
         <Units>degrees C</Units> 
