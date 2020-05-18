@@ -294,11 +294,5 @@ Questions or comments
     - Those are defines, not enum.
 
 
-Other
------
-
-To make SVN to ignore files:
-
-    svn propset svn:ignore -F svnignore.txt .
 
 
