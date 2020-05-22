@@ -1,21 +1,21 @@
 .SHELLFLAGS = -ec
 
-REVISION := $(shell svn info --show-item revision)
-BRANCH := $(shell basename $$(pwd))
+VERSIONING := $(shell git describe --tags)
+BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 DATE := $(shell date)
 VAR := 'static const unsigned char version_str[] ='
-VAL := '   "$(REVISION) $(BRANCH) $(DATE)";'
-
-#include env
+VAL := '   "$(VERSIONING) $(BRANCH) $(DATE)\\n";'
 
 .ONESHELL:
 compile: 
 	@echo $(VAR) > ipmc-user/user_version_def.h
 	@echo $(VAL) >> ipmc-user/user_version_def.h
-	echo "Current repository: $(REVISION) $(BRANCH) $(DATE)"
+	echo "Current repository: $(VERSIONING) $(BRANCH) $(DATE)"
 	$(RM) *.img
+
 	python scripts/ipmc_config_gen.py
 	python ./compile.py
+	python scripts/wrapping_up.py
 
 activate:
 	ipmitool -H $(SHM_IP) -P "" -t $(IPMB_ADDR) hpm activate

@@ -12,3 +12,5 @@ network.yml
 network.yaml
 env
 tmp
+built
+ipmc-user/user_version_def.h

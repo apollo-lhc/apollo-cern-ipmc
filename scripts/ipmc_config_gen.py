@@ -5,6 +5,8 @@ import subprocess
 import stat
 import yaml
 
+PIPE = subprocess.PIPE
+
 # get scripts directory path
 scripts_dir = os.path.dirname(os.path.realpath(__file__))
 base_dir = os.path.join(scripts_dir, "../")
@@ -23,8 +25,12 @@ def main():
 
     params = {}
 
-    svn_cmd = 'svn info --show-item revision'.split()
-    revision = int(subprocess.check_output(svn_cmd).strip())
+    revision = subprocess.run(["git", "describe", "--tags"], stdout=PIPE, text=True)
+    revision = int(revision.stdout.strip().split("-")[1])
+    print("=========", revision)
+
+    # svn_cmd = 'svn info --show-item revision'.split()
+    # revision = int(subprocess.check_output(svn_cmd).strip())
 
     params["major"] = revision // 100
     params["minor"] = revision % 100
