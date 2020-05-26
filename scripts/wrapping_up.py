@@ -26,7 +26,8 @@ def main():
     fn_new = Path.cwd() / "built" / f"hpm1all-{revision}-{sm_id}.img"
 
     fn_new.parent.mkdir(parents=True, exist_ok=True)
-    Path.rename(fn_old, fn_new)
+    if fn_old.exists():
+        Path.rename(fn_old, fn_new)
     
     files = glob.glob("hpm1*.img")
     for f in files:

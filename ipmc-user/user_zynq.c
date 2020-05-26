@@ -222,7 +222,7 @@ TIMER_CALLBACK(1s, zynq_i2c_update_ipmc_info_timercback_1s)
   ip_get_ip(0, ip_addr);
   user_zynq_i2c_write(0x67, 8, ip_addr, sizeof(ip_addr_t));
   
-  return 0;
+  return;
 }
 
 
