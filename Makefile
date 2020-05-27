@@ -4,7 +4,9 @@ VERSIONING := $(shell git describe --tags)
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 DATE := $(shell date)
 VAR := 'static const unsigned char version_str[] ='
-VAL := '   "$(VERSIONING) $(BRANCH) $(DATE)\\n";'
+VAL := '   "$(VERSIONING) $(BRANCH) $(DATE)";'
+
+TGT := $(shell ls -t built | head -n 1)
 
 .ONESHELL:
 compile: 
@@ -30,13 +32,13 @@ reset:
 	ipmitool -H $(SHM_IP) -P "" -t $(IPMB_ADDR) mc reset cold
 
 cp_pcptracker:
-	scp hpm1all.img  pcuptracker001:
+	scp "built/$(TGT)"  "pcuptracker001:built"
 
 cp_lxplus:
-	scp hpm1all.img  lxplus.cern.ch:
+	scp "built/$(TGT)" "lxplus.cern.ch:built"
 
 cp_axion:
-	scp hpm1all.img  axion.bu.edu:
+	scp "built/$(TGT)" "axion.bu.edu:built"
 
 clean:
 	@rm -rf hpm*.img >& /dev/null

@@ -761,5 +761,89 @@
       
     </Sensors>
 
+    <Sensors type="raw" global_define="CFG_SENSOR_PIM400KZ" function_name="SENSOR_PIM400KZ" rawType="PIM400KZ"> 
+
+      <Sensor> 
+
+        <Name>PIM400KZ Temp</Name> 
+        
+        <Type>Temperature</Type> 
+        <Units>degrees C</Units> 
+        
+        <NominalReading>25</NominalReading> 
+        <NormalMaximum>50</NormalMaximum> 
+        <NormalMinimum>0</NormalMinimum> 
+        
+        <Point id="0" x="29" y="6.879" /> 
+        <Point id="1" x="50" y="48.05" /> 
+        
+        <Thresholds> 
+          <UpperNonRecovery>85</UpperNonRecovery> 
+          <UpperCritical>75</UpperCritical> 
+          <UpperNonCritical>65</UpperNonCritical> 
+          <LowerNonRecovery>0</LowerNonRecovery> 
+          <LowerCritical>0</LowerCritical> 
+          <LowerNonCritical>0</LowerNonCritical> 
+        </Thresholds> 
+        
+        <Params> 
+          <p type="record_id"></p>  <!-- mandatory --> 
+          <p type="user">0</p> <!--unsigned char addr-->
+          <p type="user">UCGH | UNRGH</p> 
+        </Params> 
+        
+        <AssertEvMask>0x0A80</AssertEvMask> 
+        <DeassertEvMask>0x7A80</DeassertEvMask> 
+        <DiscreteRdMask>0x3838</DiscreteRdMask> 
+        <AnalogDataFmt>UNSIGNED</AnalogDataFmt> 
+        <PosHysteresis>0</PosHysteresis> 
+        <NegHysteresis>0</NegHysteresis> 
+        <MaxReading>90</MaxReading> 
+        <MinReading>0</MinReading> 
+        
+      </Sensor>    
+      
+      <Sensor> 
+
+        <Name>PIM400KZ Current</Name> 
+        
+        <Type>Current</Type> 
+        <Units>Amps</Units> 
+        
+        <NominalReading>5</NominalReading> 
+        <NormalMaximum>8</NormalMaximum> 
+        <NormalMinimum>0</NormalMinimum> 
+        
+        <Point id="0" x="0" y="0" /> 
+        <Point id="1" x="50" y="4.7" /> 
+        
+        <Thresholds> 
+          <UpperNonRecovery>8.5</UpperNonRecovery> 
+          <UpperCritical>8</UpperCritical> 
+          <UpperNonCritical>7.5</UpperNonCritical> 
+          <LowerNonRecovery>0</LowerNonRecovery> 
+          <LowerCritical>0</LowerCritical> 
+          <LowerNonCritical>0</LowerNonCritical> 
+        </Thresholds> 
+        
+        <Params> 
+          <p type="record_id"></p>  <!-- mandatory --> 
+          <p type="user">1</p> <!--unsigned char addr-->
+          <p type="user">UCGH | UNRGH</p> 
+        </Params> 
+        
+        <AssertEvMask>0x0A80</AssertEvMask> 
+        <DeassertEvMask>0x7A80</DeassertEvMask> 
+        <DiscreteRdMask>0x3838</DiscreteRdMask> 
+        <AnalogDataFmt>UNSIGNED</AnalogDataFmt> 
+        <PosHysteresis>0</PosHysteresis> 
+        <NegHysteresis>0</NegHysteresis> 
+        <MaxReading>10</MaxReading> 
+        <MinReading>0</MinReading> 
+        
+      </Sensor>    
+      
+    </Sensors>
+
   </SensorList>
 </IPMC>
