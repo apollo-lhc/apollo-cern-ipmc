@@ -21,9 +21,10 @@ def main():
     sm_id = conf["sm_id"]
 
     revision = subprocess.run(["git", "describe", "--tags"], stdout=PIPE, text=True)
-    revision = int(revision.stdout.strip().split("-")[1])
+    revision = revision.stdout.strip().split("-")
 
-    fn_new = Path.cwd() / "built" / f"hpm1all-{revision}-{sm_id}.img"
+    r = f"{revision[0]}.{revision[1]}"
+    fn_new = Path.cwd() / "built" / f"hpm1all-{r}-sm{sm_id}.img"
 
     fn_new.parent.mkdir(parents=True, exist_ok=True)
     if fn_old.exists():

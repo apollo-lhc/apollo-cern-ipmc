@@ -26,13 +26,13 @@ def main():
     params = {}
 
     revision = subprocess.run(["git", "describe", "--tags"], stdout=PIPE, text=True)
-    revision = int(revision.stdout.strip().split("-")[1])
-
+    revision = revision.stdout.strip().split("-")
+    
     # svn_cmd = 'svn info --show-item revision'.split()
     # revision = int(subprocess.check_output(svn_cmd).strip())
 
-    params["major"] = revision // 100
-    params["minor"] = revision % 100
+    params["major"] = revision[0]
+    params["minor"] = revision[1]
 
     serial_conf = []
     if conf["sdi"] is True:
