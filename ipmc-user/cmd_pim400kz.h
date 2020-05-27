@@ -7,6 +7,11 @@ pim400kz_get_status(unsigned char * params,
                     const int conn_idx);
 
 int
+pim400kz_set_status(unsigned char * params,
+                    unsigned char * reply,
+                    const int conn_idx);
+
+int
 pim400kz_get_holdup_voltage(unsigned char * params,
                             unsigned char * reply,
                             const int conn_idx);

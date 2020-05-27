@@ -4,7 +4,7 @@ VERSIONING := $(shell git describe --tags)
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 DATE := $(shell date)
 VAR := 'static const unsigned char version_str[] ='
-VAL := '   "$(VERSIONING) $(BRANCH) $(DATE)\\n";'
+VAL := '   "$(VERSIONING) $(BRANCH) $(DATE)";'
 
 TGT := $(shell ls -t built | head -n 1)
 

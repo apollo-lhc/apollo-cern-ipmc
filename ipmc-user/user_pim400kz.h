@@ -47,6 +47,9 @@ char
 user_pim400kz_get_status(uint8_t * val);
 
 char
+user_pim400kz_set_status(uint8_t * val);
+
+char
 user_pim400kz_get_holdup_voltage(uint8_t * val);
 
 char
