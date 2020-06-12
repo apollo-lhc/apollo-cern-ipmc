@@ -20,8 +20,8 @@ def main():
 
     sm_id = conf["sm_id"]
 
-    revision = subprocess.run(["git", "describe", "--tags"], stdout=PIPE, text=True)
-    revision = revision.stdout.strip().split("-")
+    revision = subprocess.run(["git", "describe", "--tags"], stdout=PIPE)
+    revision = revision.stdout.decode().strip().split("-")
 
     r = f"{revision[0]}.{revision[1]}"
     fn_new = Path.cwd() / "built" / f"hpm1all-{r}-sm{sm_id}.img"

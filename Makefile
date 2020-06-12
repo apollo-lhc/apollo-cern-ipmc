@@ -15,9 +15,9 @@ compile:
 	echo "Current repository: $(VERSIONING) $(BRANCH) $(DATE)"
 	$(RM) *.img
 
-	python scripts/ipmc_config_gen.py
-	python ./compile.py
-	python scripts/wrapping_up.py
+	python3 scripts/ipmc_config_gen.py
+	python3 ./compile.py
+	python3 scripts/wrapping_up.py
 
 activate:
 	ipmitool -H $(SHM_IP) -P "" -t $(IPMB_ADDR) hpm activate

@@ -25,8 +25,8 @@ def main():
 
     params = {}
 
-    revision = subprocess.run(["git", "describe", "--tags"], stdout=PIPE, text=True)
-    revision = revision.stdout.strip().split("-")
+    revision = subprocess.run(["git", "describe", "--tags"], stdout=PIPE)
+    revision = revision.stdout.decode().strip().split("-")
     
     # svn_cmd = 'svn info --show-item revision'.split()
     # revision = int(subprocess.check_output(svn_cmd).strip())
