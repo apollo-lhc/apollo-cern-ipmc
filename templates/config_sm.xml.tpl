@@ -31,10 +31,32 @@
     <!-- <ResetOnWrongHAEn /> -->
     <!-- <PowerMonitoringEn /> -->
     <!-- <AlertMonitoringEn />-->
-
-    ${serial}
-    
+    ${serial_redirect}
   </GeneralConfig>
+  
+  <SerialInterfaces>
+    <!--
+        This part allows connecting the UART port to interfaces.
+        
+        The ports 0 to 2 are linked to the hardware:
+        port 0: Edge connector (Tx: 57 / Rx: 60)
+        port 1: On-mezzanine pads
+        port 2: Optionnal UART (Tx: 75 / Rx: 76)
+        
+        For each bord, the following name can be used:
+        "SOL": Serial Over Lan
+        "SDI": Serial Debug Interface
+        "PI": Payload Interface
+        
+        The baudrate can be set using the baudrate param. By default,
+        it is configured to 115200b/s.
+    -->
+    <Connect port="0" name="${serial_type}" baudrate="115200"/>
+    <!-- <Connect port="1" name="PI"  baudrate="115200"/> -->
+    <!-- <Connect port="2" name="SDI" baudrate="115200"/> -->
+  </SerialInterfaces>
+
+
   
   <PowerManagement>
     

@@ -34,16 +34,21 @@ def main():
     params["major"] = revision[0]
     params["minor"] = revision[1]
 
-    serial_conf = []
-    if conf["sdi"] is True:
-        serial_conf += ["<SerialIntf>SDI_INTF</SerialIntf>"]
-        serial_conf += ["<RedirectSDItoSOL/>"]
-    elif conf["sdi"] is False:
-        serial_conf += ["<SerialIntf>SOL_INTF</SerialIntf>"]
+    serial_redirect_conf = []
+    serial_type_conf = []
+
+    if conf["sol"] is True and conf["sdi"] is True:
+        params["serial_redirect"] = "\n<RedirectSDItoSOL/>\n"
+        params["serial_type"] = "SOL"
+    elif conf["sol"] is False and conf["sdi"] is True:
+        params["serial_redirect"] = ""
+        params["serial_type"] = "SDI"
+    elif conf["sol"] is True and conf["sdi"] is False:
+        params["serial_redirect"] = ""
+        params["serial_type"] = "SOL"
     else:
-        print("Unknown serial mode.")
+        print("Serial should be SDI or SOL or both.")
         exit(1)
-    params["serial"] = "\n    ".join(serial_conf)
 
     params["uart_target"] = conf["uart"]
     uart_conf = [] ## Inverted GPIO logic...
