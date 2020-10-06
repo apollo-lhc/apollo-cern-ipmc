@@ -179,30 +179,32 @@ user_zynq_i2c_write_on_boot(void)
   if (ret != 0) {
     return -1;
   }
-  user_zynq_i2c_write(0x60, 16, mac_addr, 6);
+  user_zynq_i2c_write(0x60, 20, mac_addr, 6);
 
   ret = user_eeprom_get_mac_addr(1, mac_addr);
   if (ret != 0) {
     return -2;
   }
-  user_zynq_i2c_write(0x60, 24, mac_addr, 6);
+  user_zynq_i2c_write(0x60, 28, mac_addr, 6);
 
   uint8_t sn;
   ret = user_eeprom_get_serial_number(&sn);
   if (ret != 0) {
     return -3;
   }
-  user_zynq_i2c_write(0x60, 2, &sn, 1);
+  user_zynq_i2c_write(0x60, 4, &sn, 1);
 
   uint8_t rn;
   ret = user_eeprom_get_revision_number(&rn);
   if (ret != 0) {
     return -4;
   }
-  user_zynq_i2c_write(0x60, 3, &rn, 1);
+  user_zynq_i2c_write(0x60, 7, &rn, 1);
 
   // local info
-  user_zynq_i2c_write(0x60, 4, &app_hardware_address, 1);
+  uint8_t hw_addr = app_hardware_address<<1;
+  //  user_zynq_i2c_write(0x60, 4, &app_hardware_address, 1);
+  user_zynq_i2c_write(0x60, 5, &hw_addr, 1);
   
   eeprom2zynq = 1;
   return 0;
